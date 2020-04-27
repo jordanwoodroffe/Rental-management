@@ -1,5 +1,7 @@
 import sys
 import os
+from collections import namedtuple
+
 import numpy as np
 import cv2  # facilitates face recognition: detects faces, does not recognise face landmarks (i.e. recognition)
 import face_recognition  # recognise and encode user faces
@@ -56,16 +58,17 @@ class FaceDetector(AbstractFaceDetector):
         return False
 
     def login_user(self):
+        Match = namedtuple("max_match", "id score")
         faces = self.__capture_face()
         if len(faces) > 0:
+            max_match = Match(None, 0)
             encodings = self.__encode_face(faces)
-            compare_results = {}
             for encoding in encodings:
                 for user_id in self.__encodings.keys():
                     user_encodings = self.__encodings.get(user_id)
-                    results = face_recognition.compare_faces(user_encodings, encoding)
-                    compare_results[user_id] = sum(results)
-            print(max(compare_results, key=compare_results.get))
+                    result = sum(face_recognition.compare_faces(user_encodings, encoding))
+                    max_match = Match(user_id, result) if result > max_match.score else max_match
+            print(max_match)
 
     def __capture_face(self):
         video_stream = cv2.VideoCapture(0)
@@ -83,8 +86,8 @@ class FaceDetector(AbstractFaceDetector):
                 print("no faces found :(")
             else:
                 print("found ya")
-                x, y, w, h = face_objects[0]
-                faces.append(img[y: y + h, x: x + w])
+                for x, y, w, h in face_objects:
+                    faces.append(img[y: y + h, x: x + w])
 
             for (x, y, w, h) in face_objects:
                 cv2.rectangle(img, pt1=(x, y), pt2=(x + w, y + h), color=(255, 0, 0), thickness=2)
