@@ -43,5 +43,55 @@ def register():
     return render_template("register.html", form=form)
 
 
+@app.route("/main")
+def main():
+    user = {
+        "first_name": "Sample",
+        "last_name": "John",
+        "email": "sample@sample.com",
+        "face_id": False
+    }
+    return render_template("main.html", user=user)
+
+
+class Booking:
+    """
+    test class for designing front end
+    """
+    def __init__(self, id, car_id, start, end):
+        self.id = id
+        self.car_id = car_id
+        self.start = start
+        self.end = end
+
+
+@app.route("/history")
+def view_history():
+    bookings = [Booking(i, i, i, i) for i in range(0, 6)]
+    return render_template("history.html", user_bookings=bookings)
+
+
+@app.route("/list")
+def available_cars():
+    bookings = [Booking(i, i, i, i) for i in range(0, 6)]
+    return render_template("list.html", cars=bookings)
+
+
+@app.route("/book")
+@app.route("/booking")
+def make_booking():
+    return render_template("booking.html")
+
+
+@app.route("/cancel")
+def cancel_booking():
+    return render_template("cancel.html")
+
+
+@app.route("/search")
+def search_cars():
+    return render_template("search.html")
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
