@@ -1,0 +1,24 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% with page="list"%}
+{% include "nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="card-columns">
+    {% for car in cars %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title">Car ID {{car.id}}</h5>
+          <p class="card-text">details go here in some form</p>
+          <a href="/book" class="btn btn-primary">Book now</a>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+</body>
+
+{% endblock %}

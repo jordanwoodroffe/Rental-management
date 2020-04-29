@@ -1,0 +1,25 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% with page="history"%}
+{% include "nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="card-columns">
+    {% for booking in user_bookings %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title">Booking ID {{booking.id}}</h5>
+          <p class="card-text">Car: {{booking.car_id}}</p>
+          <p class="card-text">Start date: {{booking.start}}</p>
+          <p class="card-text">End date: {{booking.end}}</p>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+</body>
+
+{% endblock %}
