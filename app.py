@@ -1,10 +1,15 @@
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
+from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
+from api import DBConnect
+from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, PasswordField, SelectField, IntegerField
 from wtforms.validators import InputRequired, Email, Length, NumberRange
 
 app = Flask(__name__)
+db = DBConnect(app)
+
 app.config['SECRET_KEY'] = 'temp'
 Bootstrap(app)
 
@@ -29,7 +34,11 @@ class BookingForm(FlaskForm):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    code = "<h1>"
+    for row in db.get_users():
+        code += str(row) + " "
+    return code + "</h1>"
+    # return render_template("index.html")
 
 
 # @app.route("/<page>", methods=['GET'])
@@ -107,5 +116,5 @@ def search_cars():
 
 
 if __name__ == '__main__':
-    # app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
-    app.run(debug=True)
+    app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
+    # app.run(debug=True)
