@@ -3,19 +3,23 @@ from flask_sqlalchemy import SQLAlchemy
 
 """
 Instructions:
-https://cloud.google.com/sql/docs/mysql/connect-external-app#sqlalchemy-tcp
+https://cloud.google.com/sql/docs/mysql/connect-external-app
 
-Google Cloud SQL - set up instance, create database
+Enable Cloud SQL Admin API for the project.
 
-Install the proxy client
+Create a new Google Cloud SQL Instance, then create a database.
+
+    Copy the INSTANCE_CONNECTION_NAME from overview screen
+
+Install the proxy client (as per google doc instructions), make it executable 
 
 Invoke proxy:
-    ./cloud_sql_proxy -instances=projectID:region:instanceID=tcp:3306 &
+    ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<PORT> &
     
-should then work
-
-Used MySQLWorkbench/cloud shell
+And update the below/db code to use the right port number, database name, etc.
 """
+DB_NAME = "temp"  # UPDATE THIS if need be
+PORT_NUMBER = 3305  # UPDATE THIS if need be
 
 meta = MetaData()
 users = Table(
@@ -35,9 +39,9 @@ class DBConnect:
         if self.__db is None:
             self.__db = SQLAlchemy()
             self.__engine = self.__db.create_engine(
-                sa_url='mysql+pymysql://root@127.0.0.1/temp',
+                sa_url='mysql+pymysql://root@127.0.0.1:{}/{}'.format(PORT_NUMBER, DB_NAME),
                 engine_opts={"echo": True}
-            )
+            )  # UPDATE temp TO THE SQL DATABASE NAME
             self.__db.init_app(app)
 
     def get_users(self):
@@ -46,19 +50,22 @@ class DBConnect:
         """
         connection = self.__engine.connect()
         sel = select([users])
-        return connection.execute(sel)
+        result = connection.execute(sel)
+        connection.close()
+        return result
+
 
 # if __name__ == '__main__':
 #     alchemy = SQLAlchemy()
-# engine = alchemy.create_engine(sa_url='mysql+pymysql://root@127.0.0.1/temp', engine_opts={"echo": True})
-# connection = engine.connect()
-# meta = MetaData()
-
-# meta.create_all(engine)
-# ins = users.insert().values(user_id="2", first_name="don", last_name="uren")
-# print(ins)
-# connection.execute(ins)
-# sel = select([users]).where(users.c.user_id == 2)
-# result = connection.execute(sel)
-# for row in result:
-#     print(row)
+#     engine = alchemy.create_engine(sa_url='mysql+pymysql://root@127.0.0.1:3305/temp', engine_opts={"echo": True})
+#     connection = engine.connect()
+#     # meta = MetaData()
+#     #
+#     # meta.create_all(engine)
+#     # ins = users.insert().values(user_id="2", first_name="don", last_name="uren")
+#     # print(ins)
+#     # connection.execute(ins)
+#     sel = select([users])
+#     result = connection.execute(sel)
+#     for row in result:
+#         print(row)

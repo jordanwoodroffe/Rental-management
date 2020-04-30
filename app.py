@@ -9,9 +9,9 @@ from wtforms.validators import InputRequired, Email, Length, NumberRange
 
 app = Flask(__name__)
 db = DBConnect(app)
+Bootstrap(app)
 
 app.config['SECRET_KEY'] = 'temp'
-Bootstrap(app)
 
 
 class LoginForm(FlaskForm):
@@ -32,18 +32,26 @@ class BookingForm(FlaskForm):
     days = StringField('Number of days')
 
 
-@app.route("/")
-def home():
+@app.route("/test")
+def test_db():
+    """
+    Endpoint to test db by returning user table
+    """
     code = "<h1>"
     for row in db.get_users():
         code += str(row) + " "
     return code + "</h1>"
-    # return render_template("index.html")
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 
 # @app.route("/<page>", methods=['GET'])
 # def generate_page(page):
 #     return render_template("{}.html".format(page))
+
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
