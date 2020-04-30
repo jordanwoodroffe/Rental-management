@@ -1,4 +1,5 @@
 {% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
 
@@ -6,4 +7,31 @@
 {% include "nav.html" %}
 {% endwith %}
 
+<body style="padding-top: 4.5rem">
+  <div class="container bg-light rounded">
+    <div class="row justify-content-center pt-3">
+      <h5>Create Booking</h5>
+    </div>
+    <div class="row">
+      <div class="col">
+        <form class="form-signin" method="POST">
+          {{ form.hidden_tag() }}
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              {{ wtf.form_field(form.car)}}
+            </div>
+            <div class="form-group col-md-6">
+              {{ wtf.form_field(form.days)}}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <button type="submit" class="btn btn-primary">Confirm</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
 {% endblock %}

@@ -1,8 +1,8 @@
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField
-from wtforms.validators import InputRequired, Email, Length
+from wtforms import StringField, PasswordField, SelectField, IntegerField
+from wtforms.validators import InputRequired, Email, Length, NumberRange
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'temp'
@@ -21,10 +21,20 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired(), Length(4, 20)])
 
 
+# replace choices with result of db query
+class BookingForm(FlaskForm):
+    car = SelectField('Available Cars', choices=[('ABC123', 'car1'), ('car2', 'car2'), ('car3', 'car3')])
+    days = StringField('Number of days')
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
+# @app.route("/<page>", methods=['GET'])
+# def generate_page(page):
+#     return render_template("{}.html".format(page))
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
@@ -54,10 +64,19 @@ def main():
     return render_template("main.html", user=user)
 
 
+@app.route("/booking", methods=['POST', 'GET'])
+def render_booking_page():
+    form = BookingForm()
+    if form.validate_on_submit():
+        return "<h1>" + str(form.car.data) + " " + str(form.days.data) + "</h1>"
+    return render_template("booking.html", form=form)
+
+
 class Booking:
     """
     test class for designing front end
     """
+
     def __init__(self, id, car_id, start, end):
         self.id = id
         self.car_id = car_id
@@ -77,12 +96,6 @@ def available_cars():
     return render_template("list.html", cars=bookings)
 
 
-@app.route("/book")
-@app.route("/booking")
-def make_booking():
-    return render_template("booking.html")
-
-
 @app.route("/cancel")
 def cancel_booking():
     return render_template("cancel.html")
@@ -94,4 +107,5 @@ def search_cars():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
+    # app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
+    app.run(debug=True)
