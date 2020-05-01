@@ -3,43 +3,46 @@
 
 {% block content %}
 <!-- Source: bootstrap docs  -->
-<!-- Add validation code -->
 <div class="container">
   <div class="row">
-    <div class="jumbotron">
-      <h1 class="display-4">User Registration</h1>
-      <p class="lead">Please enter your details in order to create an account.</p>
-      <hr class="my-4">
+    <div class="col">
+      <div class="jumbotron">
+        <h1 class="display-4">User Registration</h1>
+        <p class="lead">Please enter your details in order to create an account.</p>
+        <hr class="my-4">
+      </div>
     </div>
   </div>
   <div class="row">
-    <form class="form-signin" method="POST">
-      {{ form.hidden_tag() }}
-      <div class="form-row">
-        <div class="form-group col-md-6">
-          {{ wtf.form_field(form.first_name)}}
+    <div class="col">
+      <form class="form-signin" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.first_name)}}
+          </div>
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.last_name)}}
+          </div>
         </div>
-        <div class="form-group col-md-6">
-          {{ wtf.form_field(form.last_name)}}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.email)}}
+          </div>
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.password)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              Your password must be [conditionsTBC].
+            </small>
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group col-md-6">
-          {{ wtf.form_field(form.email)}}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
         </div>
-        <div class="form-group col-md-6">
-          {{ wtf.form_field(form.password)}}
-          <!-- <small id="passwordHelpBlock" class="form-text text-muted">
-            Your password must be [conditionsTBC].
-          </small> -->
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group col-md-6">
-          <button type="submit" class="btn btn-primary">Login</button>
-        </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}

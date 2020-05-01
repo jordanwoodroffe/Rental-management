@@ -2,27 +2,52 @@
 
 {% block content %}
 
+{% with page="main"%}
 {% include "nav.html" %}
-<body style="padding-top: 4.5rem">
+{% endwith %}
 <script src="https://kit.fontawesome.com/6b539ad364.js" crossorigin="anonymous"></script>
-<!-- display user details -->
-<div class="container">
-  <div class="card" style="width: 18rem;">
-    <div class="card-img-top d-flex justify-content-center" style="padding-top: 5px">
-      <i class="fas fa-user fa-7x"></i>
-    </div>
-    <div class="card-body">
-      <h5>{{user.first_name}} {{user.last_name}}</h5>
-      <p>{{user.email}}</p>
-      {% if user.face_id == False %}
-      <button class="btn btn-primary" type="button" name="button">Register for Facial Recognition</button>
-      {% else %}
-      <small><i>Facial Recognition registration completed</i></small>
-      {% endif %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card bg-light">
+          <div class="card-header">
+            Profile
+          </div>
+          <div class="card-img-top d-flex justify-content-center" style="padding-top: 5px">
+            <i class="fas fa-user fa-7x"></i>
+          </div>
+          <div class="card-body">
+            <h5>{{user.first_name}} {{user.last_name}}</h5>
+            <p>{{user.email}}</p>
+          </div>
+        </div>
+        <div class="card bg-light mt-3">
+          <div class="card-header">
+            Facial Recognition
+          </div>
+          <div class="card-body">
+            <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
+            {% if user.face_id == False %}
+            <a href="/main/facial-recognition" class="btn btn-primary">Register Now</a>
+            {% else %}
+            <small><i>Facial Recognition registration completed</i></small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card bg-light mt-3 mt-md-0">
+          <div class="card-header">
+            Map
+          </div>
+          <div class="card-body">
+            <p>TBC</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-<!-- option to register for face id -->
 <!-- where do all car locations get displayed?? -->
 </body>
 {% endblock %}
