@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
@@ -64,9 +64,8 @@ def login():
 @app.route("/register", methods=['POST', 'GET'])
 def register():
     form = RegistrationForm()
-    if form.validate_on_submit():
-        return "<h1>" + form.first_name.data + " " + form.last_name.data + \
-               " " + form.email.data + " " + form.password.data + "</h1>"
+    if request.method == 'POST' and form.validate_on_submit():
+        return "<h1>" + str(db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)) + "</h1>"
     return render_template("register.html", form=form)
 
 

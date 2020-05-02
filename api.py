@@ -19,7 +19,9 @@ Invoke proxy:
 And update the below/db code to use the right port number, database name, etc.
 """
 DB_NAME = "temp"  # UPDATE THIS if need be
-PORT_NUMBER = 3305  # UPDATE THIS if need be
+DB_USER = "root"  # UPDATE THIS if need be
+DB_PASS = "bkh8hut1HaL6JBLu"  # UPDATE THIS if need be
+PORT_NUMBER = 3306  # UPDATE THIS if need be
 
 meta = MetaData()
 users = Table(
@@ -27,6 +29,8 @@ users = Table(
     Column('user_id', Integer, primary_key=True),
     Column('first_name', String(16)),
     Column('last_name', String(16)),
+    Column('email', String(16), nullable=False),
+    Column('password', String(16), nullable=False),
 )
 
 
@@ -39,10 +43,23 @@ class DBConnect:
         if self.__db is None:
             self.__db = SQLAlchemy()
             self.__engine = self.__db.create_engine(
-                sa_url='mysql+pymysql://root@127.0.0.1:{}/{}'.format(PORT_NUMBER, DB_NAME),
+                sa_url='mysql+pymysql://' + DB_USER + ':' + DB_PASS + '@127.0.0.1:{}/{}'.format(PORT_NUMBER, DB_NAME),
                 engine_opts={"echo": True}
             )  # UPDATE temp TO THE SQL DATABASE NAME
             self.__db.init_app(app)
+
+    def create_users_table(self):
+        connection = self.__engine.connect()
+        meta = MetaData()
+        users = Table(
+            'users', meta,
+            Column('user_id', Integer, primary_key=True),
+            Column('first_name', String(16), nullable=False),
+            Column('last_name', String(16), nullable=False),
+            Column('email', String(16), nullable=False),
+            Column('password', String(16), nullable=False),
+        )
+        meta.create_all(self.__engine)
 
     def get_users(self):
         """
@@ -54,18 +71,37 @@ class DBConnect:
         connection.close()
         return result
 
+    def add_users(self, first_name, last_name, email, password):
+        """
+        Test method: checking if accessing database as expect
+        """
+        connection = self.__engine.connect()
+        ins = users.insert().values(first_name=first_name, last_name=last_name, email=email, password=password)
+        print(ins)
+        result = connection.execute(ins)
+        connection.close()
+        return result
+    
 
-# if __name__ == '__main__':
-#     alchemy = SQLAlchemy()
-#     engine = alchemy.create_engine(sa_url='mysql+pymysql://root@127.0.0.1:3305/temp', engine_opts={"echo": True})
-#     connection = engine.connect()
-#     # meta = MetaData()
-#     #
-#     # meta.create_all(engine)
-#     # ins = users.insert().values(user_id="2", first_name="don", last_name="uren")
-#     # print(ins)
-#     # connection.execute(ins)
-#     sel = select([users])
-#     result = connection.execute(sel)
-#     for row in result:
-#         print(row)
+if __name__ == '__main__':
+    alchemy = SQLAlchemy()
+    engine = alchemy.create_engine(sa_url='mysql+pymysql://root:' + DB_PASS + '@127.0.0.1:3306/temp', engine_opts={"echo": True})
+    connection = engine.connect()
+    # meta = MetaData()
+    # users = Table(
+    #     'users', meta,
+    #     Column('user_id', Integer, primary_key=True),
+    #     Column('first_name', String(16), nullable=False),
+    #     Column('last_name', String(16), nullable=False),
+    #     Column('email', String(16), nullable=False),
+    #     Column('password', String(16), nullable=False),
+    # )
+    # meta.create_all(engine)
+
+    ins = users.insert().values(user_id="3", first_name="dan", last_name="dao", email = "dan@gmail.com" ,password = "P@ssw0rd")
+    print(ins)
+    connection.execute(ins)
+    # sel = select([users])
+    # result = connection.execute(sel)
+    # for row in result:
+    #     print(row)
