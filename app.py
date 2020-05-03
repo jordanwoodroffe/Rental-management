@@ -5,7 +5,7 @@ from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select,
 from api import DBConnect
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, PasswordField, SelectField, IntegerField
-from wtforms.validators import InputRequired, Email, Length, NumberRange
+from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 from datetime import timedelta
 
 app = Flask(__name__)
@@ -59,14 +59,16 @@ def login():
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
         result = db.user_authentication(form.email.data, form.password.data)
-        if (result[0] == 'email error'):
-            return render_template("login.html", form=form)
-        elif (result[0] == 'password error'):
-            return render_template("login.html", form=form)
-        elif (result[0] == 'successful'):
+        if (result[0] == 'successful'):
             user = [result[1], result[2], result[3]]
             session['user'] = user         
             return redirect(url_for("main"))
+        elif (result[0] == 'email error'):
+            form.email.errors.append('This email has not been registered')
+            return render_template("login.html", form=form)
+        elif (result[0] == 'password error'):
+            form.password.errors.append('Incorrect password')
+            return render_template("login.html", form=form)
     elif 'user' in session:
         return redirect(url_for("main"))
     else:
