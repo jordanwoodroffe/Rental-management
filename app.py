@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
@@ -15,14 +15,14 @@ app.config['SECRET_KEY'] = 'temp'
 
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[InputRequired(), Email(message="invalid email.")])
+    email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
     password = PasswordField('Password', validators=[InputRequired(), Length(4, 20)])
 
 
 class RegistrationForm(FlaskForm):
     first_name = StringField('First Name', validators=[InputRequired()])
     last_name = StringField('Last Name', validators=[InputRequired()])
-    email = StringField('Email', validators=[InputRequired(), Email(message="invalid email.")])
+    email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
     password = PasswordField('Password', validators=[InputRequired(), Length(4, 20)])
 
 
@@ -56,8 +56,19 @@ def home():
 def login():
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-        return str(db.user_authentication(form.email.data, form.password.data))
-    return render_template("login.html", form=form)
+        result = db.user_authentication(form.email.data, form.password.data)
+        if (result[0] == 'email error'):
+            return render_template("login.html", form=form)
+        elif (result[0] == 'password error'):
+            return render_template("login.html", form=form)
+        elif (result[0] == 'successful'):
+            user = [result[1], result[2], result[3]]
+            session['user'] = user         
+            return redirect(url_for("main"))
+    elif 'user' in session:
+        return redirect(url_for("main"))
+    else:
+        return render_template("login.html", form=form)
 
 
 @app.route("/register", methods=['POST', 'GET'])
@@ -65,19 +76,32 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         if (db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)):
-            return redirect(url_for('login'))
-    return render_template("register.html", form=form)
+            # flash('Thanks for registering')
+            return redirect(url_for("login"))
+    elif ('user' in session):
+        return redirect(url_for("main"))
+    else:
+        # flash('This email has been registered before, if this is your email, please login!')
+        return render_template("register.html", form=form)
 
 
 @app.route("/main")
 def main():
-    user = {
-        "first_name": "Sample",
-        "last_name": "John",
-        "email": "sample@sample.com",
-        "face_id": False
-    }
-    return render_template("main.html", user=user)
+    if 'user' in session:
+        user = {
+            "first_name": session['user'][0],
+            "last_name": session['user'][1],
+            "email": session['user'][2],
+            "face_id": False
+        }
+        return render_template("main.html", user=user)
+    else:
+        return redirect(url_for("login"))
+
+@app.route("/logout")
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
 
 
 @app.route("/booking", methods=['POST', 'GET'])

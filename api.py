@@ -113,16 +113,19 @@ class DBConnect:
         qur = sess.query(users).filter_by(email=email).all()
         if (len(qur) == 0):
             connection.close()
-            return "This email has not been registered"
+            # This email has not been registered
+            return ("email error", None, None, None)
         else:
             salt = qur[0][4]
             key = qur[0][3]
             if verify_password(key, password, salt):
                 connection.close()
-                return "Login successful"
+                # Login successful
+                return ("successful", qur[0][0], qur[0][1], qur[0][2])
             else:
                 connection.close()
-                return "Incorrect password"
+                # Incorrect password
+                return ("password error", None, None, None)
 
             
 
