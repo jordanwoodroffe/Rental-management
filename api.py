@@ -1,5 +1,6 @@
 from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import sessionmaker
 
 """
 Instructions:
@@ -47,6 +48,7 @@ class DBConnect:
                 engine_opts={"echo": True}
             )  # UPDATE temp TO THE SQL DATABASE NAME
             self.__db.init_app(app)
+            self.__Session = sessionmaker(self.__engine)
 
     def create_users_table(self):
         connection = self.__engine.connect()
@@ -63,7 +65,7 @@ class DBConnect:
 
     def get_users(self):
         """
-        Test method: checking if accessing database as expect
+        Get users: Return all users in the users table
         """
         connection = self.__engine.connect()
         sel = select([users])
@@ -73,7 +75,7 @@ class DBConnect:
 
     def add_users(self, first_name, last_name, email, password):
         """
-        Test method: checking if accessing database as expect
+        Add method: Add new user to the users table
         """
         connection = self.__engine.connect()
         ins = users.insert().values(first_name=first_name, last_name=last_name, email=email, password=password)
@@ -81,27 +83,38 @@ class DBConnect:
         result = connection.execute(ins)
         connection.close()
         return result
-    
 
-if __name__ == '__main__':
-    alchemy = SQLAlchemy()
-    engine = alchemy.create_engine(sa_url='mysql+pymysql://root:' + DB_PASS + '@127.0.0.1:3306/temp', engine_opts={"echo": True})
-    connection = engine.connect()
-    # meta = MetaData()
-    # users = Table(
-    #     'users', meta,
-    #     Column('user_id', Integer, primary_key=True),
-    #     Column('first_name', String(16), nullable=False),
-    #     Column('last_name', String(16), nullable=False),
-    #     Column('email', String(16), nullable=False),
-    #     Column('password', String(16), nullable=False),
-    # )
-    # meta.create_all(engine)
+    def get_user_with_email(self, email):
+        """
+        Check email method: checking if an email is in users table (user is registered)
+        """    
+        connection = self.__engine.connect()
+        sess = self.__Session()
+        qur = sess.query(users).filter_by(email=email).all()
+        print(qur)
+        result = str(qur)
+        connection.close()
+        return result
 
-    ins = users.insert().values(user_id="3", first_name="dan", last_name="dao", email = "dan@gmail.com" ,password = "P@ssw0rd")
-    print(ins)
-    connection.execute(ins)
-    # sel = select([users])
-    # result = connection.execute(sel)
-    # for row in result:
-    #     print(row)
+# if __name__ == '__main__':
+#     alchemy = SQLAlchemy()
+#     engine = alchemy.create_engine(sa_url='mysql+pymysql://root:' + DB_PASS + '@127.0.0.1:3306/temp', engine_opts={"echo": True})
+#     connection = engine.connect()
+#     # meta = MetaData()
+#     # users = Table(
+#     #     'users', meta,
+#     #     Column('user_id', Integer, primary_key=True),
+#     #     Column('first_name', String(16), nullable=False),
+#     #     Column('last_name', String(16), nullable=False),
+#     #     Column('email', String(16), nullable=False),
+#     #     Column('password', String(16), nullable=False),
+#     # )
+#     # meta.create_all(engine)
+
+#     ins = users.insert().values(user_id="3", first_name="dan", last_name="dao", email = "dan@gmail.com" ,password = "P@ssw0rd")
+#     print(ins)
+#     connection.execute(ins)
+#     # sel = select([users])
+#     # result = connection.execute(sel)
+#     # for row in result:
+#     #     print(row)

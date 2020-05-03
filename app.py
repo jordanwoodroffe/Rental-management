@@ -38,8 +38,7 @@ def test_db():
     Endpoint to test db by returning user table
     """
     code = "<h1>"
-    for row in db.get_users():
-        code += str(row) + " "
+    code += db.get_user_with_email("dan@gmail.com")
     return code + "</h1>"
 
 
