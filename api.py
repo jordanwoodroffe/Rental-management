@@ -1,6 +1,8 @@
 from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker
+from utils import get_random_alphaNumeric_string
+import hashlib
 
 """
 Instructions:
@@ -22,16 +24,16 @@ And update the below/db code to use the right port number, database name, etc.
 DB_NAME = "temp"  # UPDATE THIS if need be
 DB_USER = "root"  # UPDATE THIS if need be
 DB_PASS = "bkh8hut1HaL6JBLu"  # UPDATE THIS if need be
-PORT_NUMBER = 3306  # UPDATE THIS if need be
+PORT_NUMBER = "3306"  # UPDATE THIS if need be
 
 meta = MetaData()
 users = Table(
     'users', meta,
-    Column('user_id', Integer, primary_key=True),
-    Column('first_name', String(16)),
-    Column('last_name', String(16)),
-    Column('email', String(16), nullable=False),
-    Column('password', String(16), nullable=False),
+    Column('first_name', String(16), nullable=False),
+    Column('last_name', String(16), nullable=False),
+    Column('email', String(32), primary_key=True, nullable=False),
+    Column('password', String(64), nullable=False),
+    Column('salt', String(64), nullable=False),
 )
 
 
@@ -55,11 +57,11 @@ class DBConnect:
         meta = MetaData()
         users = Table(
             'users', meta,
-            Column('user_id', Integer, primary_key=True),
             Column('first_name', String(16), nullable=False),
             Column('last_name', String(16), nullable=False),
-            Column('email', String(16), nullable=False),
-            Column('password', String(16), nullable=False),
+            Column('email', String(32), primary_key=True, nullable=False),
+            Column('password', String(64), nullable=False),
+            Column('salt', String(64), nullable=False),
         )
         meta.create_all(self.__engine)
 
@@ -78,11 +80,18 @@ class DBConnect:
         Add method: Add new user to the users table
         """
         connection = self.__engine.connect()
-        ins = users.insert().values(first_name=first_name, last_name=last_name, email=email, password=password)
-        print(ins)
-        result = connection.execute(ins)
-        connection.close()
-        return result
+        sess = self.__Session()
+        qur = sess.query(users).filter_by(email=email).all()
+        if (len(qur) > 0):
+            return "An user has already registered using this email"
+        else:
+            salt = get_random_alphaNumeric_string(10)
+            saltedpassword = password + salt
+            ins = users.insert().values(first_name=first_name, last_name=last_name, email=email, password=hashlib.sha256(saltedpassword.encode()).hexdigest(), salt=hashlib.sha256(salt.encode()).hexdigest())
+            print(ins)
+            connection.execute(ins)
+            connection.close()
+            return "Register user succesfully"
 
     def get_user_with_email(self, email):
         """
@@ -92,29 +101,33 @@ class DBConnect:
         sess = self.__Session()
         qur = sess.query(users).filter_by(email=email).all()
         print(qur)
-        result = str(qur)
         connection.close()
-        return result
+        return qur
+
+    def user_authentication(self, email, password):
+        pass
 
 # if __name__ == '__main__':
 #     alchemy = SQLAlchemy()
-#     engine = alchemy.create_engine(sa_url='mysql+pymysql://root:' + DB_PASS + '@127.0.0.1:3306/temp', engine_opts={"echo": True})
+#     engine = alchemy.create_engine(sa_url='mysql+pymysql://' + DB_USER + ':' + DB_PASS + '@127.0.0.1:' + PORT_NUMBER + '/' + DB_NAME, engine_opts={"echo": True})
 #     connection = engine.connect()
-#     # meta = MetaData()
-#     # users = Table(
-#     #     'users', meta,
-#     #     Column('user_id', Integer, primary_key=True),
-#     #     Column('first_name', String(16), nullable=False),
-#     #     Column('last_name', String(16), nullable=False),
-#     #     Column('email', String(16), nullable=False),
-#     #     Column('password', String(16), nullable=False),
-#     # )
-#     # meta.create_all(engine)
+#     meta = MetaData()
+#     users = Table(
+#         'users', meta,
+#         Column('first_name', String(16), nullable=False),
+#         Column('last_name', String(16), nullable=False),
+#         Column('email', String(32), primary_key=True, nullable=False),
+#         Column('password', String(64), nullable=False),
+#         Column('salt', String(64), nullable=False),
+#     )
+#     # users.drop(engine)
+#     meta.create_all(engine)
 
-#     ins = users.insert().values(user_id="3", first_name="dan", last_name="dao", email = "dan@gmail.com" ,password = "P@ssw0rd")
+#     ins = users.insert().values(first_name="dan", last_name="dao", email = "dan@gmail.com" ,password = "P@ssw0rd")
 #     print(ins)
 #     connection.execute(ins)
-#     # sel = select([users])
-#     # result = connection.execute(sel)
-#     # for row in result:
-#     #     print(row)
+    
+#     sel = select([users])
+#     result = connection.execute(sel)
+#     for row in result:
+#         print(row)
