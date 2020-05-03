@@ -6,8 +6,10 @@ from api import DBConnect
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, PasswordField, SelectField, IntegerField
 from wtforms.validators import InputRequired, Email, Length, NumberRange
+from datetime import timedelta
 
 app = Flask(__name__)
+app.permanent_session_lifetime = timedelta(hours=5)
 db = DBConnect(app)
 Bootstrap(app)
 
