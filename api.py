@@ -1,7 +1,7 @@
 from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker
-from utils import get_random_alphaNumeric_string
+from utils import get_random_alphaNumeric_string, hash_password, verify_password
 import hashlib
 
 """
@@ -83,15 +83,15 @@ class DBConnect:
         sess = self.__Session()
         qur = sess.query(users).filter_by(email=email).all()
         if (len(qur) > 0):
-            return "An user has already registered using this email"
+            connection.close()
+            return False
         else:
             salt = get_random_alphaNumeric_string(10)
-            saltedpassword = password + salt
-            ins = users.insert().values(first_name=first_name, last_name=last_name, email=email, password=hashlib.sha256(saltedpassword.encode()).hexdigest(), salt=hashlib.sha256(salt.encode()).hexdigest())
+            ins = users.insert().values(first_name=first_name, last_name=last_name, email=email, password=hash_password(password, salt), salt=salt)
             print(ins)
             connection.execute(ins)
             connection.close()
-            return "Register user succesfully"
+            return True
 
     def get_user_with_email(self, email):
         """
@@ -105,7 +105,26 @@ class DBConnect:
         return qur
 
     def user_authentication(self, email, password):
-        pass
+        """
+        User authentication method: Allow user to login with correct login information
+        """
+        connection = self.__engine.connect()
+        sess = self.__Session()
+        qur = sess.query(users).filter_by(email=email).all()
+        if (len(qur) == 0):
+            connection.close()
+            return "This email has not been registered"
+        else:
+            salt = qur[0][4]
+            key = qur[0][3]
+            if verify_password(key, password, salt):
+                connection.close()
+                return "Login successful"
+            else:
+                connection.close()
+                return "Incorrect password"
+
+            
 
 # if __name__ == '__main__':
 #     alchemy = SQLAlchemy()

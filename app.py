@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from sqlalchemy import MetaData, Table, Column, Integer, String, insert, select, update, delete
@@ -38,7 +38,7 @@ def test_db():
     Endpoint to test db by returning user table
     """
     code = "<h1>"
-    code += str(db.get_user_with_email("guangdanny@gmail.com"))
+    code += str(db.get_user_with_email("danieldao@gmail.com"))
     return code + "</h1>"
 
 
@@ -55,8 +55,8 @@ def home():
 @app.route("/login", methods=['POST', 'GET'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
-        return "<h1>" + form.email.data + " " + form.password.data + "</h1>"
+    if request.method == 'POST' and form.validate_on_submit():
+        return str(db.user_authentication(form.email.data, form.password.data))
     return render_template("login.html", form=form)
 
 
@@ -64,7 +64,8 @@ def login():
 def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
-        return "<h1>" + str(db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)) + "</h1>"
+        if (db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)):
+            return redirect(url_for('login'))
     return render_template("register.html", form=form)
 
 
