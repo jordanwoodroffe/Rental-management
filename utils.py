@@ -1,10 +1,8 @@
-import random
-import string
-import hashlib
+import random, string, hashlib
 
 def get_random_alphaNumeric_string(stringLength):
-    lettersAndDigits = string.ascii_letters + string.digits
-    return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
+  lettersAndDigits = string.ascii_letters + string.digits
+  return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
 
 def hash_password(password, salt):
   saltedpassword = password + salt

@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, PasswordField, SelectField, IntegerField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 from datetime import timedelta
+import re 
 
 app = Flask(__name__)
 app.permanent_session_lifetime = timedelta(hours=5)
@@ -15,6 +16,28 @@ Bootstrap(app)
 
 app.config['SECRET_KEY'] = 'temp'
 
+def valid_name(form, field):
+    # names must be in ASCII
+    if not field.data.isascii():
+        raise ValidationError('Please enter valid name')
+    # names must not contain number
+    if any(char.isdigit() for char in field.data):
+        raise ValidationError('Name cannot contain number')
+
+def valid_password(form, field):
+    # password must contain at least one number
+    if not any(char.isdigit() for char in field.data):
+        raise ValidationError('Password must contain at least one number')
+    # password must contain at least one uppercase letter
+    if not any(char.isupper() for char in field.data):
+        raise ValidationError('Password must contain at least one uppercase letter')
+    # password must contain at least one lowercase letter
+    if not any(char.islower() for char in field.data):
+        raise ValidationError('Password must contain at least one lowercase letter')
+    # password must contain at least one special character
+    regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]') 
+    if regex.search(field.data) == None:
+        raise ValidationError('Password must contain at least one special character')
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
@@ -22,10 +45,10 @@ class LoginForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
-    first_name = StringField('First Name', validators=[InputRequired()])
-    last_name = StringField('Last Name', validators=[InputRequired()])
+    first_name = StringField('First Name', validators=[InputRequired(), valid_name])
+    last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    password = PasswordField('Password', validators=[InputRequired(), Length(4, 20)])
+    password = PasswordField('Password', validators=[InputRequired(), Length(4, 20), valid_password])
 
 
 # replace choices with result of db query
@@ -80,13 +103,12 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         if (db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)):
-            # flash('Thanks for registering')
             return redirect(url_for("login"))
+        else:
+            form.email.errors.append('This email has been used for register before')
     elif ('user' in session):
         return redirect(url_for("main"))
-    else:
-        # flash('This email has been registered before, if this is your email, please login!')
-        return render_template("register.html", form=form)
+    return render_template("register.html", form=form)
 
 
 @app.route("/main")
