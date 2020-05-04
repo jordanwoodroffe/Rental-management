@@ -48,6 +48,14 @@ class FaceDetector(AbstractFaceDetector):
         except ImportError as ie:
             print(ie)
 
+    @property
+    def encodings(self):
+        return self.__encodings
+
+    @encodings.setter
+    def encodings(self, enc_list):
+        self.__encodings = enc_list
+
     def register_user(self, user_id: str) -> bool:
         faces = self.__capture_face()
         if len(faces) > 0:
