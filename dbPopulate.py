@@ -2,6 +2,7 @@ from sqlalchemy import MetaData, ForeignKey, Table, Column, Integer, String, Lar
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR
 from flask_sqlalchemy import SQLAlchemy
+import csv
 
 alchemy = SQLAlchemy()
 
@@ -72,6 +73,17 @@ encodings = Table(
 
 meta.drop_all(engine)
 meta.create_all(engine)
+
+
+
+# load data
+with open('test_data/car_models.csv') as csv_file:
+  csv_reader = csv.reader(csv_file, delimiter=',')
+  line_count = 0
+  for row in csv_reader:
+    ins = car_models.insert().values(model_id=row[0], make=row[1], model=row[2], year=row[3], capacity=row[4])
+    connection.execute(ins)
+    line_count += 1
 
 # Populate data to tables
 session = Session()
