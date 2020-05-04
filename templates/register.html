@@ -20,19 +20,35 @@
         <div class="form-row">
           <div class="form-group col-md-6">
             {{ wtf.form_field(form.first_name)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              Name must not contain number.<br/>
+              Name must be in ASCII.<br/>
+            </small>
           </div>
           <div class="form-group col-md-6">
             {{ wtf.form_field(form.last_name)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              Name must not contain number.<br/>
+              Name must be in ASCII.<br/>
+            </small>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group col-md-6">
             {{ wtf.form_field(form.email)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              Email must not be registered before.<br/>
+              Email must be in email format.<br/>
+            </small>
           </div>
           <div class="form-group col-md-6">
             {{ wtf.form_field(form.password)}}
             <small id="passwordHelpBlock" class="form-text text-muted">
-              Your password must be [conditionsTBC].
+              Must be between 4 and 20 characters long.<br/>
+              Must contain at least one uppercase letter.<br/>
+              Must contain at least one lowercase letter.<br/>
+              Must contain at least one number.<br/>
+              Must contain at least one special character.<br/>
             </small>
           </div>
         </div>
