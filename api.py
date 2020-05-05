@@ -127,29 +127,4 @@ class DBConnect:
                 # Incorrect password
                 return ("password error", None, None, None)
 
-            
 
-# if __name__ == '__main__':
-#     alchemy = SQLAlchemy()
-#     engine = alchemy.create_engine(sa_url='mysql+pymysql://' + DB_USER + ':' + DB_PASS + '@127.0.0.1:' + PORT_NUMBER + '/' + DB_NAME, engine_opts={"echo": True})
-#     connection = engine.connect()
-#     meta = MetaData()
-#     users = Table(
-#         'users', meta,
-#         Column('first_name', String(16), nullable=False),
-#         Column('last_name', String(16), nullable=False),
-#         Column('email', String(32), primary_key=True, nullable=False),
-#         Column('password', String(64), nullable=False),
-#         Column('salt', String(64), nullable=False),
-#     )
-#     # users.drop(engine)
-#     meta.create_all(engine)
-
-#     ins = users.insert().values(first_name="dan", last_name="dao", email = "dan@gmail.com" ,password = "P@ssw0rd")
-#     print(ins)
-#     connection.execute(ins)
-    
-#     sel = select([users])
-#     result = connection.execute(sel)
-#     for row in result:
-#         print(row)
