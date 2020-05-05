@@ -10,6 +10,12 @@ from abc import ABC, abstractmethod
 
 class AbstractFaceDetector(ABC):
     @abstractmethod
+    def capture_user(self):
+
+    @abstractmethod
+    def compare_encodings(self, enc1: list, enc2: list):
+
+    @abstractmethod
     def register_user(self, user_id: str) -> bool:
         """
         Capture a users face and save under their id for login on AP.
