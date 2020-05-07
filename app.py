@@ -103,7 +103,10 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         if (db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)):
-            return redirect(url_for("login"))
+            result = db.user_authentication(form.email.data, form.password.data)
+            user = [result[1], result[2], result[3]]
+            session['user'] = user         
+            return redirect(url_for("main"))
         else:
             form.email.errors.append('This email has been used for register before')
     elif ('user' in session):
