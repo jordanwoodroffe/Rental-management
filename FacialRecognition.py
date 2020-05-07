@@ -1,5 +1,13 @@
+"""
+FacialRecognition.py
+
+Note - can raise a MemoryError when installing packages onto RPI due to limited cache size/memory.
+Solved by using:
+    pip --no-cache-dir install <package_name>
+"""
 import sys
 import os
+import unittest
 from collections import namedtuple
 
 import numpy as np
@@ -10,10 +18,32 @@ from abc import ABC, abstractmethod
 
 class AbstractFaceDetector(ABC):
     @abstractmethod
-    def capture_user(self):
+    def capture_user(self) -> list:
+        """
+        Captures a user and encodes face: used for storing in database, or for sending to MP for login/authentication
+        Returns:
+            a list containing the users login authentication
+        """
 
     @abstractmethod
-    def compare_encodings(self, enc1: list, enc2: list):
+    def compare_encodings(self, login: list, users: {str: list}):
+        """
+        Args:
+            login: encoded face of user attempting to login
+            users: a dictionary of user_ids to their saved encodings
+        Returns:
+            a string for matched user_id, or None if no match was found
+        """
+
+    @abstractmethod
+    def pickle_faces(self, encodings: list) -> str:
+        """
+        Create pickle of encodings: to be stored in database as LONG-BLOB
+        Args:
+            encodings: list of encodings to format
+        Returns:
+            filepath of pickle
+        """
 
     @abstractmethod
     def register_user(self, user_id: str) -> bool:
@@ -44,6 +74,7 @@ class FaceDetector(AbstractFaceDetector):
 
     __encodings = {}  # temp (store in cloud), hold encodings matched to a face/user id
     __haar_model = 'haarcascade_frontalface_default.xml'
+    __min_faces = 5  # minimum required faces for a valid detection
 
     def __init__(self):
         self.__classifier = cv2.CascadeClassifier(self.__haar_model)
@@ -88,7 +119,7 @@ class FaceDetector(AbstractFaceDetector):
         video_stream = cv2.VideoCapture(0)
         faces = []
 
-        while True:
+        while len(faces) > self.__min_faces:
             _, img = video_stream.read()
 
             img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -142,3 +173,4 @@ if __name__ == "__main__":
         print("unable to read face :(")
     else:
         detector.login_user()
+    # print("BEGINNING TESTS")

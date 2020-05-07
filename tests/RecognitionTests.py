@@ -14,3 +14,4 @@ class RecognitionTests(unittest.TestCase):
 
     def test_register(self):
         pass
+
