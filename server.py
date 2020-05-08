@@ -10,39 +10,59 @@ UDPServerSocket.bind((localIP, localPort))
 print("UDP server up and listening")
 
 
-def rentCar(details):
-    idCar = details[8,0]
-    #***Check with DB***
-    #Check db if id exists
-    #Check db if currently rented
-    #Update object in db
-    #Send response 'successful' to client
-    msgFromServer       = "successful"
-    bytesToSend         = str.encode(msgFromServer)
-    UDPServerSocket.sendto(bytesToSend, address)
+def rentCar(input):
+    idCar = input [30:-1]
+    print (idCar)
+    #if 
+        #Check db if id exists
+        #Check db if currently rented
+        #Update object in db
+        #msgFromServer       = "successful"
+        #bytesToSend         = str.encode(msgFromServer)
+        #UDPServerSocket.sendto(bytesToSend, address)
+    
+    #else:
+        #msgFromServer       = "unsuccessful"
+        #bytesToSend         = str.encode(msgFromServer)
+        #UDPServerSocket.sendto(bytesToSend, address)
     return
     
-def returnCar(details):
-   #***Check with DB***
-    #Check db if id exists
-    #Check db if currently rented
-    #Update object in db
-    #Send response 'successful' to client
-    msgFromServer       = "successful"
-    bytesToSend         = str.encode(msgFromServer)
-    UDPServerSocket.sendto(bytesToSend, address)
+def returnCar(input):
+    idCar = input [32:-1]
+    print (idCar)
+    #if 
+        #Check db if id exists
+        #Check db if currently rented
+        #Update object in db
+        #msgFromServer       = "successful"
+        #bytesToSend         = str.encode(msgFromServer)
+        #UDPServerSocket.sendto(bytesToSend, address)
+    
+    #else:
+        #msgFromServer       = "unsuccessful"
+        #bytesToSend         = str.encode(msgFromServer)
+        #UDPServerSocket.sendto(bytesToSend, address)
     return
     
-#will be fixed soon, needs to convert encoded details into a string
-def login(details):
-    #***Check with DB***
-    #Check db if user exists
-    #Send response 'successful' to client
-    msgFromServer       = "successful"
-    bytesToSend         = str.encode(msgFromServer)
-    UDPServerSocket.sendto(bytesToSend, address)
+def login(input):
+    userIndex = input.find('_user_')
+    passIndex = input.find ('_pass_')
+    username = input [userIndex + 6:passIndex]
+    password = input [passIndex + 6:-1]
+    
+    #if 
+        #Check db if username/ password exists in DB
+        #msgFromServer       = "successful"
+        #bytesToSend         = str.encode(msgFromServer)
+        #UDPServerSocket.sendto(bytesToSend, address)
+    
+    #else:
+        #msgFromServer       = "unsuccessful"
+        #bytesToSend         = str.encode(msgFromServer)
+        #UDPServerSocket.sendto(bytesToSend, address)
     return
-
+    
+    
 #Incoming datagrams
 while(True):
 

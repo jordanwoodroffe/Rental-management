@@ -12,7 +12,7 @@ username = input()
 print ("Enter Password")
 password = input()
 print ("Logging in...")
-loginDetails = "_login" + "_user" + username + "_pass" password
+loginDetails = "_login" + "_user_" + username + "_pass_" + password
 # Encode and send login details
 loginBytes = str.encode(loginDetails)
 UDPClientSocket.sendto(loginBytes, serverAddressPort)
