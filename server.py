@@ -1,4 +1,5 @@
 import socket
+import datetime
 
 localIP     = "localhost"
 localPort   = 20001
@@ -12,11 +13,11 @@ print("UDP server up and listening")
 
 def rentCar(input):
     idCar = input [30:-1]
-    print (idCar)
+    date = datetime.now()
     #if 
         #Check db if id exists
         #Check db if currently rented
-        #Update object in db
+        #Update object status with datetime in db 
         #msgFromServer       = "successful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
@@ -29,11 +30,11 @@ def rentCar(input):
     
 def returnCar(input):
     idCar = input [32:-1]
-    print (idCar)
+    date = datetime.now()
     #if 
         #Check db if id exists
         #Check db if currently rented
-        #Update object in db
+        #Update object status with datetimein db
         #msgFromServer       = "successful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
