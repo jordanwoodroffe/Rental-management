@@ -11,6 +11,7 @@ site = Blueprint("site", __name__)
 
 URL = "http://127.0.0.1:5000/"  # TODO: replace with method somewhere/auto-generate
 
+
 def valid_name(form, field):
     # names must be in ASCII
     if not field.data.isascii():
@@ -54,25 +55,9 @@ class BookingForm(FlaskForm):
     days = StringField('Number of days')
 
 
-#
-# @site.route("/test")
-# def test_db():
-#     """
-#     Endpoint to test db by returning user table
-#     """
-#     code = "<h1>"
-#     code += str(db.get_user_with_email("danieldao@gmail.com"))
-#     return code + "</h1>"
-
-
 @site.route("/")
 def home():
     return render_template("index.html")
-
-
-# @site.route("/<page>", methods=['GET'])
-# def generate_page(page):
-#     return render_template("{}.html".format(page))
 
 
 @site.route("/login", methods=['POST', 'GET'])
@@ -80,7 +65,9 @@ def login():
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
         # result = db.user_authentication(form.email.data, form.password.data)
-        result = requests.get("{}{}/{}/{}".format(URL, "/users/authenticate", form.email.data, form.password.data))
+        result = requests.get(
+            "{}{}/{}/{}".format(URL, "/users/authenticate", form.email.data, form.password.data),
+        )
         data = result.json()
         if data['code'] == 'SUCCESS':
             session['user'] = data['user']
@@ -105,7 +92,7 @@ def register():
             return redirect(url_for("site.main"))
         else:
             form.email.errors.append('This email has been used for register before')
-    elif ('user' in session):
+    elif 'user' in session:
         return redirect(url_for("site.main"))
     return render_template("register.html", form=form)
 
@@ -124,43 +111,49 @@ def logout():
     return redirect(url_for('site.login'))
 
 
-@site.route("/booking", methods=['POST', 'GET'])
+@site.route("/book", methods=['POST', 'GET'])
 def render_booking_page():
-    form = BookingForm()
-    if form.validate_on_submit():
-        return "<h1>" + str(form.car.data) + " " + str(form.days.data) + "</h1>"
-    return render_template("booking.html", form=form)
-
-
-class Booking:
-    """
-    test class for designing front end
-    """
-
-    def __init__(self, id, car_id, start, end):
-        self.id = id
-        self.car_id = car_id
-        self.start = start
-        self.end = end
+    if 'user' in session:
+        form = BookingForm()
+        if form.validate_on_submit():
+            return "<h1>" + str(form.car.data) + " " + str(form.days.data) + "</h1>"
+        return render_template("booking.html", form=form)
+    return redirect(url_for('site.login'))
 
 
 @site.route("/history")
 def view_history():
-    bookings = [Booking(i, i, i, i) for i in range(0, 6)]
-    return render_template("history.html", user_bookings=bookings)
+    if 'user' in session:
+        bookings = requests.get(
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["id"]}
+        )
+        return render_template("history.html", user_bookings=bookings.json())
+    return redirect(url_for('site.login'))
 
 
 @site.route("/list")
 def available_cars():
-    bookings = [Booking(i, i, i, i) for i in range(0, 6)]
-    return render_template("list.html", cars=bookings)
+    if 'user' in session:
+        cars = requests.get(
+            "{}{}".format(URL, "/cars"), params={"available": 1}
+        )
+        return render_template("list.html", cars=cars.json())
+    return redirect(url_for('site.login'))
 
 
 @site.route("/cancel")
 def cancel_booking():
-    return render_template("cancel.html")
+    if 'user' in session:
+        return render_template("cancel.html")
+    return redirect(url_for('site.login'))
 
 
 @site.route("/search")
 def search_cars():
-    return render_template("search.html")
+    if 'user' in session:
+        return render_template("search.html")
+    return redirect(url_for('site.login'))
+
+# @site.route("/<page>", methods=['GET'])
+# def generate_page(page):
+#     return render_template("{}.html".format(page))

@@ -1,11 +1,10 @@
 import json
-
-from marshmallow import fields
 from sqlalchemy import MetaData, Table, Column, Integer, Float, String, insert, select, update, delete, ForeignKey, \
     LargeBinary
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from marshmallow import fields
 from sqlalchemy.orm import sessionmaker
 from utils import get_random_alphaNumeric_string, hash_password, verify_password
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
@@ -177,10 +176,16 @@ class EncodingSchema(ma.SQLAlchemyAutoSchema):
     details = ma.auto_field()
 
 
+"""
+Database API
+provides endpoints for accessing and inserting data from Google Cloud SQL Database
+"""
+
+
 @api.route("/users", methods=['GET'])
 def get_users():
     """
-    endpoint to return all users in DB
+    Endpoint to return ALL users from database (used in testing)
     """
     users = User.query.all()
     return jsonify(UserSchema(many=True, exclude=['password']).dumps(users))
@@ -188,6 +193,15 @@ def get_users():
 
 @api.route("/user/<user_id>", methods=['GET'])
 def get_user(user_id):
+    """
+    Returns a specific user from the database
+
+    Args:
+        user_id: id of user to fetch from db
+
+    Returns:
+        user data in json format
+    """
     user = User.query.get(user_id)
     return UserSchema(exclude=['password']).dump(user)
 
@@ -195,7 +209,14 @@ def get_user(user_id):
 @api.route("/users/authenticate/<user_id>/<password>")
 def user_authentication(user_id, password):
     """
-    User authentication method: Allow user to login with correct login information
+    Endpoint to authenticate a user logging in to MP webapp
+
+    Args:
+        user_id: email input from user attempting login
+        password: password input from user attempting login
+
+    Returns:
+        JSON object containing a success/error code and user data if successful
     """
     user = User.query.get(user_id)
     response = {}
@@ -208,38 +229,56 @@ def user_authentication(user_id, password):
     else:
         response['code'] = 'EMAIL ERROR'
     return json.dumps(response)
-    # connection = self.__engine.connect()
-    # sess = self.__Session()
-    # qur = sess.query(users).filter_by(email=email).all()
-    # print(qur)
-    # if (len(qur) == 0):
-    #     connection.close()
-    #     # This email has not been registered
-    #     return ("email error", None, None, None)
-    # else:
-    #     salt = qur[0][3].split(':')[1]
-    #     key = qur[0][3].split(':')[0]
-    #     if verify_password(key, password, salt):
-    #         connection.close()
-    #         # Login successful
-    #         return ("successful", qur[0][0], qur[0][1], qur[0][2])
-    #     else:
-    #         connection.close()
-    #         # Incorrect password
-    #         return ("password error", None, None, None)
+
+
+# @api.route("/cars", methods=['GET'])
+# def get_cars():
+#     cars = Car.query.all()
+#     return CarSchema(many=True).dumps(cars)
 
 
 @api.route("/cars", methods=['GET'])
 def get_cars():
-    cars = Car.query.all()
+    """
+    Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
+    """
+    available = request.args.get('available')
+    if available is not None:
+        cars = Car.query.filter_by(available=1)
+    else:
+        cars = Car.query.all()
     return CarSchema(many=True).dumps(cars)
 
 
 @api.route("/car/<car_id>", methods=['GET'])
 def get_car(car_id):
+    """
+    Endpoint to return a car from the database
+
+    Args:
+        car_id: id of car to fetch
+
+    Returns:
+        JSON object representing car
+    """
     car = Car.query.get(car_id)
     return CarSchema().dump(car)
 
+
+@api.route("/bookings", methods=['GET'])
+def get_bookings():
+    """
+    Returns a list of bookings, optionally with user_id returns bookings for a user
+
+    Returns:
+        JSON object containing user bookings
+    """
+    user_id = request.args.get('user_id')
+    if user_id is None:
+        bookings = Booking.query.all()
+    else:
+        bookings = Booking.query.join(User).filter(User.id == user_id)
+    return BookingSchema(many=True).dumps(bookings)
 #
 # class DBConnect:
 #     db = SQLAlchemy()
@@ -298,4 +337,3 @@ def get_car(car_id):
 
 
 #
-
