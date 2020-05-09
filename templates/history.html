@@ -9,6 +9,7 @@
   <div class="container">
     <div class="card-columns">
     {% for booking in user_bookings %}
+    {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("") -%}
       <div class="card bg-light mb-4">
         <div class="card-body">
           <h5 class="card-title">Booking ID {{booking.id}}</h5>
@@ -16,6 +17,10 @@
           <p class="card-text">Start date: {{booking.start}}</p>
           <p class="card-text">End date: {{booking.end}}</p>
           <p class="card-text">Duration: {{booking.duration}}</p>
+          <p class="card-text">Status: {{status}}</p>
+          {% if booking.completed == 0 %}
+          <a href="/cancel?id={{booking.id}}" class="btn btn-primary">Cancel</a>
+          {% endif %}
         </div>
       </div>
     {% endfor %}

@@ -32,33 +32,18 @@ DB_NAME = "IOTA2"  # UPDATE THIS if need be
 DB_USER = "root"  # UPDATE THIS if need be
 DB_PASS = "3o6IsbqJKPedMGsr"  # UPDATE THIS if need be
 PORT_NUMBER = "3306"  # UPDATE THIS if need be
-
-
-def get_uri():
-    return "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
-
+DB_URI = "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
 
 api = Blueprint("api", __name__)
 
-db = SQLAlchemy()  # use to define models/tables for database
+db = SQLAlchemy()
 engine = db.create_engine(
-    sa_url=get_uri(),
+    sa_url=DB_URI,
     engine_opts={"echo": True}
-)  # UPDATE temp TO THE SQL DATABASE NAME
+)
 session = sessionmaker(engine)
 
-ma = Marshmallow()  # use to define schema/API output
-
-
-#
-# meta = MetaData()
-# users = Table(
-#     'users', meta,
-#     Column('first_name', VARCHAR(45), nullable=False),
-#     Column('last_name', VARCHAR(45), nullable=False),
-#     Column('email', VARCHAR(45), primary_key=True, nullable=False),
-#     Column('password', TEXT(75), nullable=False),
-# )
+ma = Marshmallow()
 
 
 class User(db.Model):
@@ -277,8 +262,15 @@ def get_bookings():
     if user_id is None:
         bookings = Booking.query.all()
     else:
-        bookings = Booking.query.join(User).filter(User.id == user_id)
+        status = request.args.get('status')
+        if status is not None:
+            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.id == user_id)
+        else:
+            bookings = Booking.query.join(User).filter(User.id == user_id)
     return BookingSchema(many=True).dumps(bookings)
+
+
+# @api.route("/booking/")
 #
 # class DBConnect:
 #     db = SQLAlchemy()
@@ -336,4 +328,4 @@ def get_bookings():
 #
 
 
-#
+

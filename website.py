@@ -1,8 +1,9 @@
 import json
-
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, IntegerField
+from flask_datepicker import datepicker
+from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 import re
 import requests
@@ -32,8 +33,8 @@ def valid_password(form, field):
     if not any(char.islower() for char in field.data):
         raise ValidationError('Password must contain at least one lowercase letter')
     # password must contain at least one special character
-    regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
-    if regex.search(field.data) == None:
+    regex = re.compile('[@_!#$%^&*()<>?/|}{~:]')
+    if regex.search(field.data) is None:
         raise ValidationError('Password must contain at least one special character')
 
 
@@ -46,13 +47,14 @@ class RegistrationForm(FlaskForm):
     first_name = StringField('First Name', validators=[InputRequired(), valid_name])
     last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    password = PasswordField('Password', validators=[InputRequired(), Length(4, 20), valid_password])
+    password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
 
 
 # replace choices with result of db query
 class BookingForm(FlaskForm):
-    car = SelectField('Available Cars', choices=[('ABC123', 'car1'), ('car2', 'car2'), ('car3', 'car3')])
-    days = StringField('Number of days')
+    car = SelectField(label='Available Cars', validators=[], choices=[])
+    start = DateTimeField('Start', format="%d/%m/%Y %H:%M", default=datetime.now)
+    end = DateTimeField('End', format="%d/%m/%Y %H:%M", default=datetime.now)
 
 
 @site.route("/")
@@ -111,13 +113,38 @@ def logout():
     return redirect(url_for('site.login'))
 
 
-@site.route("/book", methods=['POST', 'GET'])
+def create_booking_choices():
+    form = BookingForm()
+    cars = requests.get(
+        "{}{}".format(URL, "/cars"), params={"available": 1}
+    )  # get a list of available cars to display
+    if cars is not None:
+        choices = [
+            (car['id'], "{} {}, {}".format(car['model']['make'], car['model']['model'], car['model']['year']))
+            for car in cars.json()
+        ]
+        form.car.choices = choices
+        form.car.default = choices[0][0]
+    return form
+
+
+@site.route("/book", methods=['GET'])
 def render_booking_page():
     if 'user' in session:
-        form = BookingForm()
-        if form.validate_on_submit():
-            return "<h1>" + str(form.car.data) + " " + str(form.days.data) + "</h1>"
-        return render_template("booking.html", form=form)
+        form = create_booking_choices()
+        car_id = request.args.get('id')  # optional id arg if coming from available cars page
+        if car_id is not None:
+            form.car.default = str(car_id)
+            form.process()
+        return render_template("booking.html", form=form, car_id=car_id)
+    return redirect(url_for('site.login'))
+
+
+@site.route("/book", methods=['POST'])
+def create_booking():
+    if 'user' in session:
+        form = create_booking_choices()
+        return "<h1>" + form.car.data + " " + str(form.start.data) + " " + str(form.end.data) + " " +"</h1>"
     return redirect(url_for('site.login'))
 
 
@@ -144,7 +171,10 @@ def available_cars():
 @site.route("/cancel")
 def cancel_booking():
     if 'user' in session:
-        return render_template("cancel.html")
+        bookings = requests.get(
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["id"], "status": 0}
+        )
+        return render_template("cancel.html", user_bookings=bookings.json())
     return redirect(url_for('site.login'))
 
 

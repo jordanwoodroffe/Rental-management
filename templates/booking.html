@@ -17,11 +17,14 @@
         <form class="form-signin" method="POST">
           {{ form.hidden_tag() }}
           <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
               {{ wtf.form_field(form.car)}}
             </div>
-            <div class="form-group col-md-6">
-              {{ wtf.form_field(form.days)}}
+            <div class="form-group col-md-4">
+              {{ wtf.form_field(form.start)}}
+            </div>
+            <div class="form-group col-md-4">
+              {{ wtf.form_field(form.end)}}
             </div>
           </div>
           <div class="form-row">
