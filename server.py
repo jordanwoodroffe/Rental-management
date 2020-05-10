@@ -14,15 +14,14 @@ print("UDP server up and listening")
 def rentCar(input):
     idCar = input [30:-1]
     date = datetime.now()
-    #if 
-        #Check db if id exists
-        #Check db if currently rented
-        #Update object status with datetime in db 
-        #msgFromServer       = "successful"
-        #bytesToSend         = str.encode(msgFromServer)
-        #UDPServerSocket.sendto(bytesToSend, address)
+    if('''Check db if id exists'''): 
+        if(''''Check db if currently rented'''):
+            '''Update object status with datetime in db''''
+            #msgFromServer       = "successful"
+            #bytesToSend         = str.encode(msgFromServer)
+            #UDPServerSocket.sendto(bytesToSend, address)
     
-    #else:
+    else:
         #msgFromServer       = "unsuccessful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
@@ -31,15 +30,14 @@ def rentCar(input):
 def returnCar(input):
     idCar = input [32:-1]
     date = datetime.now()
-    #if 
-        #Check db if id exists
-        #Check db if currently rented
-        #Update object status with datetimein db
-        #msgFromServer       = "successful"
-        #bytesToSend         = str.encode(msgFromServer)
-        #UDPServerSocket.sendto(bytesToSend, address)
+    if('''Check db if id exists'''): 
+        if(''''Check db if currently rented'''):
+            '''Update object status with datetime in db''''
+            #msgFromServer       = "successful"
+            #bytesToSend         = str.encode(msgFromServer)
+            #UDPServerSocket.sendto(bytesToSend, address)
     
-    #else:
+    else:
         #msgFromServer       = "unsuccessful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
@@ -51,13 +49,12 @@ def login(input):
     username = input [userIndex + 6:passIndex]
     password = input [passIndex + 6:-1]
     
-    #if 
-        #Check db if username/ password exists in DB
+    if('''Check db if username/ password exists in DB'''): 
         #msgFromServer       = "successful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
     
-    #else:
+    else:
         #msgFromServer       = "unsuccessful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
