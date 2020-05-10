@@ -5,5 +5,53 @@
 {% with page="search"%}
 {% include "nav.html" %}
 {% endwith %}
-
+    <body style="padding-top: 4.5rem">
+      <div class="container">
+        <div>
+          <h3>Filter</h3>
+          <label>
+            <div>Make</div>
+            <select name="make">
+              {% for make in attributes['make'] %}
+                  <option value="{{ make }}">{{ make }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            <div>Year</div>
+            <select name="year">
+              {% for year in attributes['year'] %}
+                  <option value="{{ year }}">{{ year }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            <div>Colour</div>
+            <select name="colour">
+              {% for colour in attributes['colour'] %}
+                  <option value="{{ colour }}">{{ colour }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            <div>Capacity</div>
+              <div class="slidecontainer">
+                <input type="range" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity">
+              </div>
+          </label>
+        </div>
+        <div class="card-columns">
+          {% for car in cars %}
+            <div class="card bg-light mb-4">
+              <div class="card-body">
+                <h5 class="card-title">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
+                <p class="card-text">Capcity: {{car.model.capacity}}</p>
+                <p class="card-text">Colour: {{car.model.colour}}</p>
+                <p class="card-text">Cost: ${{car.cph}} per hour</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </body>
 {% endblock %}
