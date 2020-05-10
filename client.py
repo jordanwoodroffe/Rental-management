@@ -1,5 +1,7 @@
 import socket
 
+#TO DO
+#DB connectivity + facial recognition
 
 #Clientside Setup
 serverAddressPort   = ("localhost", 20001)
