@@ -21,8 +21,8 @@ meta = MetaData()
 
 # Creating tables in the database
 # users table
-users = Table(
-  'users', meta,
+user = Table(
+  'user', meta,
   Column('first_name', VARCHAR(45), nullable=False),
   Column('last_name', VARCHAR(45), nullable=False),
   Column('email', VARCHAR(45), primary_key=True, nullable=False),
@@ -30,27 +30,27 @@ users = Table(
 )
 
 # bookings table
-bookings = Table(
-  'bookings', meta,
+booking = Table(
+  'booking', meta,
   Column('booking_id', Integer(), primary_key=True, nullable=False, autoincrement=True),
-  Column('user_email', VARCHAR(45), ForeignKey('users.email'), nullable=False),
-  Column('car_id', Integer(), ForeignKey('cars.car_id'),nullable=False),
+  Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False),
+  Column('car_id', Integer(), ForeignKey('car.car_id'),nullable=False),
   Column('duration', Integer(), nullable=False),
   Column('completed', TINYINT(2), nullable=False)
 )
 
 # cars table
-cars = Table(
-  'cars', meta,
+car = Table(
+  'car', meta,
   Column('car_id', Integer(), primary_key=True, nullable=False, autoincrement=True),
   Column('name', VARCHAR(45), nullable=False),
   Column('available', TINYINT(1), nullable=False),
-  Column('model_id', Integer(), ForeignKey('car_models.model_id'), nullable=False)
+  Column('model_id', Integer(), ForeignKey('car_model.model_id'), nullable=False)
 )
 
 # car_models table
-car_models = Table(
-  'car_models', meta,
+car_model = Table(
+  'car_model', meta,
   Column('model_id', Integer(), primary_key=True, nullable=False, autoincrement=True),
   Column('make', VARCHAR(45), nullable=False),
   Column('model', VARCHAR(45), nullable=False),
@@ -59,10 +59,10 @@ car_models = Table(
 )
 
 # encodings table
-encodings = Table(
-  'encodings', meta,
+encoding = Table(
+  'encoding', meta,
   Column('image_id', Integer(), primary_key=True, nullable=False, autoincrement=True),
-  Column('user_email', VARCHAR(45), ForeignKey('users.email'), nullable=False),
+  Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False),
   Column('data', LargeBinary(length=(2**32)-1), nullable=False),
   Column('name', VARCHAR(45), nullable=False),
   Column('type', VARCHAR(45), nullable=False),
@@ -75,20 +75,20 @@ meta.create_all(engine)
 
 # load data
 # cars table
-with open('test_data/car_models.csv') as csv_file:
+with open('test_data/car_model.csv') as csv_file:
   csv_reader = csv.reader(csv_file, delimiter=',')
   line_count = 0
   for row in csv_reader:
-    ins = car_models.insert().values(make=row[0], model=row[1], year=row[2], capacity=row[3])
+    ins = car_model.insert().values(make=row[0], model=row[1], year=row[2], capacity=row[3])
     connection.execute(ins)
     line_count += 1
 
 # users table
-with open('test_data/users.csv') as csv_file:
+with open('test_data/user.csv') as csv_file:
   csv_reader = csv.reader(csv_file, delimiter=',')
   line_count = 0
   for row in csv_reader:
-    ins = users.insert().values(first_name=row[0], last_name=row[1], email=row[2], password=row[3])
+    ins = user.insert().values(first_name=row[0], last_name=row[1], email=row[2], password=row[3])
     connection.execute(ins)
     line_count += 1
 

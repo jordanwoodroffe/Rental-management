@@ -28,9 +28,9 @@ Invoke proxy:
 And update the below/db code to use the right port number, database name, etc.
 """
 
-DB_NAME = "IOTA2"  # UPDATE THIS if need be
+DB_NAME = "temp"  # UPDATE THIS if need be
 DB_USER = "root"  # UPDATE THIS if need be
-DB_PASS = "hKKdz7MfxwHJGiz2"  # UPDATE THIS if need be
+DB_PASS = "bkh8hut1HaL6JBLu"  # UPDATE THIS if need be
 PORT_NUMBER = "3306"  # UPDATE THIS if need be
 DB_URI = "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
 
@@ -213,7 +213,9 @@ def user_authentication():
     else:
         user = User.query.get(user_id)
         if user is not None:
-            if user.password == password:
+            stored_password = user.password.split(':')[0]
+            salt = user.password.split(':')[1]
+            if verify_password(stored_password, password, salt):
                 response['code'] = 'SUCCESS'
                 response['user'] = UserSchema(exclude=['password']).dump(user)
             else:
