@@ -7,6 +7,7 @@ from wtforms import StringField, PasswordField, SelectField, IntegerField, DateT
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 import re
 import requests
+from collections import defaultdict
 
 site = Blueprint("site", __name__)
 
@@ -65,6 +66,8 @@ def home():
     response = requests.get(
         "{}{}".format(URL, "populate")
     )
+    if 'user' in session:
+        return redirect(url_for("site.main"))
     return render_template("index.html")
 
 
@@ -241,7 +244,18 @@ def cancel_booking():
 @site.route("/search")
 def search_cars():
     if 'user' in session:
-        return render_template("search.html")
+        cars = requests.get(
+            "{}{}".format(URL, "/cars")
+        )
+        attributes = defaultdict(set)
+        if cars.status_code == 200:
+            for car in cars.json():
+                attributes['make'].add(car['model']['make'])
+                attributes['colour'].add(car['model']['colour'])
+                attributes['year'].add(car['model']['year'])
+                attributes['capacity'].add(car['model']['capacity'])
+            return render_template("search.html", cars=cars.json(), attributes=attributes)
+
     return redirect(url_for('site.login'))
 
 # @site.route("/<page>", methods=['GET'])
