@@ -30,7 +30,7 @@ And update the below/db code to use the right port number, database name, etc.
 
 DB_NAME = "IOTA2"  # UPDATE THIS if need be
 DB_USER = "root"  # UPDATE THIS if need be
-DB_PASS = "3o6IsbqJKPedMGsr"  # UPDATE THIS if need be
+DB_PASS = "hKKdz7MfxwHJGiz2"  # UPDATE THIS if need be
 PORT_NUMBER = "3306"  # UPDATE THIS if need be
 DB_URI = "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
 
@@ -52,12 +52,6 @@ class User(db.Model):
     f_name = db.Column('first_name', VARCHAR(45), nullable=False)
     l_name = db.Column('last_name', VARCHAR(45), nullable=False)
     password = db.Column('password', TEXT(75), nullable=False)
-
-    def __init__(self, id, f_name, l_name, password):
-        self.id = id
-        self.f_name = f_name
-        self.l_name = l_name
-        self.password = password
 
 
 class Car(db.Model):
@@ -167,6 +161,9 @@ provides endpoints for accessing and inserting data from Google Cloud SQL Databa
 """
 
 
+@api.route("/user", methods=['POST'])
+
+
 @api.route("/users", methods=['GET'])
 def get_users():
     """
@@ -176,8 +173,8 @@ def get_users():
     return jsonify(UserSchema(many=True, exclude=['password']).dumps(users))
 
 
-@api.route("/user/<user_id>", methods=['GET'])
-def get_user(user_id):
+@api.route("/user", methods=['GET'])
+def get_user():
     """
     Returns a specific user from the database
 
@@ -187,32 +184,43 @@ def get_user(user_id):
     Returns:
         user data in json format
     """
-    user = User.query.get(user_id)
-    return UserSchema(exclude=['password']).dump(user)
+    user_id = request.args.get('user_id')
+    if user_id is not None:
+        user = User.query.get(user_id)
+        return UserSchema(exclude=['password']).dump(user)
+    return None
 
 
-@api.route("/users/authenticate/<user_id>/<password>")
-def user_authentication(user_id, password):
+@api.route("/users/authenticate")
+def user_authentication():
     """
     Endpoint to authenticate a user logging in to MP webapp
 
-    Args:
+    Params:
         user_id: email input from user attempting login
         password: password input from user attempting login
 
     Returns:
         JSON object containing a success/error code and user data if successful
     """
-    user = User.query.get(user_id)
+    user_id = request.args.get('user_id')
+    password = request.args.get('password')
     response = {}
-    if user is not None:
-        if user.password == password:
-            response['code'] = 'SUCCESS'
-            response['user'] = UserSchema(exclude=['password']).dump(user)
-        else:
-            response['code'] = 'PASSWORD ERROR'
-    else:
+    if user_id is None:
         response['code'] = 'EMAIL ERROR'
+    elif password is None:
+        response['code'] = 'PASSWORD ERROR'
+    else:
+        user = User.query.get(user_id)
+        if user is not None:
+            if user.password == password:
+                response['code'] = 'SUCCESS'
+                response['user'] = UserSchema(exclude=['password']).dump(user)
+            else:
+                response['code'] = 'PASSWORD ERROR'
+        else:
+            response['code'] = 'EMAIL ERROR'
+    print(response)
     return json.dumps(response)
 
 
