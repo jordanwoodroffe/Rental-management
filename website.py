@@ -62,6 +62,8 @@ def home():
     response = requests.get(
         "{}{}".format(URL, "/populate")
     )
+    if 'user' in session:
+        return redirect(url_for("site.main"))
     return render_template("index.html")
 
 
