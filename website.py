@@ -68,7 +68,8 @@ def login():
     if request.method == 'POST' and form.validate_on_submit():
         # result = db.user_authentication(form.email.data, form.password.data)
         result = requests.get(
-            "{}{}/{}/{}".format(URL, "/users/authenticate", form.email.data, form.password.data),
+            "{}{}".format(URL, "/users/authenticate"),
+            params={"user_id": form.email.data, "password": form.password.data},
         )
         data = result.json()
         if data['code'] == 'SUCCESS':

@@ -17,6 +17,3 @@ def verify_password(stored_password, test_password, salt):
     if test_password.hex() == stored_password:
         return True
     return False
-
-
-def split_hash_salt

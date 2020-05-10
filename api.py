@@ -220,6 +220,7 @@ def user_authentication():
                 response['code'] = 'PASSWORD ERROR'
         else:
             response['code'] = 'EMAIL ERROR'
+    print(response)
     return json.dumps(response)
 
 
