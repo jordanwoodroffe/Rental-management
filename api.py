@@ -171,26 +171,26 @@ def get_users():
     users = User.query.all()
     return jsonify(UserSchema(many=True, exclude=['password']).dumps(users))
 
-#
-# @api.route("/user", methods=['GET'])
-# def get_user():
-#     """
-#     Returns a specific user from the database
-#
-#     Args:
-#         user_id: id of user to fetch from db
-#
-#     Returns:
-#         user data in json format
-#     """
-#     user_id = request.args.get('user_id')
-#     if user_id is not None:
-#         user = User.query.get(user_id)
-#         return UserSchema(exclude=['password']).dump(user)
-#     return None
+
+@api.route("/user", methods=['GET'])
+def get_user():
+    """
+    Returns a specific user from the database
+
+    Args:
+        user_id: id of user to fetch from db
+
+    Returns:
+        user data in json format
+    """
+    user_id = request.args.get('user_id')
+    if user_id is not None:
+        user = User.query.get(user_id)
+        return UserSchema(exclude=['password']).dump(user)
+    return None
 
 
-@api.route("/user", methods=['POST', 'GET'])
+@api.route("/user", methods=['POST'])
 def add_user():
     user_data = request.args.get('user')
     response = {}
