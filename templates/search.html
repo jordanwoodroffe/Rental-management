@@ -47,7 +47,8 @@
           <label>
             <div>Capacity</div>
               <div class="slidecontainer">
-                <input type="range" class="custom-range" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()">
+                <input type="range" class="custom-range" value="{{ attributes['capacity'] | min }}" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()" name="capacityVal">
+                <output for="capacityVal" onforminput="value = capacityVal.valueAsNumber;"></output>
               </div>
           </label>
         </div>

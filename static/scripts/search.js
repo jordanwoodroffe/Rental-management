@@ -56,7 +56,6 @@ function filter() {
   colourVal = document.getElementById('colour-filter').value
   capacityVal = document.getElementById('capacity-filter').value
   searchVal = document.getElementById('search-box').value
-  console.log(searchVal)
 
   var x = document.getElementsByClassName("car");
   for (var i = 0; i < x.length; i++) {
