@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from utils import get_random_alphaNumeric_string, hash_password, verify_password
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
 import hashlib
+import requests
 
 """
 Instructions:
@@ -192,22 +193,21 @@ def get_user():
 
 @api.route("/user", methods=['POST'])
 def add_user():
-    user_data = request.args.get('user')
+    user_data = request.get_json()
     response = {}
     try:
         if user_data is None:
             response['code'] = "DATA ERROR"
         else:
             data = json.loads(user_data)
-            print(data)
             user = User.query.get(data['id'])
             if user is None:
-                print("doot")
+                salt = get_random_alphaNumeric_string(10)
                 user = User()
                 user.id = data['id']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
-                user.password = data['password']  # store salt/hash pw
+                user.password = hash_password(data['password'], salt)+':'+salt
                 db.session.add(user)
                 db.session.commit()
                 response['code'] = "SUCCESS"
@@ -220,7 +220,7 @@ def add_user():
         print("{}\n{}".format("Unable to access value", str(ve)))
         response['code'] = "VALUE ERROR"
     finally:
-        return response
+        return json.dumps(response)
 
 # user={"id":"donald@gmail.com","f_name":"don","l_name":"don","password":"password"}
 

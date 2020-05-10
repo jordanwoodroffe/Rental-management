@@ -74,6 +74,7 @@ def login():
         data = result.json()
         if data['code'] == 'SUCCESS':
             session['user'] = data['user']
+            print(session['user'])
         elif data['code'] == 'EMAIL ERROR':
             form.email.errors.append('This email has not been registered')
         elif data['code'] == 'PASSWORD ERROR':
@@ -88,12 +89,21 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         #  should be using response = requests.get(<DB_API_URL>)
-        if (db.add_users(form.first_name.data, form.last_name.data, form.email.data, form.password.data)):
-            result = db.user_authentication(form.email.data, form.password.data)
-            user = [result[1], result[2], result[3]]
-            session['user'] = user
-            return redirect(url_for("site.main"))
-        else:
+        user = {'id': form.email.data,
+                'l_name': form.last_name.data,
+                'f_name': form.first_name.data,
+                'password': form.password.data,
+                }
+        result = requests.post(
+            "{}{}".format(URL, "/user"),
+            json = json.dumps(user),
+        )
+        print(result)
+        data = result.json()
+        # print(data)
+        if data['code'] == 'SUCCESS':
+            return redirect(url_for("site.login"))
+        elif data['code'] == "USER ERROR":
             form.email.errors.append('This email has been used for register before')
     elif 'user' in session:
         return redirect(url_for("site.main"))
