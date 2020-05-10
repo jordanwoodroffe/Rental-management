@@ -1,7 +1,9 @@
 {% extends "bootstrap/base.html" %}
 
 {% block content %}
-
+{% block javascript %}
+  <script src="{{ url_for('static', filename='scripts/search.js')}}"></script>
+{% endblock %}
 {% with page="search"%}
 {% include "nav.html" %}
 {% endwith %}
@@ -11,7 +13,8 @@
           <h3>Filter</h3>
           <label>
             <div>Make</div>
-            <select name="make">
+            <select name="make" id="make-filter" onchange="filter()">
+              <option value="All" selected>All</option>
               {% for make in attributes['make'] %}
                   <option value="{{ make }}">{{ make }}</option>
               {% endfor %}
@@ -19,7 +22,8 @@
           </label>
           <label>
             <div>Year</div>
-            <select name="year">
+            <select name="year" id="year-filter" onchange="filter()">
+              <option value="All" selected>All</option>
               {% for year in attributes['year'] %}
                   <option value="{{ year }}">{{ year }}</option>
               {% endfor %}
@@ -27,7 +31,8 @@
           </label>
           <label>
             <div>Colour</div>
-            <select name="colour">
+            <select name="colour" id="colour-filter" onchange="filter()">
+              <option value="All" selected>All</option>
               {% for colour in attributes['colour'] %}
                   <option value="{{ colour }}">{{ colour }}</option>
               {% endfor %}
@@ -36,17 +41,17 @@
           <label>
             <div>Capacity</div>
               <div class="slidecontainer">
-                <input type="range" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity">
+                <input type="range" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()">
               </div>
           </label>
         </div>
         <div class="card-columns">
           {% for car in cars %}
-            <div class="card bg-light mb-4">
+            <div class="card bg-light mb-4 car">
               <div class="card-body">
-                <h5 class="card-title">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
-                <p class="card-text">Capcity: {{car.model.capacity}}</p>
-                <p class="card-text">Colour: {{car.model.colour}}</p>
+                <h5 class="card-title make-value">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
+                <p class="card-text capacity-value">Capcity: {{car.model.capacity}}</p>
+                <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
                 <p class="card-text">Cost: ${{car.cph}} per hour</p>
               </div>
             </div>
