@@ -259,6 +259,7 @@ def user_authentication():
                 response['code'] = 'PASSWORD ERROR'
         else:
             response['code'] = 'EMAIL ERROR'
+    return response
 
 
 # @api.route("/cars", methods=['GET'])
@@ -313,6 +314,17 @@ def get_bookings():
         else:
             bookings = Booking.query.join(User).filter(User.id == user_id)
     return BookingSchema(many=True).dumps(bookings)
+
+
+@api.route("/booking", methods=['POST'])
+def add_booking():
+    """
+    Adds a booking to the database
+
+    Returns:
+        JSON object with response code (successful/error)
+    """
+    response = {}
 
 
 @api.route("/populate", methods=['GET'])
