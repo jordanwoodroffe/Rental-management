@@ -1,4 +1,6 @@
 import json
+from json.decoder import JSONDecodeError
+
 from sqlalchemy import MetaData, Table, Column, Integer, Float, String, insert, select, update, delete, ForeignKey, \
     LargeBinary
 from flask import Blueprint, jsonify, request
@@ -161,9 +163,6 @@ provides endpoints for accessing and inserting data from Google Cloud SQL Databa
 """
 
 
-@api.route("/user", methods=['POST'])
-
-
 @api.route("/users", methods=['GET'])
 def get_users():
     """
@@ -172,24 +171,58 @@ def get_users():
     users = User.query.all()
     return jsonify(UserSchema(many=True, exclude=['password']).dumps(users))
 
+#
+# @api.route("/user", methods=['GET'])
+# def get_user():
+#     """
+#     Returns a specific user from the database
+#
+#     Args:
+#         user_id: id of user to fetch from db
+#
+#     Returns:
+#         user data in json format
+#     """
+#     user_id = request.args.get('user_id')
+#     if user_id is not None:
+#         user = User.query.get(user_id)
+#         return UserSchema(exclude=['password']).dump(user)
+#     return None
 
-@api.route("/user", methods=['GET'])
-def get_user():
-    """
-    Returns a specific user from the database
 
-    Args:
-        user_id: id of user to fetch from db
+@api.route("/user", methods=['POST', 'GET'])
+def add_user():
+    user_data = request.args.get('user')
+    response = {}
+    try:
+        if user_data is None:
+            response['code'] = "DATA ERROR"
+        else:
+            data = json.loads(user_data)
+            print(data)
+            user = User.query.get(data['id'])
+            if user is None:
+                print("doot")
+                user = User()
+                user.id = data['id']
+                user.f_name = data['f_name']
+                user.l_name = data['l_name']
+                user.password = data['password']  # store salt/hash pw
+                db.session.add(user)
+                db.session.commit()
+                response['code'] = "SUCCESS"
+            else:
+                response['code'] = "USER ERROR"
+    except JSONDecodeError as de:
+        print("{}\n{}".format("Unable to decode user object", str(de)))
+        response['code'] = "JSON ERROR"
+    except ValueError as ve:
+        print("{}\n{}".format("Unable to access value", str(ve)))
+        response['code'] = "VALUE ERROR"
+    finally:
+        return response
 
-    Returns:
-        user data in json format
-    """
-    user_id = request.args.get('user_id')
-    if user_id is not None:
-        user = User.query.get(user_id)
-        return UserSchema(exclude=['password']).dump(user)
-    return None
-
+# user={"id":"donald@gmail.com","f_name":"don","l_name":"don","password":"password"}
 
 @api.route("/users/authenticate")
 def user_authentication():
