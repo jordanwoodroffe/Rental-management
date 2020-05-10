@@ -14,6 +14,7 @@ from utils import get_random_alphaNumeric_string, hash_password, verify_password
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
 import hashlib
 import requests
+from environs import Env
 
 """
 Instructions:
@@ -32,11 +33,13 @@ Invoke proxy:
     
 And update the below/db code to use the right port number, database name, etc.
 """
+env = Env()
+env.read_env()
 
-DB_NAME = "IOTA2"  # UPDATE THIS if need be
-DB_USER = "root"  # UPDATE THIS if need be
-DB_PASS = "108s7dyf89712398478324231423"  # UPDATE THIS if need be
-PORT_NUMBER = "3306"  # UPDATE THIS if need be
+DB_NAME = env("DB_NAME")
+DB_USER = env("DB_USER")
+DB_PASS = env("DB_PASS")
+PORT_NUMBER = env("PORT_NUMBER")
 DB_URI = "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
 
 api = Blueprint("api", __name__)
