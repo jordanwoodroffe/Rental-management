@@ -21,9 +21,10 @@ app.register_blueprint(api)
 
 Bootstrap(app)
 
+db.init_app(app)
+
 if __name__ == '__main__':
     # app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
-    db.init_app(app)
     db.drop_all(app=app)
     db.create_all(app=app)
     app.run(debug=True)
