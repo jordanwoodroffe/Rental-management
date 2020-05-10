@@ -3,8 +3,8 @@ import random
 import pandas as pd
 from json.decoder import JSONDecodeError
 import requests
-from sqlalchemy import MetaData, Table, Column, Integer, Float, String, insert, select, update, delete, ForeignKey, \
-    LargeBinary
+from sqlalchemy import MetaData, Table, Column, DateTime, Integer, Float, String, insert, select, update, delete, \
+    ForeignKey, LargeBinary
 from flask import Blueprint, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -79,7 +79,7 @@ class CarModel(db.Model):
     model = db.Column('model', VARCHAR(45), nullable=False)
     year = db.Column('year', Integer(), nullable=False)
     capacity = db.Column('capacity', Integer(), nullable=False)
-    # colour = db.Column('colour', VARCHAR(45), nullable=False)
+    colour = db.Column('colour', VARCHAR(45), nullable=False)
 
 
 class Booking(db.Model):
@@ -89,8 +89,10 @@ class Booking(db.Model):
     user = db.relationship('User')
     car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
     car = db.relationship('Car')
-    duration = db.Column('duration', Integer(), nullable=False)
-    completed = db.Column('completed', TINYINT(2), nullable=False)
+    # duration = db.Column('duration', Integer(), nullable=False)
+    start = db.Column('start', DateTime(), nullable=False)
+    end = db.Column('end', DateTime(), nullable=False)
+    completed = db.Column('completed', Integer(), nullable=False)
 
 
 class Encoding(db.Model):
@@ -123,6 +125,7 @@ class CarModelSchema(ma.SQLAlchemyAutoSchema):
     model = ma.auto_field()
     year = ma.auto_field()
     capacity = ma.auto_field()
+    colour = ma.auto_field()
 
 
 class CarSchema(ma.SQLAlchemyAutoSchema):
@@ -146,7 +149,9 @@ class BookingSchema(ma.SQLAlchemyAutoSchema):
     user = fields.Nested(UserSchema)
     car_id = ma.auto_field()
     car = fields.Nested(CarSchema)
-    duration = ma.auto_field()
+    start = ma.auto_field()
+    end = ma.auto_field()
+    # duration = ma.auto_field()
     completed = ma.auto_field()
 
 
@@ -284,8 +289,8 @@ def get_cars():
     return CarSchema(many=True).dumps(cars)
 
 
-@api.route("/car/<car_id>", methods=['GET'])
-def get_car(car_id):
+@api.route("/car", methods=['GET'])
+def get_car():
     """
     Endpoint to return a car from the database
 
@@ -295,8 +300,13 @@ def get_car(car_id):
     Returns:
         JSON object representing car
     """
-    car = Car.query.get(car_id)
-    return CarSchema().dump(car)
+    car_id = request.args.get('car_id')
+    data = None
+    if car_id is not None:
+        car = Car.query.get(car_id)
+        if car is not None:
+            data = CarSchema().dump(car)
+    return data
 
 
 @api.route("/bookings", methods=['GET'])
@@ -319,6 +329,15 @@ def get_bookings():
     return BookingSchema(many=True).dumps(bookings)
 
 
+@api.route("/bookings/<start>/<end>", methods=['GET'])
+def get_valid_cars(start, end):
+    bookings = Booking.query.filter_by(completed=0)
+    # convert start end to date time
+    # query bookings, and find booking with s > end or e < start
+    # get car id's from previous step, and then return cars that aren't these ids
+    return None
+
+
 @api.route("/booking", methods=['POST'])
 def add_booking():
     """
@@ -336,8 +355,8 @@ def populate():
     populates database on init with dummy data
     """
     response = {}
-    # users: TODO - check if empty
     if User.query.first() is None:
+        # users
         user_cols = ['email', 'f_name', 'l_name', 'password']
         users = pd.read_csv('./test_data/user.csv', engine='python', sep=',', names=user_cols, error_bad_lines=False)
         for index, row in users.iterrows():
@@ -350,11 +369,7 @@ def populate():
             db.session.add(user)
         db.session.commit()
         response['users'] = True
-    else:
-        response['users'] = False
-
-    # car models
-    if CarModel.query.first() is None:
+        # car models
         cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour']
         models = pd.read_csv('./test_data/car_model.csv', engine='python', sep=',', names=cm_cols, error_bad_lines=False)
         for index, row in models.iterrows():
@@ -365,7 +380,7 @@ def populate():
             model.model = row['model']
             model.year = row['year']
             model.capacity = row['capacity']
-            # model.colour = row['colour']
+            model.colour = row['colour']
             db.session.add(model)
         response['models'] = True
         # cars (references car models)
@@ -380,11 +395,27 @@ def populate():
             car.name = row['name']
             car.available = 1
             db.session.add(car)
-        db.session.commit()
         response['cars'] = True
+        # bookings
+        book_cols = ['start', 'end']
+        bookings = pd.read_csv('./test_data/booking.csv', engine='python', sep=',', names=book_cols,
+                               error_bad_lines=False)
+        for index, row in bookings.iterrows():
+            print(row)
+            booking = Booking()
+            booking.user_id = random.choice(users.email.unique().tolist())
+            booking.car_id = random.choice(cars.car_id.unique().tolist())
+            booking.start = row['start']
+            booking.end = row['end']
+            booking.completed = 0
+            db.session.add(booking)
+        response['bookings'] = True
+        db.session.commit()
     else:
+        response['users'] = False
         response['models'] = False
         response['cars'] = False
+        response['bookings'] = False
     return response
 
 

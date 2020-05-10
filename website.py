@@ -59,6 +59,9 @@ class BookingForm(FlaskForm):
 
 @site.route("/")
 def home():
+    response = requests.get(
+        "{}{}".format(URL, "/populate")
+    )
     return render_template("index.html")
 
 
@@ -155,7 +158,8 @@ def render_booking_page():
 def create_booking():
     if 'user' in session:
         form = create_booking_choices()
-        return "<h1>" + form.car.data + " " + str(form.start.data) + " " + str(form.end.data) + " " +"</h1>"
+        print(str(form.start.data < form.end.data))
+        return "<h1>" + str(form.start.data) + " " + str(form.end.data) + " " + "</h1>"
     return redirect(url_for('site.login'))
 
 

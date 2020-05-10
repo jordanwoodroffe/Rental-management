@@ -1,4 +1,5 @@
 import random, string, hashlib
+from datetime import datetime
 
 
 def get_random_alphaNumeric_string(stringLength):
@@ -17,3 +18,26 @@ def verify_password(stored_password, test_password, salt):
     if test_password.hex() == stored_password:
         return True
     return False
+
+
+def compare_dates(start: datetime, end: datetime, b_start: datetime, b_end: datetime) -> bool:
+    """
+
+    Args:
+        start: proposed booking start datetime
+        end: proposed booking end datetime
+        b_start: an existing bookings start
+        b_end: an existing bookings end
+
+    Returns:
+        a boolean value indicating whether an overlap occurred
+    """
+    return True if (start <= b_end) or (end >= b_start) or (start >= b_start and end <= b_end) else False
+
+
+if __name__ == '__main__':
+    start = datetime(2020, 11, 11, 10, 00, 00)
+    end = datetime(2020, 11, 11, 12, 00, 00)
+    b_start = datetime(2020, 11, 11, 11, 00, 00)
+    b_end = datetime(2020, 11, 11, 11, 30, 00)
+    print(start <= b_start and end >= b_end)
