@@ -1,6 +1,8 @@
 import json
+import random
+import pandas as pd
 from json.decoder import JSONDecodeError
-
+import requests
 from sqlalchemy import MetaData, Table, Column, Integer, Float, String, insert, select, update, delete, ForeignKey, \
     LargeBinary
 from flask import Blueprint, jsonify, request
@@ -31,9 +33,9 @@ Invoke proxy:
 And update the below/db code to use the right port number, database name, etc.
 """
 
-DB_NAME = "temp"  # UPDATE THIS if need be
+DB_NAME = "IOTA2"  # UPDATE THIS if need be
 DB_USER = "root"  # UPDATE THIS if need be
-DB_PASS = "bkh8hut1HaL6JBLu"  # UPDATE THIS if need be
+DB_PASS = "108s7dyf89712398478324231423"  # UPDATE THIS if need be
 PORT_NUMBER = "3306"  # UPDATE THIS if need be
 DB_URI = "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
 
@@ -59,7 +61,7 @@ class User(db.Model):
 
 class Car(db.Model):
     __tablename__ = "car"
-    id = db.Column('car_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
+    id = db.Column('car_id', VARCHAR(6), primary_key=True, nullable=False)
     model_id = db.Column('model_id', Integer(), ForeignKey('car_model.model_id'), nullable=False)
     model = db.relationship("CarModel")
     name = db.Column('name', VARCHAR(45), nullable=False)
@@ -74,6 +76,7 @@ class CarModel(db.Model):
     model = db.Column('model', VARCHAR(45), nullable=False)
     year = db.Column('year', Integer(), nullable=False)
     capacity = db.Column('capacity', Integer(), nullable=False)
+    # colour = db.Column('colour', VARCHAR(45), nullable=False)
 
 
 class Booking(db.Model):
@@ -81,7 +84,7 @@ class Booking(db.Model):
     id = db.Column('booking_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
     user_id = db.Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False)
     user = db.relationship('User')
-    car_id = db.Column('car_id', Integer(), ForeignKey('car.car_id'), nullable=False)
+    car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
     car = db.relationship('Car')
     duration = db.Column('duration', Integer(), nullable=False)
     completed = db.Column('completed', TINYINT(2), nullable=False)
@@ -200,11 +203,11 @@ def add_user():
             response['code'] = "DATA ERROR"
         else:
             data = json.loads(user_data)
-            user = User.query.get(data['id'])
+            user = User.query.get(data['user_id'])
             if user is None:
                 salt = get_random_alphaNumeric_string(10)
                 user = User()
-                user.id = data['id']
+                user.id = data['user_id']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
                 user.password = hash_password(data['password'], salt)+':'+salt
@@ -221,6 +224,7 @@ def add_user():
         response['code'] = "VALUE ERROR"
     finally:
         return json.dumps(response)
+
 
 # user={"id":"donald@gmail.com","f_name":"don","l_name":"don","password":"password"}
 
@@ -255,8 +259,6 @@ def user_authentication():
                 response['code'] = 'PASSWORD ERROR'
         else:
             response['code'] = 'EMAIL ERROR'
-    print(response)
-    return json.dumps(response)
 
 
 # @api.route("/cars", methods=['GET'])
@@ -311,6 +313,64 @@ def get_bookings():
         else:
             bookings = Booking.query.join(User).filter(User.id == user_id)
     return BookingSchema(many=True).dumps(bookings)
+
+
+@api.route("/populate", methods=['GET'])
+def populate():
+    """
+    populates database on init with dummy data
+    """
+    response = {}
+    # users: TODO - check if empty
+    if User.query.first() is None:
+        user_cols = ['email', 'f_name', 'l_name', 'password']
+        users = pd.read_csv('./test_data/user.csv', engine='python', sep=',', names=user_cols, error_bad_lines=False)
+        for index, row in users.iterrows():
+            print(row)
+            user = User()
+            user.id = row['email']
+            user.f_name = row['f_name']
+            user.l_name = row['l_name']
+            user.password = row['password']
+            db.session.add(user)
+        db.session.commit()
+        response['users'] = True
+    else:
+        response['users'] = False
+
+    # car models
+    if CarModel.query.first() is None:
+        cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour']
+        models = pd.read_csv('./test_data/car_model.csv', engine='python', sep=',', names=cm_cols, error_bad_lines=False)
+        for index, row in models.iterrows():
+            print(row)
+            model = CarModel()
+            model.id = row['model_id']
+            model.make = row['make']
+            model.model = row['model']
+            model.year = row['year']
+            model.capacity = row['capacity']
+            # model.colour = row['colour']
+            db.session.add(model)
+        response['models'] = True
+        # cars (references car models)
+        car_cols = ['car_id', 'name', 'cph', 'available']
+        cars = pd.read_csv('./test_data/car.csv', engine='python', sep=',', names=car_cols, error_bad_lines=False)
+        for index, row in cars.iterrows():
+            print(row)
+            car = Car()
+            car.id = row['car_id']
+            car.model_id = random.choice(models.model_id.unique().tolist())
+            car.cph = row['cph']
+            car.name = row['name']
+            car.available = 1
+            db.session.add(car)
+        db.session.commit()
+        response['cars'] = True
+    else:
+        response['models'] = False
+        response['cars'] = False
+    return response
 
 
 # @api.route("/booking/")
@@ -369,6 +429,3 @@ def get_bookings():
 #         connection.close()
 #         return qur
 #
-
-
-
