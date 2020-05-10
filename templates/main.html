@@ -1,0 +1,101 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% with page="main"%}
+{% include "nav.html" %}
+{% endwith %}
+<div class="container">
+		<b> Location: </b><span id=city></span><br>
+		<div id = map>
+		<iframe frameborder="0" style="border:0; width: 100%;" src="" allowfullscreen></iframe> 
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+    <script>
+		$(document).ready(function () {
+			 if ("geolocation" in navigator) {
+			navigator.geolocation.getCurrentPosition(function (p) {
+				var latitude = p.coords.latitude;
+				var longitude = p.coords.longitude;
+				var position = latitude + "," + longitude;
+				
+				var urlmap = "https://www.google.com/maps/embed/v1/view?center="+position+"&zoom=15&key=AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ"
+				$("iframe").attr('src', urlmap);
+			
+				let url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+position+'&key=AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ';
+				fetch(url)
+				.then(response => response.json() )
+				.then( data => {
+				
+					//output data to console for debugging
+					console.log(data);
+					
+					//filter data array
+					let parts = data.results[0].address_components;
+					
+					parts.forEach( part => {
+					if( part.types.includes("locality")) {
+					//found "city" inside of data.results.address array
+					var city = part.long_name;
+					//output city var to <b> tag
+					$("#city").text(city);
+						}
+					})
+				})	
+				.catch(error => console.warn(err.message));
+			}, function (e) {
+				ipLookup();
+			})
+		}else
+			ipLookup();
+		});
+		function ipLookup() {
+		}	
+	</script>
+<script src="https://kit.fontawesome.com/6b539ad364.js" crossorigin="anonymous"></script>
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card bg-light">
+          <div class="card-header">
+            Profile
+          </div>
+          <div class="card-img-top d-flex justify-content-center" style="padding-top: 5px">
+            <i class="fas fa-user fa-7x"></i>
+          </div>
+          <div class="card-body">
+            <h5>{{user.f_name}} {{user.l_name}}</h5>
+            <p>{{user.id}}</p>
+          </div>
+        </div>
+        <div class="card bg-light mt-3">
+          <div class="card-header">
+            Facial Recognition
+          </div>
+          <div class="card-body">
+            <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
+            {% if user.face_id == False %}
+            <a href="/main/facial-recognition" class="btn btn-primary">Register Now</a>
+            {% else %}
+            <small><i>Facial Recognition registration completed</i></small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card bg-light mt-3 mt-md-0">
+          <div class="card-header">
+            Map
+          </div>
+          <div class="card-body">
+            <p>TBC</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- where do all car locations get displayed?? -->
+</body>
+{% endblock %}
