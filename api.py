@@ -1,5 +1,7 @@
 import json
 import random
+from datetime import datetime
+
 import pandas as pd
 from json.decoder import JSONDecodeError
 import requests
@@ -10,7 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import fields
 from sqlalchemy.orm import sessionmaker
-from utils import get_random_alphaNumeric_string, hash_password, verify_password
+from utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
 import hashlib
 import requests
@@ -56,7 +58,7 @@ ma = Marshmallow()
 
 class User(db.Model):
     __tablename__ = "user"
-    id = db.Column('email', VARCHAR(45), primary_key=True, nullable=False)
+    email = db.Column('email', VARCHAR(45), primary_key=True, nullable=False)
     f_name = db.Column('first_name', VARCHAR(45), nullable=False)
     l_name = db.Column('last_name', VARCHAR(45), nullable=False)
     password = db.Column('password', TEXT(75), nullable=False)
@@ -64,7 +66,7 @@ class User(db.Model):
 
 class Car(db.Model):
     __tablename__ = "car"
-    id = db.Column('car_id', VARCHAR(6), primary_key=True, nullable=False)
+    car_id = db.Column('car_id', VARCHAR(6), primary_key=True, nullable=False)
     model_id = db.Column('model_id', Integer(), ForeignKey('car_model.model_id'), nullable=False)
     model = db.relationship("CarModel")
     name = db.Column('name', VARCHAR(45), nullable=False)
@@ -74,7 +76,7 @@ class Car(db.Model):
 
 class CarModel(db.Model):
     __tablename__ = "car_model"
-    id = db.Column('model_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
+    model_id = db.Column('model_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
     make = db.Column('make', VARCHAR(45), nullable=False)
     model = db.Column('model', VARCHAR(45), nullable=False)
     year = db.Column('year', Integer(), nullable=False)
@@ -84,7 +86,7 @@ class CarModel(db.Model):
 
 class Booking(db.Model):
     __tablename__ = "booking"
-    id = db.Column('booking_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
+    booking_id = db.Column('booking_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
     user_id = db.Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False)
     user = db.relationship('User')
     car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
@@ -97,7 +99,7 @@ class Booking(db.Model):
 
 class Encoding(db.Model):
     __tablename__ = "encoding"
-    id = db.Column('image_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
+    enc_id = db.Column('image_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
     user_id = db.Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False)
     user = db.relationship('User')
     data = db.Column('data', LargeBinary(length=(2 ** 32) - 1), nullable=False)
@@ -111,7 +113,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
 
-    id = ma.auto_field()
+    email = ma.auto_field()
     f_name = ma.auto_field()
     l_name = ma.auto_field()
 
@@ -120,7 +122,7 @@ class CarModelSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = CarModel
 
-    id = ma.auto_field()
+    model_id = ma.auto_field()
     make = ma.auto_field()
     model = ma.auto_field()
     year = ma.auto_field()
@@ -132,7 +134,7 @@ class CarSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Car
 
-    id = ma.auto_field()
+    car_id = ma.auto_field()
     name = ma.auto_field()
     model_id = ma.auto_field()
     model = fields.Nested(CarModelSchema)
@@ -144,7 +146,7 @@ class BookingSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Booking
 
-    id = ma.auto_field()
+    booking_id = ma.auto_field()
     user_id = ma.auto_field()
     user = fields.Nested(UserSchema)
     car_id = ma.auto_field()
@@ -159,7 +161,7 @@ class EncodingSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Encoding
 
-    id = ma.auto_field()
+    enc_id = ma.auto_field()
     user_id = ma.auto_field()
     user = fields.Nested(UserSchema)
     data = ma.auto_field()
@@ -215,10 +217,10 @@ def add_user():
             if user is None:
                 salt = get_random_alphaNumeric_string(10)
                 user = User()
-                user.id = data['user_id']
+                user.email = data['user_id']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
-                user.password = hash_password(data['password'], salt)+':'+salt
+                user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.add(user)
                 db.session.commit()
                 response['code'] = "SUCCESS"
@@ -323,19 +325,28 @@ def get_bookings():
     else:
         status = request.args.get('status')
         if status is not None:
-            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.id == user_id)
+            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.email == user_id)
         else:
-            bookings = Booking.query.join(User).filter(User.id == user_id)
+            bookings = Booking.query.join(User).filter(User.email == user_id)
     return BookingSchema(many=True).dumps(bookings)
 
 
-@api.route("/bookings/<start>/<end>", methods=['GET'])
+@api.route("/cars/<start>/<end>", methods=['GET'])
 def get_valid_cars(start, end):
     bookings = Booking.query.filter_by(completed=0)
-    # convert start end to date time
-    # query bookings, and find booking with s > end or e < start
-    # get car id's from previous step, and then return cars that aren't these ids
-    return None
+    data = json.loads(BookingSchema(many=True).dumps(bookings))
+    booked_cars = []
+    for booking in data:
+        # TODO - check for conversion/datatype error
+        b_start = datetime.strptime(booking['start'], "%Y-%m-%dT%H:%M:%S")
+        b_end = datetime.strptime(booking['end'], "%Y-%m-%dT%H:%M:%S")
+        start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S")
+        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
+        if compare_dates(start=start_dt, end=end_dt, b_start=b_start, b_end=b_end):  # overlap found
+            booked_cars.append(booking['car_id'])  # add to booked car list
+    # return cars that don't match any cars with overlapping bookings
+    cars = Car.query.filter(Car.car_id.notin_(booked_cars))
+    return CarSchema(many=True).dumps(cars)
 
 
 @api.route("/booking", methods=['POST'])
@@ -347,6 +358,45 @@ def add_booking():
         JSON object with response code (successful/error)
     """
     response = {}
+    request_data = request.get_json()
+    if request_data is not None:
+        data = json.loads(request_data)
+        booking = Booking()
+        booking.start = datetime.strptime(data['start'], "%Y-%m-%d %H:%M:%S")
+        booking.end = datetime.strptime(data['end'], "%Y-%m-%d %H:%M:%S")
+        booking.user_id = data['user_id']
+        booking.car_id = data['car_id']
+        booking.completed = 0
+        db.session.add(booking)
+        db.session.commit()
+        response['code'] = "SUCCESS"
+    else:
+        response['code'] = "FAIL"
+    return response
+
+
+@api.route("/booking", methods=['PUT'])
+def update_booking():
+    """
+    Update booking status: cancelled or completed
+    Returns:
+        success/error
+    """
+    data = request.get_json()
+    response = {}
+    if data is not None:
+        json_data = json.loads(data)
+        booking_id = json_data['booking_id']
+        status = json_data['status']
+        if None not in (status, booking_id):
+            booking = Booking.query.filter_by(booking_id=booking_id)
+            if booking is not None:
+                setattr(booking, "email", status)
+                db.session.commit()
+            response['code'] = 'SUCCESS'
+    else:
+        response['code'] = "FAIL"
+    return response
 
 
 @api.route("/populate", methods=['GET'])
@@ -362,7 +412,7 @@ def populate():
         for index, row in users.iterrows():
             print(row)
             user = User()
-            user.id = row['email']
+            user.email = row['email']
             user.f_name = row['f_name']
             user.l_name = row['l_name']
             user.password = row['password']
@@ -371,7 +421,8 @@ def populate():
         response['users'] = True
         # car models
         cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour']
-        models = pd.read_csv('./test_data/car_model.csv', engine='python', sep=',', names=cm_cols, error_bad_lines=False)
+        models = pd.read_csv('./test_data/car_model.csv', engine='python', sep=',', names=cm_cols,
+                             error_bad_lines=False)
         for index, row in models.iterrows():
             print(row)
             model = CarModel()
@@ -389,7 +440,7 @@ def populate():
         for index, row in cars.iterrows():
             print(row)
             car = Car()
-            car.id = row['car_id']
+            car.car_id = row['car_id']
             car.model_id = random.choice(models.model_id.unique().tolist())
             car.cph = row['cph']
             car.name = row['name']
@@ -403,7 +454,7 @@ def populate():
         for index, row in bookings.iterrows():
             print(row)
             booking = Booking()
-            booking.user_id = random.choice(users.email.unique().tolist())
+            booking.user_id = "donald@gmail.com"
             booking.car_id = random.choice(cars.car_id.unique().tolist())
             booking.start = row['start']
             booking.end = row['end']
@@ -417,7 +468,6 @@ def populate():
         response['cars'] = False
         response['bookings'] = False
     return response
-
 
 # @api.route("/booking/")
 #

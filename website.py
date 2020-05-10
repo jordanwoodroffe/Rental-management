@@ -51,16 +51,19 @@ class RegistrationForm(FlaskForm):
 
 
 # replace choices with result of db query
+class BookingQueryForm(FlaskForm):
+    start = DateTimeField('Start', format="%Y-%m-%d %H:%M", default=datetime.now)
+    end = DateTimeField('End', format="%Y-%m-%d %H:%M", default=datetime.now)
+
+
 class BookingForm(FlaskForm):
-    car = SelectField(label='Available Cars', validators=[], choices=[])
-    start = DateTimeField('Start', format="%d/%m/%Y %H:%M", default=datetime.now)
-    end = DateTimeField('End', format="%d/%m/%Y %H:%M", default=datetime.now)
+    car_id = StringField('Car', render_kw={'readonly': True})
 
 
 @site.route("/")
 def home():
     response = requests.get(
-        "{}{}".format(URL, "/populate")
+        "{}{}".format(URL, "populate")
     )
     return render_template("index.html")
 
@@ -71,7 +74,7 @@ def login():
     if request.method == 'POST' and form.validate_on_submit():
         # result = db.user_authentication(form.email.data, form.password.data)
         result = requests.get(
-            "{}{}".format(URL, "/users/authenticate"),
+            "{}{}".format(URL, "users/authenticate"),
             params={"user_id": form.email.data, "password": form.password.data},
         )
         data = result.json()
@@ -98,8 +101,8 @@ def register():
                 'password': form.password.data,
                 }
         result = requests.post(
-            "{}{}".format(URL, "/user"),
-            json = json.dumps(user),
+            "{}{}".format(URL, "user"),
+            json=json.dumps(user),
         )
         print(result)
         data = result.json()
@@ -127,47 +130,75 @@ def logout():
     return redirect(url_for('site.login'))
 
 
-def create_booking_choices():
-    form = BookingForm()
-    cars = requests.get(
-        "{}{}".format(URL, "/cars"), params={"available": 1}
-    )  # get a list of available cars to display
-    if cars is not None:
-        choices = [
-            (car['id'], "{} {}, {}".format(car['model']['make'], car['model']['model'], car['model']['year']))
-            for car in cars.json()
-        ]
-        form.car.choices = choices
-        form.car.default = choices[0][0]
-    return form
+# def create_booking_choices():
+#     form = BookingForm()
+#     cars = requests.get(
+#         "{}{}".format(URL, "/cars"), params={"available": 1}
+#     )  # get a list of available cars to display
+#     if cars is not None:
+#         choices = [
+#             (car['id'], "{} {}, {}".format(car['model']['make'], car['model']['model'], car['model']['year']))
+#             for car in cars.json()
+#         ]
+#         form.car.choices = choices
+#         form.car.default = choices[0][0]
+#     return form
 
 
 @site.route("/book", methods=['GET'])
 def render_booking_page():
     if 'user' in session:
-        form = create_booking_choices()
-        car_id = request.args.get('id')  # optional id arg if coming from available cars page
-        if car_id is not None:
-            form.car.default = str(car_id)
-            form.process()
-        return render_template("booking.html", form=form, car_id=car_id)
+        start = request.args.get('start')
+        end = request.args.get('end')
+        form = BookingQueryForm()
+        if start is not None and end is not None:
+            start_dt = datetime.strptime(start, "%Y-%m-%d %H:%M")
+            end_dt = datetime.strptime(end, "%Y-%m-%d %H:%M")
+            print(start_dt)
+            print(end_dt)
+            response = requests.get(
+                "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
+            )
+            # booking form - render the car tiles:
+            # set datetime to readonly?
+            form.start.data = start_dt
+            form.end.data = end_dt
+            return render_template("booking.html", form=form, cars=response.json(), start=start_dt, end=end_dt)
+        return render_template("booking.html", form=form)
     return redirect(url_for('site.login'))
 
 
 @site.route("/book", methods=['POST'])
-def create_booking():
+def process_booking():
     if 'user' in session:
-        form = create_booking_choices()
-        print(str(form.start.data < form.end.data))
-        return "<h1>" + str(form.start.data) + " " + str(form.end.data) + " " + "</h1>"
+        completed = 0
+        car_id = request.args.get('car_id')
+        start = request.args.get('start')
+        end = request.args.get('end')
+        if None not in (car_id, start, end):
+            data = {
+                'start': start,
+                'end': end,
+                'user_id': session['user']['email'],
+                'car_id': car_id
+            }
+            response = requests.post(
+                "{}{}".format(URL, "booking"),
+                json=json.dumps(data)
+            )
+            result = response.json()
+            print(result)
+            completed = 1
+        return render_template("booking.html", form=BookingQueryForm(), completed=completed)
     return redirect(url_for('site.login'))
 
 
 @site.route("/history")
 def view_history():
     if 'user' in session:
+        print(session['user'])
         bookings = requests.get(
-            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["id"]}
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['email']}
         )
         return render_template("history.html", user_bookings=bookings.json())
     return redirect(url_for('site.login'))
@@ -183,12 +214,26 @@ def available_cars():
     return redirect(url_for('site.login'))
 
 
-@site.route("/cancel")
+@site.route("/cancel", methods=['POST', 'GET'])
 def cancel_booking():
     if 'user' in session:
         bookings = requests.get(
-            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["id"], "status": 0}
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
         )
+        if request.method == "POST":
+            booking_id = request.args.get('booking_id')
+            status = request.args.get('status')
+            if None not in (booking_id, status):
+                data = {
+                    "booking_id": booking_id,
+                    "status": status
+                }
+                response = requests.put(
+                    "{}{}".format(URL, "booking"),
+                    json=json.dumps(data)
+                )
+                result = response.json()
+                return str(result)
         return render_template("cancel.html", user_bookings=bookings.json())
     return redirect(url_for('site.login'))
 

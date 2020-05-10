@@ -12,9 +12,14 @@
     <div class="row justify-content-center pt-3">
       <h5>Create Booking</h5>
     </div>
+    {% if completed == 1 %}
+    <div class="row justify-content-center pt-3">
+      <p><i>Booking Successful!</i></p>
+    </div>
+    {% endif %}
     <div class="row">
       <div class="col">
-        <form class="form-signin" method="POST">
+        <form id="form" class="form-signin" method="GET">
           {{ form.hidden_tag() }}
           <div class="form-row">
             <div class="form-group col-md-4">
@@ -26,10 +31,29 @@
           </div>
           <div class="form-row">
             <div class="form-group col-md-6">
-              <button type="submit" class="btn btn-primary">Confirm</button>
+              <button type="submit" class="btn btn-primary">Submit</button>
             </div>
           </div>
         </form>
+      </div>
+    </div>
+    <div class="container">
+      <div class="card-columns">
+      {% for car in cars %}
+        <div class="card bg-light mb-4">
+          <div class="card-body">
+            <h5 class="card-title">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
+            <p class="card-text">{{car.car_id}}</p>
+            <p class="card-text">Capcity: {{car.model.capacity}}</p>
+            <p class="card-text">Colour: {{car.model.colour}}</p>
+            <p class="card-text">Cost: ${{car.cph}} per hour</p>
+            <!-- <a href="/book?id={{car.id}}" class="btn btn-primary">Book now</a> -->
+            <form action="/book?car_id={{car.car_id}}&start={{start}}&end={{end}}" class="form-signup" method="POST">
+              <button type="submit" class="btn btn-primary" name="submit">Book now</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
       </div>
     </div>
   </div>
