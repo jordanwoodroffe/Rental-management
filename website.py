@@ -10,17 +10,9 @@ import requests
 from collections import defaultdict
 from datetime import datetime
 from datetime import timedelta
-from googleapiclient.discovery import build
 from httplib2 import Http
-from oauth2client import file, client, tools
-
-from authlib.client import OAuth2Session
-import google.oauth2.credentials
-import googleapiclient.discovery
-import os
-
-from apiclient import discovery
 from oauth2client import client
+from apiclient import discovery
 
 
 site = Blueprint("site", __name__)
@@ -320,9 +312,8 @@ def add_event():
     if 'user' in session:
         booking_id = request.args.get('booking_id')
         car_id = request.args.get('car_id')
-        # time_start = request.args.get('booking_id')
-        # time_end = request.args.get('booking_id')
-        # name = request.args.get('booking_id')
+        time_start = request.args.get('time_start')
+        time_end = request.args.get('time_end')
 
         date = datetime.now()
         tomorrow = (date + timedelta(days = 1)).strftime("%Y-%m-%d")
@@ -330,8 +321,8 @@ def add_event():
         time_end = "{}T07:00:00+10:00".format(tomorrow)
         event = {
             "summary": "Booking: " + booking_id + " for car: " + car_id,
-            "location": "RMIT Building 14",
-            "description": "Adding new IoT event",
+            "location": "",
+            "description": "Car booking",
             "start": {
                 "dateTime": time_start,
                 "timeZone": "Australia/Melbourne",
@@ -341,8 +332,6 @@ def add_event():
                 "timeZone": "Australia/Melbourne",
             },
             "attendees": [
-                { "email": "kevin@scare.you" },
-                { "email": "shekhar@wake.you" },
             ],
             "reminders": {
                 "useDefault": False,

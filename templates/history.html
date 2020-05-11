@@ -21,7 +21,7 @@
           {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("") -%}
           <p class="card-text">{{status}}</p>
           {% endif %}
-          <a href="/calendar?booking_id={{booking.booking_id}}&car_id={{booking.car.car_id}}" class="btn btn-primary">Add to calendar</a>
+          <a href="/calendar?booking_id={{booking.booking_id}}&car_id={{booking.car.car_id}}&time_start{{booking.start}}=&time_end={{booking.end}}" class="btn btn-primary">Add to calendar</a>
         </div>
       </div>
     {% endfor %}
