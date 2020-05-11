@@ -95,6 +95,7 @@ class Booking(db.Model):
     start = db.Column('start', DateTime(), nullable=False)
     end = db.Column('end', DateTime(), nullable=False)
     completed = db.Column('completed', Integer(), nullable=False)
+    event_id = db.Column('event_id', VARCHAR(45))
 
 
 class Encoding(db.Model):
@@ -156,6 +157,7 @@ class BookingSchema(ma.SQLAlchemyAutoSchema):
     start = ma.auto_field()
     end = ma.auto_field()
     completed = ma.auto_field()
+    event_id = ma.auto_field()
 
 
 class EncodingSchema(ma.SQLAlchemyAutoSchema):

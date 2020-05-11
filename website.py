@@ -222,6 +222,17 @@ def cancel_booking():
                 result = response.json()
                 messages = []
                 if result['code'] == 'SUCCESS':
+                    # if 'credentials' not in session:
+                    #     return redirect(url_for('site.oauth2callback'))
+                    # credentials = client.OAuth2Credentials.from_json(session['credentials'])
+                    # if credentials.access_token_expired:
+                    #     return redirect(url_for('site.oauth2callback'))
+                    # else:
+                    #     http_auth = credentials.authorize(Http())
+                    #     service = discovery.build('calendar', 'v3', http=http_auth)
+
+                    # event_id = request.args.get('event_id')
+                    # delete_event = service.events().delete(calenderId="primary", eventId=event_id, sendUpdates="all")
                     booking = result['data']
                     messages.append((
                         "success",
@@ -330,25 +341,6 @@ def add_event():
         add_event = service.events().insert(calendarId="primary", body=event).execute()
         print("Event created: {}".format(add_event.get("htmlLink")))
         return render_template("booking.html", form=BookingQueryForm())
-
-    return redirect(url_for('site.login'))
-
-
-@site.route("/deleteevent")
-def delete_event():
-    if 'user' in session:
-        if 'credentials' not in session:
-            return redirect(url_for('site.oauth2callback'))
-        credentials = client.OAuth2Credentials.from_json(session['credentials'])
-        if credentials.access_token_expired:
-            return redirect(url_for('site.oauth2callback'))
-        else:
-            http_auth = credentials.authorize(Http())
-            service = discovery.build('calendar', 'v3', http=http_auth)
-
-        event_id = request.args.get('event_id')
-        delete_event = service.events().delete(calenderId="primary", eventId=event_id, sendUpdates="all")
-        return redirect(url_for('site.view_history'))
 
     return redirect(url_for('site.login'))
 
