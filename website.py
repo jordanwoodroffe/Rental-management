@@ -289,8 +289,8 @@ def search_cars():
     return redirect(url_for('site.login'))
 
 
-@site.route("/calendar/<event>")
-def calendar(event):
+@site.route("/addevent")
+def add_event():
     if 'user' in session:
         if 'credentials' not in session:
             return redirect(url_for('site.oauth2callback'))
@@ -301,41 +301,54 @@ def calendar(event):
             http_auth = credentials.authorize(Http())
             service = discovery.build('calendar', 'v3', http=http_auth)
 
-        if event == "add":
-            car_id = request.args.get('car_id')
-            time_start = request.args.get('time_start').replace(" ", "T") + "+10:00"
-            time_end = request.args.get('time_end').replace(" ", "T") + "+10:00"
+        car_id = request.args.get('car_id')
+        time_start = request.args.get('time_start').replace(" ", "T") + "+10:00"
+        time_end = request.args.get('time_end').replace(" ", "T") + "+10:00"
 
-            event = {
-                "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
-                        session['user']['l_name'],
-                "start": {
-                    "dateTime": time_start,
-                    "timeZone": "Australia/Melbourne",
-                },
-                "end": {
-                    "dateTime": time_end,
-                    "timeZone": "Australia/Melbourne",
-                },
-                "attendees": [
-                    {"email": session['user']['email']},
+        event = {
+            "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
+                    session['user']['l_name'],
+            "start": {
+                "dateTime": time_start,
+                "timeZone": "Australia/Melbourne",
+            },
+            "end": {
+                "dateTime": time_end,
+                "timeZone": "Australia/Melbourne",
+            },
+            "attendees": [
+                {"email": session['user']['email']},
+            ],
+            "reminders": {
+                "useDefault": False,
+                "overrides": [
+                    {"method": "email", "minutes": 5},
+                    {"method": "popup", "minutes": 10},
                 ],
-                "reminders": {
-                    "useDefault": False,
-                    "overrides": [
-                        {"method": "email", "minutes": 5},
-                        {"method": "popup", "minutes": 10},
-                    ],
-                }
             }
-            add_event = service.events().insert(calendarId="primary", body=event).execute()
-            print("Event created: {}".format(add_event.get("htmlLink")))
-            return render_template("booking.html", form=BookingQueryForm())
+        }
+        add_event = service.events().insert(calendarId="primary", body=event).execute()
+        print("Event created: {}".format(add_event.get("htmlLink")))
+        return render_template("booking.html", form=BookingQueryForm())
 
-        elif event == "delete":
-            print("DELETE TEST")
-            return redirect(url_for('site.view_history'))
+    return redirect(url_for('site.login'))
 
+@site.route("/deleteevent")
+def delete_event():
+    if 'user' in session:
+        if 'credentials' not in session:
+            return redirect(url_for('site.oauth2callback'))
+        credentials = client.OAuth2Credentials.from_json(session['credentials'])
+        if credentials.access_token_expired:
+            return redirect(url_for('site.oauth2callback'))
+        else:
+            http_auth = credentials.authorize(Http())
+            service = discovery.build('calendar', 'v3', http=http_auth)
+        
+        event_id = request.args.get('event_id')
+        delete_event = service.events().delete(calenderId="primary", eventId=event_id, sendUpdates="all")
+        return redirect(url_for('site.view_history'))
+    
     return redirect(url_for('site.login'))
 
 
