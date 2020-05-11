@@ -10,8 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
-from apiclient import discovery
-
+from googleapiclient import discovery
 
 site = Blueprint("site", __name__)
 
@@ -178,7 +177,6 @@ def render_booking_page():
 @site.route("/book", methods=['POST'])
 def process_booking():
     if 'user' in session:
-        completed = 0
         car_id = request.args.get('car_id')
         start = request.args.get('start')
         end = request.args.get('end')
@@ -245,7 +243,7 @@ def cancel_booking():
                         {
                             "message": "Booking successfully cancelled!",
                             "data": "With {}\n{} - {}".format(
-                               booking['car_id'], booking['start'], booking['end']
+                                booking['car_id'], booking['start'], booking['end']
                             )
                         }
                     ))
@@ -305,6 +303,7 @@ def search_cars():
 
     return redirect(url_for('site.login'))
 
+
 @site.route("/calendar")
 def add_event():
     if 'user' in session:
@@ -314,7 +313,7 @@ def add_event():
         time_end = request.args.get('time_end')
 
         date = datetime.now()
-        tomorrow = (date + timedelta(days = 1)).strftime("%Y-%m-%d")
+        tomorrow = (date + timedelta(days=1)).strftime("%Y-%m-%d")
         time_start = "{}T06:00:00+10:00".format(tomorrow)
         time_end = "{}T07:00:00+10:00".format(tomorrow)
         event = {
@@ -334,46 +333,43 @@ def add_event():
             "reminders": {
                 "useDefault": False,
                 "overrides": [
-                    { "method": "email", "minutes": 5 },
-                    { "method": "popup", "minutes": 10 },
+                    {"method": "email", "minutes": 5},
+                    {"method": "popup", "minutes": 10},
                 ],
             }
         }
         print(event)
 
         if 'credentials' not in session:
-            return redirect(url_for('oauth2callback'))
+            return redirect(url_for('site.oauth2callback'))
         credentials = client.OAuth2Credentials.from_json(session['credentials'])
         if credentials.access_token_expired:
-            return redirect(url_for('oauth2callback'))
+            return redirect(url_for('site.oauth2callback'))
         else:
             http_auth = credentials.authorize(Http())
-            service = discovery.build('calendar', 'v3', http = http_auth)
-        
-        event = service.events().insert(calendarId = "primary", body = event).execute()
+            service = discovery.build('calendar', 'v3', http=http_auth)
+
+        event = service.events().insert(calendarId="primary", body=event).execute()
         print("Event created: {}".format(event.get("htmlLink")))
 
         return redirect(url_for('site.view_history'))
 
     return redirect(url_for('site.login'))
 
+
 @site.route('/oauth2callback')
 def oauth2callback():
-  flow = client.flow_from_clientsecrets(
-      'credentials.json',
-      scope='https://www.googleapis.com/auth/calendar',
-      redirect_uri=url_for('site.oauth2callback', _external=True))
+    flow = client.flow_from_clientsecrets(
+        'credentials.json',
+        scope='https://www.googleapis.com/auth/calendar',
+        redirect_uri=url_for('site.oauth2callback', _external=True))
 
-  if 'code' not in request.args:
-    auth_uri = flow.step1_get_authorize_url()
-    return redirect(auth_uri)
-  else:
-    auth_code = request.args.get('code')
-    credentials = flow.step2_exchange(auth_code)
-    session['credentials'] = credentials.to_json()
-    print(credentials.to_json())
-    return redirect(url_for('site.view_history'))
-
-# @site.route("/<page>", methods=['GET'])
-# def generate_page(page):
-#     return render_template("{}.html".format(page))
+    if 'code' not in request.args:
+        auth_uri = flow.step1_get_authorize_url()
+        return redirect(auth_uri)
+    else:
+        auth_code = request.args.get('code')
+        credentials = flow.step2_exchange(auth_code)
+        session['credentials'] = credentials.to_json()
+        print(credentials.to_json())
+        return redirect(url_for('site.view_history'))

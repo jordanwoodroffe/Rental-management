@@ -1,7 +1,6 @@
 import json
 import random
 from datetime import datetime
-
 import pandas as pd
 from json.decoder import JSONDecodeError
 import requests
@@ -71,7 +70,7 @@ class Car(db.Model):
     model = db.relationship("CarModel")
     name = db.Column('name', VARCHAR(45), nullable=False)
     cph = db.Column('cph', Float())
-    available = db.Column('available', TINYINT(1), nullable=False)
+    locked = db.Column('available', TINYINT(1), nullable=False)
 
 
 class CarModel(db.Model):
@@ -91,7 +90,6 @@ class Booking(db.Model):
     user = db.relationship('User')
     car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
     car = db.relationship('Car')
-    # duration = db.Column('duration', Integer(), nullable=False)
     start = db.Column('start', DateTime(), nullable=False)
     end = db.Column('end', DateTime(), nullable=False)
     completed = db.Column('completed', Integer(), nullable=False)
@@ -138,7 +136,7 @@ class CarSchema(ma.SQLAlchemyAutoSchema):
     name = ma.auto_field()
     model_id = ma.auto_field()
     model = fields.Nested(CarModelSchema)
-    available = ma.auto_field()
+    locked = ma.auto_field()
     cph = ma.auto_field()
 
 
@@ -153,7 +151,6 @@ class BookingSchema(ma.SQLAlchemyAutoSchema):
     car = fields.Nested(CarSchema)
     start = ma.auto_field()
     end = ma.auto_field()
-    # duration = ma.auto_field()
     completed = ma.auto_field()
 
 
@@ -311,6 +308,57 @@ def get_car():
     return data
 
 
+@api.route("/car", methods=['PUT'])
+def unlock_car():
+    car_id = request.args.get('car_id')
+    if car_id is not None:
+        locked = request.args.get('locked')
+        user_id = request.args.get('user_id')
+        if None in (user_id, locked):
+            return update_location(car_id)
+        else:
+            locked_val = int(locked)
+            bookings = Booking.query.filter_by(completed=0).filter_by(car_id=car_id).filter_by(user_id=user_id)
+            data = json.loads(BookingSchema(many=True, exclude=['user.password']).dumps(bookings))
+            if len(data) > 0:  # TODO: handle decode error: ie if multiple (should never occur though)
+                # TODO: check datetime for unlock (and lock? send overdue msg?)
+                event = data[0]
+                car = Car.query.get(car_id)
+                car.locked = locked_val
+                db.session.add(car)
+                if locked_val == 1:
+                    print(event)
+                    booking = Booking.query.get(event['booking_id'])
+                    booking.completed = 1
+                    db.session.add(booking)
+                db.session.commit()
+                return event
+            else:
+                return "oops"
+
+
+def update_location(car_id):
+    return "DOOT"
+
+
+@api.route("/cars/<start>/<end>", methods=['GET'])
+def get_valid_cars(start, end):
+    bookings = Booking.query.filter_by(completed=0)
+    data = json.loads(BookingSchema(many=True, exclude=['user.password']).dumps(bookings))
+    booked_cars = []
+    for booking in data:
+        # TODO - check for conversion/datatype error
+        b_start = datetime.strptime(booking['start'], "%Y-%m-%dT%H:%M:%S")
+        b_end = datetime.strptime(booking['end'], "%Y-%m-%dT%H:%M:%S")
+        start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S")
+        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
+        if compare_dates(start=start_dt, end=end_dt, b_start=b_start, b_end=b_end):  # overlap found
+            booked_cars.append(booking['car_id'])  # add to booked car list
+    # get cars that don't match any cars with overlapping bookings
+    cars = Car.query.filter(Car.car_id.notin_(booked_cars))
+    return CarSchema(many=True).dumps(cars)
+
+
 @api.route("/bookings", methods=['GET'])
 def get_bookings():
     """
@@ -328,25 +376,7 @@ def get_bookings():
             bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.email == user_id)
         else:
             bookings = Booking.query.join(User).filter(User.email == user_id)
-    return BookingSchema(many=True).dumps(bookings)
-
-
-@api.route("/cars/<start>/<end>", methods=['GET'])
-def get_valid_cars(start, end):
-    bookings = Booking.query.filter_by(completed=0)
-    data = json.loads(BookingSchema(many=True).dumps(bookings))
-    booked_cars = []
-    for booking in data:
-        # TODO - check for conversion/datatype error
-        b_start = datetime.strptime(booking['start'], "%Y-%m-%dT%H:%M:%S")
-        b_end = datetime.strptime(booking['end'], "%Y-%m-%dT%H:%M:%S")
-        start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S")
-        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
-        if compare_dates(start=start_dt, end=end_dt, b_start=b_start, b_end=b_end):  # overlap found
-            booked_cars.append(booking['car_id'])  # add to booked car list
-    # return cars that don't match any cars with overlapping bookings
-    cars = Car.query.filter(Car.car_id.notin_(booked_cars))
-    return CarSchema(many=True).dumps(cars)
+    return BookingSchema(many=True, exclude=['user.password']).dumps(bookings)
 
 
 @api.route("/booking", methods=['POST'])
@@ -454,7 +484,7 @@ def populate():
             car.model_id = random.choice(models.model_id.unique().tolist())
             car.cph = row['cph']
             car.name = row['name']
-            car.available = 1
+            car.locked = 1
             db.session.add(car)
         response['cars'] = True
         # bookings
