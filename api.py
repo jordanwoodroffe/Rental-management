@@ -442,12 +442,18 @@ def get_bookings():
 
 @api.route("/booking", methods=['GET'])
 def get_booking():
+    """
+    Returns a booking with booking id
+
+    Returns:
+        JSON object containing a booking
+    """
     booking_id = request.args.get('booking_id')
     if booking_id is not None:
         booking = Booking.query.get(booking_id)
         if booking is not None:
             return Response(
-                BookingSchema().dump(booking), status=200, content_type="application/json", mimetype="application/json")
+                BookingSchema().dumps(booking), status=200, content_type="application/json", mimetype="application/json")
         else:
             return Response("invalid booking id", status=404)
     return Response("missing booking_id argument", status=400)
@@ -470,9 +476,14 @@ def add_booking():
         booking.user_id = data['user_id']
         booking.car_id = data['car_id']
         booking.completed = 0
+        if data['event_id'] is not None:
+            booking.event_id = data['event_id']
         db.session.add(booking)
         db.session.commit()
-        response = Response(status=200)
+        response = {
+            "status_code": 200,
+            "booking_id": booking.booking_id
+        }
     else:
         response = Response(status=400)
     return response
@@ -502,6 +513,40 @@ def update_booking():
                     'car_id': booking.car_id,
                     'start': booking.start,
                     'end': booking.end
+                }
+            else:
+                response['code'] = 'BOOKING ERROR'
+                response['data'] = 'Invalid BookingID'
+    else:
+        response['code'] = "JSON ERROR"
+        response['data'] = 'Invalid JSON received.'
+    return response
+
+@api.route("/eventId", methods=['PUT'])
+def update_eventId():
+    """
+    Update eventid for booking
+    Returns:
+        Success if processed correctly, otherwise error corresponding to the problem
+    """
+    data = request.get_json()
+    print(data)
+    response = {}
+    if data is not None:
+        json_data = json.loads(data)
+        event_id = json_data['event_id']
+        booking_id = json_data['booking_id']
+        if None not in (event_id, booking_id):
+            booking = Booking.query.get(booking_id)
+            if booking is not None:
+                booking.event_id = event_id
+                db.session.commit()
+                response['code'] = 'SUCCESS'
+                response['data'] = {
+                    'car_id': booking.car_id,
+                    'start': booking.start,
+                    'end': booking.end,
+                    'event_id': booking.event_id
                 }
             else:
                 response['code'] = 'BOOKING ERROR'

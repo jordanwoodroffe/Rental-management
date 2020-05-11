@@ -19,7 +19,7 @@
           <small class="text-muted">{{message.data}}</small>
         </div>
         {% if category == "success" %}
-          <br><a href="/addevent?car_id={{message.car_id}}&time_start={{message.start}}&time_end={{message.end}}" class="btn btn-primary">Add to calendar</a>
+          <br><a href="/addevent?booking_id={{message.booking_id}}&car_id={{message.car_id}}&time_start={{message.start}}&time_end={{message.end}}" class="btn btn-primary">Add to calendar</a>
         {% endif %}
       </div>
     {% endfor %}
