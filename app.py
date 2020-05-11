@@ -1,9 +1,8 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 from api import api, db, DB_URI
 from website import site
 from datetime import timedelta
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'temp'
@@ -14,13 +13,16 @@ app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(site)
 app.register_blueprint(api)
 
+
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template("404.html"), 404
 
+
 @app.errorhandler(403)
 def access_forbidden(error):
     return render_template("403.html"), 403
+
 
 @app.errorhandler(500)
 def internal(error):
@@ -36,4 +38,3 @@ if __name__ == '__main__':
     # db.drop_all(app=app)
     db.create_all(app=app)
     app.run(debug=True)
-
