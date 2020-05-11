@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
-from apiclient import discovery
+from googleapiclient import discovery
 
 
 site = Blueprint("site", __name__)
@@ -310,23 +310,19 @@ def add_event():
     if 'user' in session:
         booking_id = request.args.get('booking_id')
         car_id = request.args.get('car_id')
-        time_start = request.args.get('time_start')
-        time_end = request.args.get('time_end')
+        time_start = datetime.strptime(request.args.get('time_start').replace("T"," "), "%Y-%m-%d %H:%M:%S")
+        time_end = datetime.strptime(request.args.get('time_end').replace("T"," "), "%Y-%m-%d %H:%M:%S")
 
-        date = datetime.now()
-        tomorrow = (date + timedelta(days = 1)).strftime("%Y-%m-%d")
-        time_start = "{}T06:00:00+10:00".format(tomorrow)
-        time_end = "{}T07:00:00+10:00".format(tomorrow)
         event = {
-            "summary": "Booking: " + booking_id + " for car: " + car_id,
+            "summary": "Booking for car: " + car_id,
             "location": "",
-            "description": "Car booking",
+            "description": "Booking ID: " + booking_id,
             "start": {
-                "dateTime": time_start,
+                "dateTime": str(time_start).replace(" ","T") + "+10:00",
                 "timeZone": "Australia/Melbourne",
             },
             "end": {
-                "dateTime": time_end,
+                "dateTime": str(time_end).replace(" ","T") + "+10:00",
                 "timeZone": "Australia/Melbourne",
             },
             "attendees": [
@@ -339,13 +335,12 @@ def add_event():
                 ],
             }
         }
-        print(event)
 
         if 'credentials' not in session:
-            return redirect(url_for('oauth2callback'))
+            return redirect(url_for('site.oauth2callback'))
         credentials = client.OAuth2Credentials.from_json(session['credentials'])
         if credentials.access_token_expired:
-            return redirect(url_for('oauth2callback'))
+            return redirect(url_for('site.oauth2callback'))
         else:
             http_auth = credentials.authorize(Http())
             service = discovery.build('calendar', 'v3', http = http_auth)
@@ -371,8 +366,7 @@ def oauth2callback():
     auth_code = request.args.get('code')
     credentials = flow.step2_exchange(auth_code)
     session['credentials'] = credentials.to_json()
-    print(credentials.to_json())
-    return redirect(url_for('site.view_history'))
+    return redirect(url_for('site.calendar'))
 
 # @site.route("/<page>", methods=['GET'])
 # def generate_page(page):
