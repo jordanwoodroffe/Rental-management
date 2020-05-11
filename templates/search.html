@@ -51,6 +51,13 @@
                 <output for="capacityVal" onforminput="value = capacityVal.valueAsNumber;"></output>
               </div>
           </label>
+          <label>
+            <div>Cost</div>
+              <div class="slidecontainer">
+                <input type="range" class="custom-range" value="{{ attributes['cost'] | min }}" min="{{ attributes['cost'] | min }}" max="{{ attributes['cost'] | max}}" class="slider" id="cost-filter" oninput="filter()" name="costVal">
+                <output for="costVal" onforminput="value = costVal.valueAsNumber;"></output>
+              </div>
+          </label>
         </div>
         <div class="card-columns">
           {% for car in cars %}
@@ -59,7 +66,7 @@
                 <h5 class="card-title make-value">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
                 <p class="card-text capacity-value">Capcity: {{car.model.capacity}}</p>
                 <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
-                <p class="card-text">Cost: ${{car.cph}} per hour</p>
+                <p class="card-text cost-value">Cost: ${{car.cph}} per hour</p>
               </div>
             </div>
           {% endfor %}

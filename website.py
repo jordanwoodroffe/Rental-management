@@ -254,6 +254,8 @@ def search_cars():
                 attributes['colour'].add(car['model']['colour'])
                 attributes['year'].add(car['model']['year'])
                 attributes['capacity'].add(car['model']['capacity'])
+                attributes['cost'].add(car['cph'])
+
             return render_template("search.html", cars=cars.json(), attributes=attributes)
 
     return redirect(url_for('site.login'))
