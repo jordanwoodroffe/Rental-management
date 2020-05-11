@@ -47,14 +47,14 @@
           <label>
             <div>Capacity</div>
               <div class="slidecontainer">
-                <input type="range" class="custom-range" value="{{ attributes['capacity'] | min }}" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()" name="capacityVal">
+                <span>{{ attributes['capacity'] | min }}</span><input type="range" class="custom-range" value="{{ attributes['capacity'] | min }}" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()" name="capacityVal"><span>{{ attributes['capacity'] | max}}</span>
                 <output for="capacityVal" onforminput="value = capacityVal.valueAsNumber;"></output>
               </div>
           </label>
           <label>
             <div>Cost</div>
               <div class="slidecontainer">
-                <input type="range" class="custom-range" value="{{ attributes['cost'] | min }}" min="{{ attributes['cost'] | min }}" max="{{ attributes['cost'] | max}}" class="slider" id="cost-filter" oninput="filter()" name="costVal">
+                <span>${{ attributes['cost'] | min }}</span><input type="range" class="custom-range" value="{{ attributes['cost'] | min }}" min="{{ attributes['cost'] | min }}" max="{{ attributes['cost'] | max}}" class="slider" id="cost-filter" oninput="filter()" name="costVal"><span>${{ attributes['cost'] | max }}</span>
                 <output for="costVal" onforminput="value = costVal.valueAsNumber;"></output>
               </div>
           </label>
