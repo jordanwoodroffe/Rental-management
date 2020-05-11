@@ -239,17 +239,18 @@ def cancel_booking():
                         "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
                     )
                     event_id = booking.json()['event_id']
-                    delete_event = service.events().delete(calendarId="primary", eventId=event_id, sendUpdates="all").execute()
-                    booking = result['data']
-                    messages.append((
-                        "success",
-                        {
-                            "message": "Booking successfully cancelled!",
-                            "data": "With {}\n{} - {}".format(
-                                booking['car_id'], booking['start'], booking['end']
-                            )
-                        }
-                    ))
+                    if event_id is not None:
+                        delete_event = service.events().delete(calendarId="primary", eventId=event_id, sendUpdates="all").execute()
+                        booking = result['data']
+                        messages.append((
+                            "success",
+                            {
+                                "message": "Booking successfully cancelled!",
+                                "data": "With {}\n{} - {}".format(
+                                    booking['car_id'], booking['start'], booking['end']
+                                )
+                            }
+                        ))
                     bookings = requests.get(
                         "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
                     )
