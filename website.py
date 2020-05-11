@@ -42,9 +42,19 @@ def valid_password(form, field):
         raise ValidationError('Password must contain at least one special character')
 
 
+def validate_date(form, field):
+    try:
+        dt = datetime.strptime(field.data, "%Y-%m-%d %H:%M")
+    except Exception:
+        raise ValidationError('Incorrect input format. Please input as YYYY-mm-dd  HH:MM')
+    else:
+        if dt < datetime.now():
+            raise ValidationError('Date must be later than current date')
+
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    password = PasswordField('Password', validators=[InputRequired(), Length(4, 20)])
+    password = PasswordField('Password', validators=[InputRequired()])
 
 
 class RegistrationForm(FlaskForm):
@@ -56,8 +66,10 @@ class RegistrationForm(FlaskForm):
 
 # replace choices with result of db query
 class BookingQueryForm(FlaskForm):
-    start = DateTimeField('Start', format="%Y-%m-%d %H:%M", default=datetime.now)
-    end = DateTimeField('End', format="%Y-%m-%d %H:%M", default=datetime.now)
+    start = DateTimeField('Start', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
+                          default=datetime.now)
+    end = DateTimeField('End', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
+                        default=datetime.now)
 
 
 class BookingForm(FlaskForm):
@@ -84,13 +96,13 @@ def login():
             params={"user_id": form.email.data, "password": form.password.data},
         )
         data = result.json()
-        if data['code'] == 'SUCCESS':
-            session['user'] = data['user']
-            print(session['user'])
-        elif data['code'] == 'EMAIL ERROR':
-            form.email.errors.append('This email has not been registered')
-        elif data['code'] == 'PASSWORD ERROR':
-            form.password.errors.append('Incorrect password')
+        if result.status_code == 200:
+            session['user'] = result.json()
+        elif result.status_code == 404:
+            if data['error'] == 'EMAIL':
+                form.email.errors.append('This email has not been registered')
+            elif data['error'] == 'PASSWORD':
+                form.password.errors.append('Incorrect password')
     if 'user' in session:
         return redirect(url_for("site.main"))
     return render_template("login.html", form=form)
@@ -140,18 +152,28 @@ def render_booking_page():
         end = request.args.get('end')
         form = BookingQueryForm()
         if start is not None and end is not None:
-            start_dt = datetime.strptime(start, "%Y-%m-%d %H:%M")
-            end_dt = datetime.strptime(end, "%Y-%m-%d %H:%M")
-            print(start_dt)
-            print(end_dt)
-            response = requests.get(
-                "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
-            )
-            # booking form - render the car tiles:
-            # set datetime to readonly?
-            form.start.data = start_dt
-            form.end.data = end_dt
-            return render_template("booking.html", form=form, cars=response.json(), start=start_dt, end=end_dt)
+            try:
+                start_dt = datetime.strptime(start, "%Y-%m-%d %H:%M")
+                end_dt = datetime.strptime(end, "%Y-%m-%d %H:%M")
+                if start_dt > end_dt:
+                    raise DateException("Start date cannot be after end date")
+                elif start_dt < datetime.now() or end_dt < datetime.now():
+                    raise DateException("Start and end date must be after current time")
+            except DateException as de:
+                form.start.errors = [str(de)]
+            except ValueError as ve:
+                print("Incorrect input format\n{}".format(str(ve)))
+                form.start.errors = ['Incorrect format', 'expected YYYY-mm-dd HH:MM']
+
+            else:
+                print(start_dt)
+                print(end_dt)
+                response = requests.get(
+                    "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
+                )
+                form.start.data = start_dt
+                form.end.data = end_dt
+                return render_template("booking.html", form=form, cars=response.json(), start=start_dt, end=end_dt)
         return render_template("booking.html", form=form)
     return redirect(url_for('site.login'))
 
@@ -159,7 +181,6 @@ def render_booking_page():
 @site.route("/book", methods=['POST'])
 def process_booking():
     if 'user' in session:
-        completed = 0
         car_id = request.args.get('car_id')
         start = request.args.get('start')
         end = request.args.get('end')
@@ -176,8 +197,6 @@ def process_booking():
                 "{}{}".format(URL, "booking"),
                 json=json.dumps(data)
             )
-
-
             if response.json()['status_code'] == 200:
                 messages = [(
                     "success",
@@ -234,7 +253,7 @@ def cancel_booking():
                     else:
                         http_auth = credentials.authorize(Http())
                         service = discovery.build('calendar', 'v3', http=http_auth)
-                    
+
                     booking = requests.get(
                         "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
                     )
@@ -379,3 +398,7 @@ def oauth2callback():
     return redirect(url_for('site.add_event'))
 
 
+
+
+class DateException(ValueError):
+    pass

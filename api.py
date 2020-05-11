@@ -208,7 +208,7 @@ def get_user():
     if user_id is not None:
         user = User.query.get(user_id)
         if user is not None:
-            return Response(UserSchema(exclude=['password']).dump(user), status=200, mimetype="application/json")
+            return Response(UserSchema(exclude=['password']).dumps(user), status=200, mimetype="application/json")
         return Response("User {} not found".format(user_id), status=404)
     return Response("user_id param not found", status=400)
 
@@ -254,7 +254,7 @@ def add_user():
         return response
 
 
-@api.route("/users/authenticate")
+@api.route("/users/authenticate", methods=['GET', 'POST'])
 def user_authentication():
     """
     Endpoint to authenticate a user logging in to MP webapp
@@ -268,23 +268,30 @@ def user_authentication():
     """
     user_id = request.args.get('user_id')
     password = request.args.get('password')
-    response = {}
+    # response = {}
     if user_id is None:
-        response['code'] = 'EMAIL ERROR'
+        response = Response("No email parameter found", status=400)
+        # response['code'] = 'EMAIL ERROR'
     elif password is None:
-        response['code'] = 'PASSWORD ERROR'
+        response = Response("No password parameter found", status=400)
+        # response['code'] = 'PASSWORD ERROR'
     else:
         user = User.query.get(user_id)
         if user is not None:
             stored_password = user.password.split(':')[0]
             salt = user.password.split(':')[1]
             if verify_password(stored_password, password, salt):
-                response['code'] = 'SUCCESS'
-                response['user'] = UserSchema(exclude=['password']).dump(user)
+                response = Response(
+                    UserSchema(exclude=['password']).dumps(user), status=200, content_type="application/json"
+                )
+                # response['code'] = 'SUCCESS'
+                # response['user'] = UserSchema(exclude=['password']).dumps(user)
             else:
-                response['code'] = 'PASSWORD ERROR'
+                response = Response(json.dumps({'error': 'PASSWORD'}), status=404, content_type="application/json")
+                # response['code'] = 'PASSWORD ERROR'
         else:
-            response['code'] = 'EMAIL ERROR'
+            response = Response(json.dumps({'error': 'EMAIL'}), status=404, content_type="application/json")
+            # response['code'] = 'EMAIL ERROR'
     return response
 
 
@@ -315,7 +322,7 @@ def get_car():
     if car_id is not None:
         car = Car.query.get(car_id)
         if car is not None:
-            return Response(CarSchema().dump(car), status=200, mimetype="application/json")
+            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
         return Response("Car not found", status=404)
     return Response("car_id param was not found", status=400)
 
@@ -352,15 +359,16 @@ def update_car():
                 event = data[0]
                 car = Car.query.get(car_id)
                 car.locked = locked_val
-                db.session.add(car)
+                # db.session.add(car)
+                db.session.commit()
                 message = "Successful: car is {}".format("locked" if locked_val == 1 else "unlocked")
                 if locked_val == 1:
                     print(event)
                     booking = Booking.query.get(event['booking_id'])
                     booking.completed = 1
-                    db.session.add(booking)
+                    # db.session.add(booking)
+                    db.session.commit()
                     message = message + ", booking has been completed"
-                db.session.commit()
                 return Response(message, status=200)
             else:
                 return Response(status=404)
@@ -383,7 +391,7 @@ def update_location(car_id):
         if car is not None:
             car.long = float(long)
             car.lat = float(lat)
-            db.session.add(car)
+            # db.session.add(car)
             db.session.commit()
             return Response(status=200)
         return Response(status=404)
@@ -452,8 +460,7 @@ def get_booking():
     if booking_id is not None:
         booking = Booking.query.get(booking_id)
         if booking is not None:
-            return Response(
-                BookingSchema().dumps(booking), status=200, content_type="application/json", mimetype="application/json")
+            return Response(BookingSchema().dumps(booking), status=200, content_type="application/json")
         else:
             return Response("invalid booking id", status=404)
     return Response("missing booking_id argument", status=400)
