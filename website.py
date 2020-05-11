@@ -8,6 +8,20 @@ from wtforms.validators import InputRequired, Email, Length, NumberRange, Valida
 import re
 import requests
 from collections import defaultdict
+from datetime import datetime
+from datetime import timedelta
+from googleapiclient.discovery import build
+from httplib2 import Http
+from oauth2client import file, client, tools
+
+from authlib.client import OAuth2Session
+import google.oauth2.credentials
+import googleapiclient.discovery
+import os
+
+from apiclient import discovery
+from oauth2client import client
+
 
 site = Blueprint("site", __name__)
 
@@ -259,6 +273,78 @@ def search_cars():
             return render_template("search.html", cars=cars.json(), attributes=attributes)
 
     return redirect(url_for('site.login'))
+
+@site.route("/calendar")
+def add_event():
+    if 'user' in session:
+        booking_id = request.args.get('booking_id')
+        car_id = request.args.get('car_id')
+        # time_start = request.args.get('booking_id')
+        # time_end = request.args.get('booking_id')
+        # name = request.args.get('booking_id')
+
+        date = datetime.now()
+        tomorrow = (date + timedelta(days = 1)).strftime("%Y-%m-%d")
+        time_start = "{}T06:00:00+10:00".format(tomorrow)
+        time_end = "{}T07:00:00+10:00".format(tomorrow)
+        event = {
+            "summary": "Booking: " + booking_id + " for car: " + car_id,
+            "location": "RMIT Building 14",
+            "description": "Adding new IoT event",
+            "start": {
+                "dateTime": time_start,
+                "timeZone": "Australia/Melbourne",
+            },
+            "end": {
+                "dateTime": time_end,
+                "timeZone": "Australia/Melbourne",
+            },
+            "attendees": [
+                { "email": "kevin@scare.you" },
+                { "email": "shekhar@wake.you" },
+            ],
+            "reminders": {
+                "useDefault": False,
+                "overrides": [
+                    { "method": "email", "minutes": 5 },
+                    { "method": "popup", "minutes": 10 },
+                ],
+            }
+        }
+        print(event)
+
+        if 'credentials' not in session:
+            return redirect(url_for('oauth2callback'))
+        credentials = client.OAuth2Credentials.from_json(session['credentials'])
+        if credentials.access_token_expired:
+            return redirect(url_for('oauth2callback'))
+        else:
+            http_auth = credentials.authorize(Http())
+            service = discovery.build('calendar', 'v3', http = http_auth)
+        
+        event = service.events().insert(calendarId = "primary", body = event).execute()
+        print("Event created: {}".format(event.get("htmlLink")))
+
+        return redirect(url_for('site.view_history'))
+
+    return redirect(url_for('site.login'))
+
+@site.route('/oauth2callback')
+def oauth2callback():
+  flow = client.flow_from_clientsecrets(
+      'credentials.json',
+      scope='https://www.googleapis.com/auth/calendar',
+      redirect_uri=url_for('site.oauth2callback', _external=True))
+
+  if 'code' not in request.args:
+    auth_uri = flow.step1_get_authorize_url()
+    return redirect(auth_uri)
+  else:
+    auth_code = request.args.get('code')
+    credentials = flow.step2_exchange(auth_code)
+    session['credentials'] = credentials.to_json()
+    print(credentials.to_json())
+    return redirect(url_for('site.view_history'))
 
 # @site.route("/<page>", methods=['GET'])
 # def generate_page(page):
