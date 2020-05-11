@@ -1,15 +1,13 @@
 import json
-from datetime import datetime
+import re
+import requests
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
 from flask_datepicker import datepicker
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
-import re
-import requests
 from collections import defaultdict
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
 from apiclient import discovery
