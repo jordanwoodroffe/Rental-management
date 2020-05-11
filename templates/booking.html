@@ -8,15 +8,23 @@
 {% endwith %}
 
 <body style="padding-top: 4.5rem">
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>{{message.message}}</strong>
+        <div>
+          <small class="text-muted">{{message.data}}</small>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
   <div class="container bg-light rounded">
     <div class="row justify-content-center pt-3">
       <h5>Create Booking</h5>
     </div>
-    {% if completed == 1 %}
-    <div class="row justify-content-center pt-3">
-      <p><i>Booking Successful!</i></p>
-    </div>
-    {% endif %}
     <div class="row">
       <div class="col">
         <form id="form" class="form-signin" method="GET">

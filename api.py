@@ -371,7 +371,7 @@ def add_booking():
         db.session.commit()
         response['code'] = "SUCCESS"
     else:
-        response['code'] = "FAIL"
+        response['code'] = "ERROR"
     return response
 
 
@@ -383,19 +383,29 @@ def update_booking():
         success/error
     """
     data = request.get_json()
+    print(data)
     response = {}
     if data is not None:
         json_data = json.loads(data)
         booking_id = json_data['booking_id']
         status = json_data['status']
         if None not in (status, booking_id):
-            booking = Booking.query.filter_by(booking_id=booking_id)
+            booking = Booking.query.get(booking_id)
             if booking is not None:
-                setattr(booking, "email", status)
+                booking.completed = int(status)
                 db.session.commit()
-            response['code'] = 'SUCCESS'
+                response['code'] = 'SUCCESS'
+                response['data'] = {
+                    'car_id': booking.car_id,
+                    'start': booking.start,
+                    'end': booking.end
+                }
+            else:
+                response['code'] = 'BOOKING ERROR'
+                response['data'] = 'Invalid BookingID'
     else:
-        response['code'] = "FAIL"
+        response['code'] = "JSON ERROR"
+        response['data'] = 'Invalid JSON received.'
     return response
 
 
