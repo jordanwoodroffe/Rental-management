@@ -210,33 +210,35 @@ def get_user():
 @api.route("/user", methods=['POST'])
 def add_user():
     user_data = request.get_json()
-    response = {}
+    print("user data" + user_data)
+    response = None
     try:
         if user_data is None:
-            response['code'] = "DATA ERROR"
+            response = Response(status=400)
         else:
             data = json.loads(user_data)
-            user = User.query.get(data['user_id'])
+            print("data " + str(data))
+            user = User.query.get(data['email'])
             if user is None:
                 salt = get_random_alphaNumeric_string(10)
                 user = User()
-                user.email = data['user_id']
+                user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
                 user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.add(user)
                 db.session.commit()
-                response['code'] = "SUCCESS"
+                response = Response(status=200)
             else:
-                response['code'] = "USER ERROR"
+                response = Response(status=404)
     except JSONDecodeError as de:
         print("{}\n{}".format("Unable to decode user object", str(de)))
-        response['code'] = "JSON ERROR"
+        response = Response(status=500)
     except ValueError as ve:
         print("{}\n{}".format("Unable to access value", str(ve)))
-        response['code'] = "VALUE ERROR"
+        response = Response(status=500)
     finally:
-        return json.dumps(response)
+        return response
 
 
 @api.route("/users/authenticate")
@@ -392,7 +394,6 @@ def add_booking():
     Returns:
         JSON object with response code (successful/error)
     """
-    response = {}
     request_data = request.get_json()
     if request_data is not None:
         data = json.loads(request_data)
@@ -404,9 +405,9 @@ def add_booking():
         booking.completed = 0
         db.session.add(booking)
         db.session.commit()
-        response['code'] = "SUCCESS"
+        response = Response(status=200)
     else:
-        response['code'] = "ERROR"
+        response = Response(status=400)
     return response
 
 
