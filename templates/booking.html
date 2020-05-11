@@ -18,6 +18,9 @@
         <div>
           <small class="text-muted">{{message.data}}</small>
         </div>
+        {% if category == "success" %}
+          <br><a href="/calendar/add?car_id={{message.car_id}}&time_start={{message.start}}&time_end={{message.end}}" class="btn btn-primary">Add to calendar</a>
+        {% endif %}
       </div>
     {% endfor %}
   {% endif %}

@@ -186,7 +186,10 @@ def process_booking():
                         "message": "Booking successfully created!",
                         "data": "With {}\n{} - {}".format(
                             car_id, start, end
-                        )
+                        ),
+                        "car_id": car_id,
+                        "start": start,
+                        "end": end
                     }
                 )]
             else:
@@ -303,14 +306,13 @@ def calendar(event):
             service = discovery.build('calendar', 'v3', http=http_auth)
 
         if event == "add":
-            booking_id = request.args.get('booking_id')
             car_id = request.args.get('car_id')
-            time_start = request.args.get('time_start') + "+10:00"
-            time_end = request.args.get('time_end') + "+10:00"
+            time_start = request.args.get('time_start').replace(" ", "T") + "+10:00"
+            time_end = request.args.get('time_end').replace(" ", "T") + "+10:00"
+
             event = {
                 "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
-                           session['user']['l_name'],
-                "description": "Booking ID: " + booking_id,
+                        session['user']['l_name'],
                 "start": {
                     "dateTime": time_start,
                     "timeZone": "Australia/Melbourne",
@@ -330,15 +332,13 @@ def calendar(event):
                     ],
                 }
             }
-
-            event = service.events().insert(calendarId="primary", body=event).execute()
-            print(event)
-            print("Event created: {}".format(event.get("htmlLink")))
-
-            return redirect(url_for('site.view_history'))
+            add_event = service.events().insert(calendarId="primary", body=event).execute()
+            print("Event created: {}".format(add_event.get("htmlLink")))
+            return render_template("booking.html", form=BookingQueryForm())
 
         elif event == "delete":
-            pass
+            print("DELETE TEST")
+            return redirect(url_for('site.view_history'))
 
     return redirect(url_for('site.login'))
 
@@ -356,6 +356,6 @@ def oauth2callback():
         auth_code = request.args.get('code')
         credentials = flow.step2_exchange(auth_code)
         session['credentials'] = credentials.to_json()
-    return redirect(url_for('site.calendar'))
+    return redirect(url_for('site.calendar', event="add"))
 
 
