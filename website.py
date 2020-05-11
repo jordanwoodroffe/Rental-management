@@ -11,8 +11,6 @@ from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
-from googleapiclient import discovery
-
 
 site = Blueprint("site", __name__)
 
@@ -246,7 +244,7 @@ def cancel_booking():
                         {
                             "message": "Booking successfully cancelled!",
                             "data": "With {}\n{} - {}".format(
-                               booking['car_id'], booking['start'], booking['end']
+                                booking['car_id'], booking['start'], booking['end']
                             )
                         }
                     ))
@@ -306,6 +304,7 @@ def search_cars():
 
     return redirect(url_for('site.login'))
 
+
 @site.route("/calendar/<event>")
 def calendar(event):
     if 'user' in session:
@@ -316,7 +315,7 @@ def calendar(event):
             return redirect(url_for('site.oauth2callback'))
         else:
             http_auth = credentials.authorize(Http())
-            service = discovery.build('calendar', 'v3', http = http_auth)
+            service = discovery.build('calendar', 'v3', http=http_auth)
 
         if event == "add":
             booking_id = request.args.get('booking_id')
@@ -324,7 +323,8 @@ def calendar(event):
             time_start = request.args.get('time_start') + "+10:00"
             time_end = request.args.get('time_end') + "+10:00"
             event = {
-                "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " + session['user']['l_name'],
+                "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
+                           session['user']['l_name'],
                 "description": "Booking ID: " + booking_id,
                 "start": {
                     "dateTime": time_start,
@@ -335,18 +335,18 @@ def calendar(event):
                     "timeZone": "Australia/Melbourne",
                 },
                 "attendees": [
-                    { "email": session['user']['email'] },
+                    {"email": session['user']['email']},
                 ],
                 "reminders": {
                     "useDefault": False,
                     "overrides": [
-                        { "method": "email", "minutes": 5 },
-                        { "method": "popup", "minutes": 10 },
+                        {"method": "email", "minutes": 5},
+                        {"method": "popup", "minutes": 10},
                     ],
                 }
             }
 
-            event = service.events().insert(calendarId = "primary", body = event).execute()
+            event = service.events().insert(calendarId="primary", body=event).execute()
             print(event)
             print("Event created: {}".format(event.get("htmlLink")))
 
@@ -357,20 +357,20 @@ def calendar(event):
 
     return redirect(url_for('site.login'))
 
+
 @site.route('/oauth2callback')
 def oauth2callback():
     flow = client.flow_from_clientsecrets(
         'credentials.json',
         scope='https://www.googleapis.com/auth/calendar',
         redirect_uri=url_for('site.oauth2callback', _external=True))
-
-  if 'code' not in request.args:
-    auth_uri = flow.step1_get_authorize_url()
-    return redirect(auth_uri)
-  else:
-    auth_code = request.args.get('code')
-    credentials = flow.step2_exchange(auth_code)
-    session['credentials'] = credentials.to_json()
+    if 'code' not in request.args:
+        auth_uri = flow.step1_get_authorize_url()
+        return redirect(auth_uri)
+    else:
+        auth_code = request.args.get('code')
+        credentials = flow.step2_exchange(auth_code)
+        session['credentials'] = credentials.to_json()
     return redirect(url_for('site.calendar'))
 
 # @site.route("/<page>", methods=['GET'])
