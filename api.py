@@ -233,8 +233,6 @@ def add_user():
         return json.dumps(response)
 
 
-# user={"id":"donald@gmail.com","f_name":"don","l_name":"don","password":"password"}
-
 @api.route("/users/authenticate")
 def user_authentication():
     """
@@ -267,12 +265,6 @@ def user_authentication():
         else:
             response['code'] = 'EMAIL ERROR'
     return response
-
-
-# @api.route("/cars", methods=['GET'])
-# def get_cars():
-#     cars = Car.query.all()
-#     return CarSchema(many=True).dumps(cars)
 
 
 @api.route("/cars", methods=['GET'])
@@ -508,60 +500,3 @@ def populate():
         response['cars'] = False
         response['bookings'] = False
     return response
-
-# @api.route("/booking/")
-#
-# class DBConnect:
-#     db = SQLAlchemy()
-#     ma = Marshmallow()
-#     __engine = None
-#
-#     def __init__(self, app):
-#         if self.__engine is None:
-#             self.__engine = self.db.create_engine(
-#                 sa_url='mysql+pymysql://' + DB_USER + ':' + DB_PASS + '@127.0.0.1:{}/{}'.format(PORT_NUMBER, DB_NAME),
-#                 engine_opts={"echo": True}
-#             )  # UPDATE temp TO THE SQL DATABASE NAME
-#             self.db.init_app(app)
-#             self.__Session = sessionmaker(self.__engine)
-#
-#     def get_users(self):
-#         """
-#         Get users: Return all users in the users table
-#         """
-#         connection = self.__engine.connect()
-#         sel = select([users])
-#         result = connection.execute(sel)
-#         connection.close()
-#         return result
-#
-#     def add_users(self, first_name, last_name, email, password):
-#         """
-#         Add method: Add new user to the users table
-#         """
-#         connection = self.__engine.connect()
-#         sess = self.__Session()
-#         qur = sess.query(users).filter_by(email=email).all()
-#         if (len(qur) > 0):
-#             connection.close()
-#             return False
-#         else:
-#             salt = get_random_alphaNumeric_string(10)
-#             ins = users.insert().values(first_name=first_name, last_name=last_name, email=email,
-#                                         password=hash_password(password, salt) + ':' + salt)
-#             print(ins)
-#             connection.execute(ins)
-#             connection.close()
-#             return True
-#
-#     def get_user_with_email(self, email):
-#         """
-#         Check email method: checking if an email is in users table (user is registered)
-#         """
-#         connection = self.__engine.connect()
-#         sess = self.__Session()
-#         qur = sess.query(users).filter_by(email=email).all()
-#         print(qur)
-#         connection.close()
-#         return qur
-#

@@ -136,21 +136,6 @@ def logout():
     return redirect(url_for('site.login'))
 
 
-# def create_booking_choices():
-#     form = BookingForm()
-#     cars = requests.get(
-#         "{}{}".format(URL, "/cars"), params={"available": 1}
-#     )  # get a list of available cars to display
-#     if cars is not None:
-#         choices = [
-#             (car['id'], "{} {}, {}".format(car['model']['make'], car['model']['model'], car['model']['year']))
-#             for car in cars.json()
-#         ]
-#         form.car.choices = choices
-#         form.car.default = choices[0][0]
-#     return form
-
-
 @site.route("/book", methods=['GET'])
 def render_booking_page():
     if 'user' in session:
@@ -373,6 +358,4 @@ def oauth2callback():
         session['credentials'] = credentials.to_json()
     return redirect(url_for('site.calendar'))
 
-# @site.route("/<page>", methods=['GET'])
-# def generate_page(page):
-#     return render_template("{}.html".format(page))
+
