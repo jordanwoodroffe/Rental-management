@@ -2,7 +2,9 @@ import socket
 import json, requests
 import time
 import threading
-import sys 
+import sys
+
+var car_id = "HKF607" 
 
 #TO DO
 #DB connectivity + facial recognition
@@ -43,7 +45,7 @@ def interface():
 
             def rentCar():
                 print("enter car id")
-                id = "_rentCar" + input()
+                id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
                 #conditions are met on server side (car id exists && is not currently rented)
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
@@ -60,7 +62,7 @@ def interface():
                     
             def returnCar():
                 print("enter car id")
-                id = "_returnCar" + input()
+                id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
                 #conditions are met on server side (car id exists && is currently rented)
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
