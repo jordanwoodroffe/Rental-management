@@ -101,7 +101,7 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         #  should be using response = requests.get(<DB_API_URL>)
-        user = {'id': form.email.data,
+        user = {'email': form.email.data,
                 'l_name': form.last_name.data,
                 'f_name': form.first_name.data,
                 'password': form.password.data,
@@ -110,12 +110,9 @@ def register():
             "{}{}".format(URL, "user"),
             json=json.dumps(user),
         )
-        print(result)
-        data = result.json()
-        # print(data)
-        if data['code'] == 'SUCCESS':
+        if result.status_code == 200:
             return redirect(url_for("site.login"))
-        elif data['code'] == "USER ERROR":
+        elif result.status_code == 404:
             form.email.errors.append('This email has been used for register before')
     elif 'user' in session:
         return redirect(url_for("site.main"))
@@ -178,8 +175,7 @@ def process_booking():
                 "{}{}".format(URL, "booking"),
                 json=json.dumps(data)
             )
-            result = response.json()
-            if result['code'] == 'SUCCESS':
+            if response.status_code == 200:
                 messages = [(
                     "success",
                     {
