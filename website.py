@@ -308,24 +308,32 @@ def search_cars():
 @site.route("/calendar")
 def add_event():
     if 'user' in session:
+        if 'credentials' not in session:
+            return redirect(url_for('site.oauth2callback'))
+        credentials = client.OAuth2Credentials.from_json(session['credentials'])
+        if credentials.access_token_expired:
+            return redirect(url_for('site.oauth2callback'))
+        else:
+            http_auth = credentials.authorize(Http())
+            service = discovery.build('calendar', 'v3', http = http_auth)
+
         booking_id = request.args.get('booking_id')
         car_id = request.args.get('car_id')
-        time_start = datetime.strptime(request.args.get('time_start').replace("T"," "), "%Y-%m-%d %H:%M:%S")
-        time_end = datetime.strptime(request.args.get('time_end').replace("T"," "), "%Y-%m-%d %H:%M:%S")
-
+        time_start = request.args.get('time_start') + "+10:00"
+        time_end = request.args.get('time_end') + "+10:00"
         event = {
-            "summary": "Booking for car: " + car_id,
-            "location": "",
+            "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " + session['user']['l_name'],
             "description": "Booking ID: " + booking_id,
             "start": {
-                "dateTime": str(time_start).replace(" ","T") + "+10:00",
+                "dateTime": time_start,
                 "timeZone": "Australia/Melbourne",
             },
             "end": {
-                "dateTime": str(time_end).replace(" ","T") + "+10:00",
+                "dateTime": time_end,
                 "timeZone": "Australia/Melbourne",
             },
             "attendees": [
+                { "email": session['user']['email'] },
             ],
             "reminders": {
                 "useDefault": False,
@@ -335,15 +343,6 @@ def add_event():
                 ],
             }
         }
-
-        if 'credentials' not in session:
-            return redirect(url_for('site.oauth2callback'))
-        credentials = client.OAuth2Credentials.from_json(session['credentials'])
-        if credentials.access_token_expired:
-            return redirect(url_for('site.oauth2callback'))
-        else:
-            http_auth = credentials.authorize(Http())
-            service = discovery.build('calendar', 'v3', http = http_auth)
         
         event = service.events().insert(calendarId = "primary", body = event).execute()
         print("Event created: {}".format(event.get("htmlLink")))
