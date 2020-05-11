@@ -278,7 +278,7 @@ def view_history():
 def available_cars():
     if 'user' in session:
         cars = requests.get(
-            "{}{}".format(URL, "/cars"), params={"available": 1}
+            "{}{}".format(URL, "/cars"), params={"locked": 1}
         )
         return render_template("list.html", cars=cars.json())
     return redirect(url_for('site.login'))
