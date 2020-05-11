@@ -440,6 +440,19 @@ def get_bookings():
     )
 
 
+@api.route("/booking", methods=['GET'])
+def get_booking():
+    booking_id = request.args.get('booking_id')
+    if booking_id is not None:
+        booking = Booking.query.get(booking_id)
+        if booking is not None:
+            return Response(
+                BookingSchema().dump(booking), status=200, content_type="application/json", mimetype="application/json")
+        else:
+            return Response("invalid booking id", status=404)
+    return Response("missing booking_id argument", status=400)
+
+
 @api.route("/booking", methods=['POST'])
 def add_booking():
     """
