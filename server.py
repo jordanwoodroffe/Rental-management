@@ -1,6 +1,9 @@
 import socket
 import datetime
+import json, requests
+from flask import Flask
 
+app = Flask(__name__,template_folder='C:\Uni\IOT\IOTA2-develop\IOTA2-develop\templates')
 localIP     = "localhost"
 localPort   = 20001
 bufferSize  = 1024
@@ -10,18 +13,24 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind((localIP, localPort))
 print("UDP server up and listening")
 
+@app.route('/')
+def index():
+	return render_template('index.html', latitude = '-37.8201', longitude = '144.9589')
+      
+if __name__ == "__main__":
+	app.run() 
+
 
 def rentCar(input):
     idCar = input [30:-1]
-    date = datetime.now()
-    if('''Check db if id exists'''): 
-        if(''''Check db if currently rented'''):
-            '''Update object status with datetime in db''''
+    #if('''Check db if id exists'''): 
+        #if(''''Check db if currently rented'''):
+            #'''Update object status with datetime in db''''
             #msgFromServer       = "successful"
             #bytesToSend         = str.encode(msgFromServer)
             #UDPServerSocket.sendto(bytesToSend, address)
     
-    else:
+    #else:
         #msgFromServer       = "unsuccessful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
@@ -29,15 +38,14 @@ def rentCar(input):
     
 def returnCar(input):
     idCar = input [32:-1]
-    date = datetime.now()
-    if('''Check db if id exists'''): 
-        if(''''Check db if currently rented'''):
-            '''Update object status with datetime in db''''
+    #if('''Check db if id exists'''): 
+        #if(''''Check db if currently rented'''):
+            #'''Update object status with datetime in db''''
             #msgFromServer       = "successful"
             #bytesToSend         = str.encode(msgFromServer)
             #UDPServerSocket.sendto(bytesToSend, address)
     
-    else:
+    #else:
         #msgFromServer       = "unsuccessful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
@@ -49,17 +57,25 @@ def login(input):
     username = input [userIndex + 6:passIndex]
     password = input [passIndex + 6:-1]
     
-    if('''Check db if username/ password exists in DB'''): 
+    #if('''Check db if username/ password exists in DB'''): 
         #msgFromServer       = "successful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
     
-    else:
+    #else:
         #msgFromServer       = "unsuccessful"
         #bytesToSend         = str.encode(msgFromServer)
         #UDPServerSocket.sendto(bytesToSend, address)
     return
-    
+
+def getLocation(input):
+    latitudeIndex = input.find('_location')
+    longitudeIndex = input.find(',')
+    latitude = input [latitudeIndex + 9:longitudeIndex]
+    longitude = input [longitudeIndex + 1: -1]
+    print (latitude)
+    print (longitude)
+    return
     
 #Incoming datagrams
 while(True):
@@ -79,7 +95,6 @@ while(True):
             rentCar(clientMsg)
             break
        
-            
         if ("_login" in clientMsg):
             login(clientMsg)
             break
@@ -87,8 +102,10 @@ while(True):
         if ("_returnCar" in clientMsg):
             returnCar(clientMsg)
             break
-      
-    
+        
+        if ("_location" in clientMsg):
+            getLocation(clientMsg)
+            break  
 
     
     
