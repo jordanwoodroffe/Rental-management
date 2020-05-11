@@ -190,13 +190,14 @@ def process_booking():
                 'start': start,
                 'end': end,
                 'user_id': session['user']['email'],
-                'car_id': car_id
+                'car_id': car_id,
+                'event_id': None
             }
             response = requests.post(
                 "{}{}".format(URL, "booking"),
                 json=json.dumps(data)
             )
-            if response.status_code == 200:
+            if response.json()['status_code'] == 200:
                 messages = [(
                     "success",
                     {
@@ -206,7 +207,8 @@ def process_booking():
                         ),
                         "car_id": car_id,
                         "start": start,
-                        "end": end
+                        "end": end,
+                        "booking_id": response.json()['booking_id']
                     }
                 )]
             else:
@@ -243,17 +245,20 @@ def cancel_booking():
                 result = response.json()
                 messages = []
                 if result['code'] == 'SUCCESS':
-                    # if 'credentials' not in session:
-                    #     return redirect(url_for('site.oauth2callback'))
-                    # credentials = client.OAuth2Credentials.from_json(session['credentials'])
-                    # if credentials.access_token_expired:
-                    #     return redirect(url_for('site.oauth2callback'))
-                    # else:
-                    #     http_auth = credentials.authorize(Http())
-                    #     service = discovery.build('calendar', 'v3', http=http_auth)
+                    if 'credentials' not in session:
+                        return redirect(url_for('site.oauth2callback'))
+                    credentials = client.OAuth2Credentials.from_json(session['credentials'])
+                    if credentials.access_token_expired:
+                        return redirect(url_for('site.oauth2callback'))
+                    else:
+                        http_auth = credentials.authorize(Http())
+                        service = discovery.build('calendar', 'v3', http=http_auth)
 
-                    # event_id = request.args.get('event_id')
-                    # delete_event = service.events().delete(calenderId="primary", eventId=event_id, sendUpdates="all")
+                    booking = requests.get(
+                        "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
+                    )
+                    event_id = booking.json()['event_id']
+                    delete_event = service.events().delete(calendarId="primary", eventId=event_id, sendUpdates="all").execute()
                     booking = result['data']
                     messages.append((
                         "success",
@@ -336,6 +341,7 @@ def add_event():
         car_id = request.args.get('car_id')
         time_start = request.args.get('time_start').replace(" ", "T") + "+10:00"
         time_end = request.args.get('time_end').replace(" ", "T") + "+10:00"
+        booking_id = request.args.get('booking_id')
 
         event = {
             "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
@@ -361,6 +367,15 @@ def add_event():
         }
         add_event = service.events().insert(calendarId="primary", body=event).execute()
         print("Event created: {}".format(add_event.get("htmlLink")))
+        data = {
+                'booking_id': booking_id,
+                'event_id': add_event.get("id")
+            }
+        response = requests.put(
+                "{}{}".format(URL, "eventId"),
+                json=json.dumps(data)
+            )
+        print("Add event successfully")
         return render_template("booking.html", form=BookingQueryForm())
 
     return redirect(url_for('site.login'))
@@ -379,7 +394,9 @@ def oauth2callback():
         auth_code = request.args.get('code')
         credentials = flow.step2_exchange(auth_code)
         session['credentials'] = credentials.to_json()
-    return redirect(url_for('site.calendar', event="add"))
+    return redirect(url_for('site.add_event'))
+
+
 
 
 class DateException(ValueError):
