@@ -178,6 +178,7 @@ def process_booking():
         car_id = request.args.get('car_id')
         start = request.args.get('start')
         end = request.args.get('end')
+        messages = None
         if None not in (car_id, start, end):
             data = {
                 'start': start,
@@ -190,9 +191,73 @@ def process_booking():
                 json=json.dumps(data)
             )
             result = response.json()
-            print(result)
-            completed = 1
-        return render_template("booking.html", form=BookingQueryForm(), completed=completed)
+            if result['code'] == 'SUCCESS':
+                messages = [(
+                    "success",
+                    {
+                        "message": "Booking successfully created!",
+                        "data": "With {}\n{} - {}".format(
+                            car_id, start, end
+                        )
+                    }
+                )]
+            else:
+                messages = [(
+                    "warning",
+                    {
+                        "message": "Booking unsuccessful",
+                        "data": "Unable to create booking"
+                    }
+                )]
+        return render_template("booking.html", form=BookingQueryForm(), messages=messages)
+    return redirect(url_for('site.login'))
+
+
+@site.route("/cancel", methods=['POST', 'GET'])
+def cancel_booking():
+    if 'user' in session:
+        bookings = requests.get(
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
+        )
+        messages = None
+        if request.method == "POST":
+            booking_id = request.args.get('booking_id')
+            status = request.args.get('status')
+            if None not in (booking_id, status):
+                data = {
+                    "booking_id": booking_id,
+                    "status": status
+                }
+                response = requests.put(
+                    "{}{}".format(URL, "booking"),
+                    json=json.dumps(data)
+                )
+                result = response.json()
+                messages = []
+                if result['code'] == 'SUCCESS':
+                    booking = result['data']
+                    messages.append((
+                        "success",
+                        {
+                            "message": "Booking successfully cancelled!",
+                            "data": "With {}\n{} - {}".format(
+                               booking['car_id'], booking['start'], booking['end']
+                            )
+                        }
+                    ))
+                    bookings = requests.get(
+                        "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
+                    )
+                else:
+                    messages.append((
+                        "warning",
+                        {
+                            "message": "Unable to cancel booking",
+                            "data": result['data']
+                        }
+                    ))
+
+        return render_template("cancel.html", user_bookings=bookings.json(), messages=messages)
     return redirect(url_for('site.login'))
 
 
@@ -214,30 +279,6 @@ def available_cars():
             "{}{}".format(URL, "/cars"), params={"available": 1}
         )
         return render_template("list.html", cars=cars.json())
-    return redirect(url_for('site.login'))
-
-
-@site.route("/cancel", methods=['POST', 'GET'])
-def cancel_booking():
-    if 'user' in session:
-        bookings = requests.get(
-            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
-        )
-        if request.method == "POST":
-            booking_id = request.args.get('booking_id')
-            status = request.args.get('status')
-            if None not in (booking_id, status):
-                data = {
-                    "booking_id": booking_id,
-                    "status": status
-                }
-                response = requests.put(
-                    "{}{}".format(URL, "booking"),
-                    json=json.dumps(data)
-                )
-                result = response.json()
-                return str(result)
-        return render_template("cancel.html", user_bookings=bookings.json())
     return redirect(url_for('site.login'))
 
 
