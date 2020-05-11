@@ -307,7 +307,7 @@ def add_event():
 
         event = {
             "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
-                    session['user']['l_name'],
+                       session['user']['l_name'],
             "start": {
                 "dateTime": time_start,
                 "timeZone": "Australia/Melbourne",
@@ -333,6 +333,7 @@ def add_event():
 
     return redirect(url_for('site.login'))
 
+
 @site.route("/deleteevent")
 def delete_event():
     if 'user' in session:
@@ -344,11 +345,11 @@ def delete_event():
         else:
             http_auth = credentials.authorize(Http())
             service = discovery.build('calendar', 'v3', http=http_auth)
-        
+
         event_id = request.args.get('event_id')
         delete_event = service.events().delete(calenderId="primary", eventId=event_id, sendUpdates="all")
         return redirect(url_for('site.view_history'))
-    
+
     return redirect(url_for('site.login'))
 
 
@@ -366,5 +367,3 @@ def oauth2callback():
         credentials = flow.step2_exchange(auth_code)
         session['credentials'] = credentials.to_json()
     return redirect(url_for('site.calendar', event="add"))
-
-

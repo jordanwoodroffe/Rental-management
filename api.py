@@ -71,6 +71,8 @@ class Car(db.Model):
     name = db.Column('name', VARCHAR(45), nullable=False)
     cph = db.Column('cph', Float())
     locked = db.Column('available', TINYINT(1), nullable=False)
+    long = db.Column('long', Float())
+    lat = db.Column('lat', Float())
 
 
 class CarModel(db.Model):
@@ -138,6 +140,8 @@ class CarSchema(ma.SQLAlchemyAutoSchema):
     model = fields.Nested(CarModelSchema)
     locked = ma.auto_field()
     cph = ma.auto_field()
+    long = ma.auto_field()
+    lat = ma.auto_field()
 
 
 class BookingSchema(ma.SQLAlchemyAutoSchema):
@@ -209,15 +213,22 @@ def get_user():
 
 @api.route("/user", methods=['POST'])
 def add_user():
+    """
+    Adds a user to the database
+
+    Params:
+        user_data: data to be added (name, email, password)
+
+    Returns:
+        200 if successful, 404 if email already registered, 400 if client errors, or 500 if exceptions raised
+    """
     user_data = request.get_json()
-    print("user data" + user_data)
     response = None
     try:
         if user_data is None:
             response = Response(status=400)
         else:
             data = json.loads(user_data)
-            print("data " + str(data))
             user = User.query.get(data['email'])
             if user is None:
                 salt = get_random_alphaNumeric_string(10)
@@ -280,10 +291,6 @@ def get_cars():
     """
     Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
     """
-    # available = request.args.get('available')
-    # if available is not None:
-    #     cars = Car.query.filter_by(available=1)
-    # else:
     cars = Car.query.all()
     if cars is not None:
         return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
@@ -312,7 +319,22 @@ def get_car():
 
 
 @api.route("/car", methods=['PUT'])
-def unlock_car():
+def update_car():
+    """
+    Endpoint to update a car - called from MP after it receives login information from AP. First, bookings matching
+    the user_id and car_id are retrieved, and if they are valid (i.e. have not been completed or are within their
+    start/end dates) then the car is unlocked.
+    If the car is to be locked, then the booking is also marked as completed.
+    If no user_id or locked value are included, this function calls update_location(car_id)
+
+    Params:
+        car_id: id of car to unlock
+        locked: locked value to update to (1= locked, 0= unlocked)
+        user_id: id of user in db
+
+    Returns:
+        200 if successful, 404 if no valid results found, or 400 if there are client errors
+    """
     car_id = request.args.get('car_id')
     if car_id is not None:
         locked = request.args.get('locked')
@@ -339,15 +361,45 @@ def unlock_car():
                 db.session.commit()
                 return Response(message, status=200)
             else:
-                return Response(status=400)
+                return Response(status=404)
+    return Response(status=400)
 
 
 def update_location(car_id):
-    return "DOOT"
+    """
+    Updates the cars location coords in the db
+    Args:
+        car_id: id of car in db
+
+    Returns:
+        Corresponding response code: 200 if successful, 404 if missing car_id in table, or 400 for client error
+    """
+    long = request.args.get('long')
+    lat = request.args.get('lat')
+    if None not in (long, lat):
+        car = Car.query.get(car_id)
+        if car is not None:
+            car.long = float(long)
+            car.lat = float(lat)
+            db.session.add(car)
+            db.session.commit()
+            return Response(status=200)
+        return Response(status=404)
+    else:
+        return Response(status=400)
 
 
 @api.route("/cars/<start>/<end>", methods=['GET'])
 def get_valid_cars(start, end):
+    """
+    Returns a list of cars that are able to be booked between desired dates
+    Args:
+        start: start datetime of booking
+        end: end datetime of booking
+
+    Returns:
+        JSON object containing valid options for booking
+    """
     bookings = Booking.query.filter_by(completed=0)
     data = json.loads(BookingSchema(many=True, exclude=['user.password']).dumps(bookings))
     booked_cars = []
@@ -416,7 +468,7 @@ def update_booking():
     """
     Update booking status: cancelled or completed
     Returns:
-        success/error
+        Success if processed correctly, otherwise error corresponding to the problem
     """
     data = request.get_json()
     print(data)
@@ -448,7 +500,7 @@ def update_booking():
 @api.route("/populate", methods=['GET'])
 def populate():
     """
-    populates database on init with dummy data
+    populates database on init with dummy data using csv files (see test_data)
     """
     response = {}
     if User.query.first() is None:
