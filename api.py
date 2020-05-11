@@ -6,7 +6,7 @@ from json.decoder import JSONDecodeError
 import requests
 from sqlalchemy import MetaData, Table, Column, DateTime, Integer, Float, String, insert, select, update, delete, \
     ForeignKey, LargeBinary
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import fields
@@ -169,8 +169,8 @@ class EncodingSchema(ma.SQLAlchemyAutoSchema):
 
 
 """
-Database API
-provides endpoints for accessing and inserting data from Google Cloud SQL Database
+Database RESTful API
+provides endpoints for accessing, inserting, and updating data from Google Cloud SQL Database
 """
 
 
@@ -180,7 +180,11 @@ def get_users():
     Endpoint to return ALL users from database (used in testing)
     """
     users = User.query.all()
-    return jsonify(UserSchema(many=True, exclude=['password']).dumps(users))
+    if users is not None:
+        return Response(
+            UserSchema(many=True, exclude=['password']).dumps(users), status=200, mimetype="application/json"
+        )
+    return Response("No users found", status=500)
 
 
 @api.route("/user", methods=['GET'])
@@ -188,7 +192,7 @@ def get_user():
     """
     Returns a specific user from the database
 
-    Args:
+    Params:
         user_id: id of user to fetch from db
 
     Returns:
@@ -197,8 +201,10 @@ def get_user():
     user_id = request.args.get('user_id')
     if user_id is not None:
         user = User.query.get(user_id)
-        return UserSchema(exclude=['password']).dump(user)
-    return None
+        if user is not None:
+            return Response(UserSchema(exclude=['password']).dump(user), status=200, mimetype="application/json")
+        return Response("User {} not found".format(user_id), status=404)
+    return Response("user_id param not found", status=400)
 
 
 @api.route("/user", methods=['POST'])
@@ -272,12 +278,14 @@ def get_cars():
     """
     Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
     """
-    available = request.args.get('available')
-    if available is not None:
-        cars = Car.query.filter_by(available=1)
-    else:
-        cars = Car.query.all()
-    return CarSchema(many=True).dumps(cars)
+    # available = request.args.get('available')
+    # if available is not None:
+    #     cars = Car.query.filter_by(available=1)
+    # else:
+    cars = Car.query.all()
+    if cars is not None:
+        return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
+    return Response("No cars found", status=500)
 
 
 @api.route("/car", methods=['GET'])
@@ -285,7 +293,7 @@ def get_car():
     """
     Endpoint to return a car from the database
 
-    Args:
+    Params:
         car_id: id of car to fetch
 
     Returns:
@@ -296,8 +304,9 @@ def get_car():
     if car_id is not None:
         car = Car.query.get(car_id)
         if car is not None:
-            data = CarSchema().dump(car)
-    return data
+            return Response(CarSchema().dump(car), status=200, mimetype="application/json")
+        return Response("Car not found", status=404)
+    return Response("car_id param was not found", status=400)
 
 
 @api.route("/car", methods=['PUT'])
@@ -318,15 +327,17 @@ def unlock_car():
                 car = Car.query.get(car_id)
                 car.locked = locked_val
                 db.session.add(car)
+                message = "Successful: car is {}".format("locked" if locked_val == 1 else "unlocked")
                 if locked_val == 1:
                     print(event)
                     booking = Booking.query.get(event['booking_id'])
                     booking.completed = 1
                     db.session.add(booking)
+                    message = message + ", booking has been completed"
                 db.session.commit()
-                return event
+                return Response(message, status=200)
             else:
-                return "oops"
+                return Response(status=400)
 
 
 def update_location(car_id):
@@ -348,7 +359,7 @@ def get_valid_cars(start, end):
             booked_cars.append(booking['car_id'])  # add to booked car list
     # get cars that don't match any cars with overlapping bookings
     cars = Car.query.filter(Car.car_id.notin_(booked_cars))
-    return CarSchema(many=True).dumps(cars)
+    return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
 
 
 @api.route("/bookings", methods=['GET'])
@@ -368,7 +379,9 @@ def get_bookings():
             bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.email == user_id)
         else:
             bookings = Booking.query.join(User).filter(User.email == user_id)
-    return BookingSchema(many=True, exclude=['user.password']).dumps(bookings)
+    return Response(
+        BookingSchema(many=True, exclude=['user.password']).dumps(bookings), status=200, mimetype="application/json"
+    )
 
 
 @api.route("/booking", methods=['POST'])
