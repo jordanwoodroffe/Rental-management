@@ -19,9 +19,19 @@
           {{ form.hidden_tag() }}
           <div class="form-group col-md-6">
             {{ wtf.form_field(form.email)}}
+            <small id="emailHelpBlock" class="form-text text-muted">
+              {% for error in form.email.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
           </div>
           <div class="form-group col-md-6">
             {{ wtf.form_field(form.password)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              {% for error in form.password.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
           </div>
         </div>
         <div class="form-row">
