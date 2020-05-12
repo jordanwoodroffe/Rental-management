@@ -305,29 +305,29 @@ def get_cars():
         return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
     return Response("No cars found", status=500)
 
-#
-# @api.route("/car", methods=['GET'])
-# def get_car():
-#     """
-#     Endpoint to return a car from the database
-#
-#     Params:
-#         car_id: id of car to fetch
-#
-#     Returns:
-#         JSON object representing car
-#     """
-#     car_id = request.args.get('car_id')
-#     data = None
-#     if car_id is not None:
-#         car = Car.query.get(car_id)
-#         if car is not None:
-#             return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
-#         return Response("Car not found", status=404)
-#     return Response("car_id param was not found", status=400)
+
+@api.route("/car", methods=['GET'])
+def get_car():
+    """
+    Endpoint to return a car from the database
+
+    Params:
+        car_id: id of car to fetch
+
+    Returns:
+        JSON object representing car
+    """
+    car_id = request.args.get('car_id')
+    data = None
+    if car_id is not None:
+        car = Car.query.get(car_id)
+        if car is not None:
+            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
+        return Response("Car not found", status=404)
+    return Response("car_id param was not found", status=400)
 
 
-@api.route("/car", methods=['PUT', 'POST', 'GET'])
+@api.route("/car", methods=['PUT'])
 def update_car():
     """
     Endpoint to update a car - called from MP after it receives login information from AP. First, bookings matching
