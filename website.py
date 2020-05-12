@@ -136,7 +136,7 @@ def main():
     if 'user' in session:
         return render_template("main.html", user=session['user'])
     else:
-        return redirect(url_for("site.login"))
+        return redirect(url_for("site.home"))
 
 
 @site.route("/logout")
@@ -175,7 +175,7 @@ def render_booking_page():
                 form.end.data = end_dt
                 return render_template("booking.html", form=form, cars=response.json(), start=start_dt, end=end_dt)
         return render_template("booking.html", form=form)
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/book", methods=['POST'])
@@ -220,7 +220,7 @@ def process_booking():
                     }
                 )]
         return render_template("booking.html", form=BookingQueryForm(), messages=messages)
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/cancel", methods=['POST', 'GET'])
@@ -283,7 +283,7 @@ def cancel_booking():
                     ))
 
         return render_template("cancel.html", user_bookings=bookings.json(), messages=messages)
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/history")
@@ -294,7 +294,7 @@ def view_history():
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['email']}
         )
         return render_template("history.html", user_bookings=bookings.json())
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/list")
@@ -304,7 +304,7 @@ def available_cars():
             "{}{}".format(URL, "/cars"), params={"available": 1}
         )
         return render_template("list.html", cars=cars.json())
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/search")
@@ -324,7 +324,7 @@ def search_cars():
 
             return render_template("search.html", cars=cars.json(), attributes=attributes)
 
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/addevent")
@@ -379,7 +379,7 @@ def add_event():
         print("Add event successfully")
         return render_template("booking.html", form=BookingQueryForm())
 
-    return redirect(url_for('site.login'))
+    return redirect(url_for('site.home'))
 
 
 @site.route('/oauth2callback')

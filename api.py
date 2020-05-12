@@ -305,29 +305,29 @@ def get_cars():
         return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
     return Response("No cars found", status=500)
 
+#
+# @api.route("/car", methods=['GET'])
+# def get_car():
+#     """
+#     Endpoint to return a car from the database
+#
+#     Params:
+#         car_id: id of car to fetch
+#
+#     Returns:
+#         JSON object representing car
+#     """
+#     car_id = request.args.get('car_id')
+#     data = None
+#     if car_id is not None:
+#         car = Car.query.get(car_id)
+#         if car is not None:
+#             return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
+#         return Response("Car not found", status=404)
+#     return Response("car_id param was not found", status=400)
 
-@api.route("/car", methods=['GET'])
-def get_car():
-    """
-    Endpoint to return a car from the database
 
-    Params:
-        car_id: id of car to fetch
-
-    Returns:
-        JSON object representing car
-    """
-    car_id = request.args.get('car_id')
-    data = None
-    if car_id is not None:
-        car = Car.query.get(car_id)
-        if car is not None:
-            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
-        return Response("Car not found", status=404)
-    return Response("car_id param was not found", status=400)
-
-
-@api.route("/car", methods=['PUT'])
+@api.route("/car", methods=['PUT', 'POST', 'GET'])
 def update_car():
     """
     Endpoint to update a car - called from MP after it receives login information from AP. First, bookings matching
@@ -351,28 +351,40 @@ def update_car():
         if None in (user_id, locked):
             return update_location(car_id)
         else:
-            locked_val = int(locked)
-            bookings = Booking.query.filter_by(completed=0).filter_by(car_id=car_id).filter_by(user_id=user_id)
-            data = json.loads(BookingSchema(many=True, exclude=['user.password']).dumps(bookings))
-            if len(data) > 0:  # TODO: handle decode error: ie if multiple (should never occur though)
-                # TODO: check datetime for unlock (and lock? send overdue msg?)
-                event = data[0]
-                car = Car.query.get(car_id)
-                car.locked = locked_val
-                # db.session.add(car)
-                db.session.commit()
-                message = "Successful: car is {}".format("locked" if locked_val == 1 else "unlocked")
-                if locked_val == 1:
-                    print(event)
-                    booking = Booking.query.get(event['booking_id'])
-                    booking.completed = 1
-                    # db.session.add(booking)
+            try:
+                locked_val = int(locked)
+            except ValueError as e:
+                return Response("Invalid locked format: expected 1 or 0.\n".format(str(e)), status=400)
+            status = 1 if locked_val == 0 else 0  # current locked status should be opposite of new status
+            # query returns uncompleted bookings for the user and car, where the car.locked = status
+            bookings = Booking.query\
+                .filter_by(completed=0).filter_by(car_id=car_id).filter_by(user_id=user_id)\
+                .join(Car).filter(Car.car_id == car_id).filter_by(locked=status)
+            if bookings.count() > 0:  # if any bookings were found
+                valid_bookings = []
+                for booking in bookings:
+                    # TODO: booking.start <= datetime.now() <= booking.end? check overdue return?
+                    if booking.start <= datetime.now():  # booking has started and booking has not ended
+                        valid_bookings.append(booking)
+                if len(valid_bookings) == 0:  # no bookings found for user/car
+                    print("no valid bookings")
+                    return Response("No valid bookings were found", status=404)
+                elif len(valid_bookings) > 1:  # there can only be one valid booking for a user and car
+                    print("multi booking error")
+                    return Response("Multiple bookings found: database error", status=500)
+                else:  # valid booking found, so details are updated
+                    Car.query.get(car_id).locked = locked_val
+                    db.session.commit()
+                    message = "Successful: car is {}".format("locked" if locked_val == 1 else "unlocked")
+                if locked_val == 1:  # if car is to be locked/returned
+                    Booking.query.get(valid_bookings[0].booking_id).completed = 1
                     db.session.commit()
                     message = message + ", booking has been completed"
                 return Response(message, status=200)
             else:
-                return Response(status=404)
-    return Response(status=400)
+                print("no bookings")
+                return Response("No bookings found - invalid parameters", status=404)
+    return Response("Missing required params: car_id", status=400)
 
 
 def update_location(car_id):
@@ -389,14 +401,22 @@ def update_location(car_id):
     if None not in (long, lat):
         car = Car.query.get(car_id)
         if car is not None:
-            car.long = float(long)
-            car.lat = float(lat)
-            # db.session.add(car)
-            db.session.commit()
-            return Response(status=200)
-        return Response(status=404)
+            try:
+                fl_long = float(long)
+                fl_lat = float(lat)
+                if fl_long > 180 or fl_long < -180:
+                    raise ValueError("long {} outside valid bounds".format(fl_long))
+                if fl_lat > 90 or fl_lat < -90:
+                    raise ValueError("lat {}  outside valid bounds".format(fl_lat))
+                car.lat = fl_lat
+                car.long = fl_long
+                db.session.commit()
+                return Response("Updated coords: {} lat{},long{}".format(car_id, lat, long), status=200)
+            except ValueError as ve:
+                return Response("Invalid lat/long format: {}".format(str(ve)), status=400)
+        return Response("Car not found, invalid id{}".format(car_id), status=404)
     else:
-        return Response(status=400)
+        return Response("Missing required params: lat, long", status=400)
 
 
 @api.route("/cars/<start>/<end>", methods=['GET'])
@@ -528,6 +548,7 @@ def update_booking():
         response['code'] = "JSON ERROR"
         response['data'] = 'Invalid JSON received.'
     return response
+
 
 @api.route("/eventId", methods=['PUT'])
 def update_eventId():
