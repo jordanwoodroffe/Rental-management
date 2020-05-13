@@ -123,10 +123,9 @@ def incomingFeed():
 
 @app.route('/')
 def index():
-    
-   points = [{"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 40000, "locked": 0, "lng": 144.3690243, "lat": -37.8934276},
-             {"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 40000, "locked": 0, "lng": 145.3690243, "lat": -37.8934276},
-             {"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 40000, "locked": 0, "lng": 146.3690243, "lat": -37.8934276}] 
+   points = [{"lat": -37.8934276, "lng": 144.3690243},                         
+             {"lat": -39.052060, "lng": 144.639868},                            
+             {"lat": -38.1118, "lng": 144.0396}]         
    return render_template('index.html', points=json.dumps(points))
                 
 if __name__ == '__main__':
