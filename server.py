@@ -122,12 +122,11 @@ def incomingFeed():
     
 
 @app.route('/')
-def index():
-    
-   points = [{"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 40000, "locked": 0, "lng": 144.3690243, "lat": -37.8934276},
-             {"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 40000, "locked": 0, "lng": 145.3690243, "lat": -37.8934276},
-             {"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 40000, "locked": 0, "lng": 146.3690243, "lat": -37.8934276}] 
-   return render_template('index.html', points=json.dumps(points))
+def index(): 
+    points = [{"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 49000, "locked": 0, "lng": 144.3690243, "lat": -37.8934276},
+             {"car_id": "s123", "model_id": 123, "model": "test", "name": "hyundai", "cph": 40000, "locked": 0, "lng": 145.3690243, "lat": -37.8934276},
+             {"car_id": "s123", "model_id": 123, "model": "test", "name": "holden", "cph": 38000, "locked": 0, "lng": 146.3690243, "lat": -37.8934276}] 
+    return render_template('index.html', points=json.dumps(points))
                 
 if __name__ == '__main__':
     t1 = threading.Thread(target=incomingFeed, args=()) 

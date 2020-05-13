@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>My Google Map</title>
+  <title>Car Locations</title>
   <style>
     #map{
       height:400px;
@@ -37,9 +37,10 @@
 				position: new google.maps.LatLng(points[i].lat, points[i].lng),   
 				map: map
 			});
-			google.maps.event.addListener(marker, 'click', (function(marker, i) {
+			google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
 			return function() {
-				infowindow.setContent('<h1>'+ points[i].lat + '</h1>');
+				infowindow.setContent('<h1>' + 'Name: ' + points[i].name + '<BR>' 
+											 + 'Miles: ' + points[i].cph  + '<BR></h1>');
 				infowindow.open(map, marker);
 				}
 			})(marker, i));
