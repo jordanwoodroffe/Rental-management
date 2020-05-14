@@ -3,6 +3,9 @@ from website import site
 from datetime import timedelta
 from api import create_app
 import api
+import requests
+
+URL = "http://127.0.0.1:5000/"
 
 
 class TestApi(unittest.TestCase):
@@ -24,11 +27,21 @@ class TestApi(unittest.TestCase):
         # print(json)
 
     def test_get_user(self):
-        self.assertEqual(api.get_user(), 200)  ## test if a user comes back that exists
+        user_id = "daniel@gmail.com"
+        result = requests.get(
+            "{}{}".format(URL, "user"),
+            params={"user_id": user_id}
+        )
 
-        self.assertEqual(api.get_user(), 404) ## if user that doesnt exist infact returns nothing
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json()['email'], "daniel@gmail.com")
 
-        self.assertEqual(api.get_user(), 400) ## if the parameter i gave doesnt exist.
+
+        # self.assertEqual(api.get_user(), 200)  ## test if a user comes back that exists
+
+        # self.assertEqual(api.get_user(), 404) ## if user that doesnt exist infact returns nothing
+
+        # self.assertEqual(api.get_user(), 400) ## if the parameter i gave doesnt exist.
 
 
 if __name__ == '__main__':
