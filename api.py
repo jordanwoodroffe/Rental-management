@@ -6,15 +6,13 @@ from json.decoder import JSONDecodeError
 import requests
 from sqlalchemy import MetaData, Table, Column, DateTime, Integer, Float, String, insert, select, update, delete, \
     ForeignKey, LargeBinary
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, request, Response, Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import fields
 from sqlalchemy.orm import sessionmaker
 from utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
-import hashlib
-import requests
 from environs import Env
 
 """
@@ -173,6 +171,11 @@ class EncodingSchema(ma.SQLAlchemyAutoSchema):
     size = ma.auto_field()
     details = ma.auto_field()
 
+
+def create_app():
+    app = Flask(__name__)
+    db.init_app(app)
+    return app
 
 """
 Database RESTful API
