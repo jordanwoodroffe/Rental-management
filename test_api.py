@@ -11,7 +11,8 @@ URL = "http://127.0.0.1:5000/"
 
 class TestApi(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         app = create_app()
         app.config['SECRET_KEY'] = 'temp'
         app.config['SQLALCHEMY_DATABASE_URI'] = api.DB_URI
@@ -21,7 +22,7 @@ class TestApi(unittest.TestCase):
         app.register_blueprint(site)
         app.register_blueprint(api.api)
         app.app_context().push()
-
+        
     def test_get_users(self): # just confirms that it returns array of all users information
         self.assertEqual(api.get_users().status_code, 200)
 
@@ -31,17 +32,17 @@ class TestApi(unittest.TestCase):
         user_id2 = "imnotreal@gmail.com"
 
         result200 = requests.get(
-            "{}{}".format(URL, "/user"),
+            "{}{}".format(URL, "user"),
             params={"user_id": user_id1}
         )
 
         result404 = requests.get(
-            "{}{}".format(URL, "/user"),
+            "{}{}".format(URL, "user"),
             params={"user_id": user_id2}
         )
 
         result400 = requests.get(
-            "{}{}".format(URL, "/user"),
+            "{}{}".format(URL, "user"),
         )
 
         self.assertEqual(result200.status_code, 200)
@@ -128,17 +129,17 @@ class TestApi(unittest.TestCase):
         car_id2 = "HIDDEN"
 
         result200 = requests.get(
-            "{}{}".format(URL, "/car"),
+            "{}{}".format(URL, "car"),
             params={"car_id": car_id1}
         )
 
         result404 = requests.get(
-            "{}{}".format(URL, "/car"),
+            "{}{}".format(URL, "car"),
             params={"car_id": car_id2}
         )
 
         result400 = requests.get(
-            "{}{}".format(URL, "/car"),
+            "{}{}".format(URL, "car"),
         )
 
         self.assertEqual(result200.status_code, 200)
@@ -154,24 +155,24 @@ class TestApi(unittest.TestCase):
         user_id = "kev@gmail.com"
 
         result_no_booking = requests.put(
-                "{}{}".format(URL, "/car"),
+                "{}{}".format(URL, "car"),
                 params={"car_id": car_id1, "locked" : locked, "user_id" : user_id},
             )
 
         self.assertEqual(result_no_booking.status_code, 404)
 
         result_no_car_id = requests.put(
-                "{}{}".format(URL, "/car"),
+                "{}{}".format(URL, "car"),
                 params={"locked" : locked, "user_id" : user_id},
             )
 
         result_no_locked = requests.put(
-                "{}{}".format(URL, "/car"),
+                "{}{}".format(URL, "car"),
                 params={"car_id": car_id1, "user_id" : user_id},
             )
 
         result_no_user_id = requests.put(
-                "{}{}".format(URL, "/car"),
+                "{}{}".format(URL, "car"),
                 params={"car_id": car_id1, "locked" : locked},
             )
 
@@ -184,7 +185,7 @@ class TestApi(unittest.TestCase):
         # TODO check 400 by changing lock from above to invalid value 2
 
         # result_wrong_lock = requests.put(
-        #         "{}{}".format(URL, "/car"),
+        #         "{}{}".format(URL, "car"),
         #         params={"car_id": car_id1, "locked": 2, "user_id": user_id},
         #     )
 
@@ -227,7 +228,7 @@ class TestApi(unittest.TestCase):
 
     def test_get_valid_cars(self): # returns all cards right now,
         result_200 = requests.get(
-                "{}{}".format(URL, "/cars/1995-01-05T12:12:12/2021-01-05T12:12:12"),
+                "{}{}".format(URL, "cars/1995-01-05T12:12:12/2021-01-05T12:12:12"),
             )
         self.assertEqual(result_200.status_code, 200)
 
@@ -239,12 +240,12 @@ class TestApi(unittest.TestCase):
 
         # no user peram =  all bookings
         result_200 = requests.get(
-                "{}{}".format(URL, "/bookings"),
+                "{}{}".format(URL, "bookings"),
             )
 
         # TODO booking for user return, has to have made booking
         # result_200_user = requests.get(
-        #     "{}{}".format(URL, "/bookings"),
+        #     "{}{}".format(URL, "bookings"),
         #     params={"user_id": "kev@gmail.com"},
 
         # )
@@ -259,12 +260,12 @@ class TestApi(unittest.TestCase):
         # TODO test result 200
 
         result_404 = requests.get(
-                    "{}{}".format(URL, "/booking"),
+                    "{}{}".format(URL, "booking"),
                     params={"booking_id": "IDONTKNOWYET"},
                 )
 
         result_400 = requests.get(
-            "{}{}".format(URL, "/booking"),
+            "{}{}".format(URL, "booking"),
         )
 
         self.assertEqual(result_404.status_code, 404)
@@ -291,17 +292,17 @@ class TestApi(unittest.TestCase):
         #     }
 
         # result200 = requests.post(
-        #     "{}{}".format(URL, "/booking"),
+        #     "{}{}".format(URL, "booking"),
         #     json=json.dumps(booking),
         # )
 
         # result200_with_event = requests.post(
-        #     "{}{}".format(URL, "/booking"),
+        #     "{}{}".format(URL, "booking"),
         #     json=json.dumps(booking_with_event),
         # )
 
         result400_no_data = requests.post(
-             "{}{}".format(URL, "/booking")
+             "{}{}".format(URL, "booking")
         )
 
         # self.assertEqual(result200.status_code, 200)
@@ -320,7 +321,7 @@ class TestApi(unittest.TestCase):
     #         }
 
     #     booking_added = requests.post(
-    #         "{}{}".format(URL, "/booking"),
+    #         "{}{}".format(URL, "booking"),
     #         json=json.dumps(booking),
     #     )
 
@@ -334,7 +335,7 @@ class TestApi(unittest.TestCase):
     #     }
 
     #     booking_updated = requests.put(
-    #         "{}{}".format(URL, "/booking"),
+    #         "{}{}".format(URL, "booking"),
     #         json=json.dumps(booking_update),
     #     )
 
@@ -352,7 +353,7 @@ class TestApi(unittest.TestCase):
             }
 
         booking_added = requests.post(
-            "{}{}".format(URL, "/booking"),
+            "{}{}".format(URL, "booking"),
             json=json.dumps(booking),
         )
 
@@ -371,17 +372,17 @@ class TestApi(unittest.TestCase):
         }
 
         event_updated = requests.put(
-            "{}{}".format(URL, "/eventId"),
+            "{}{}".format(URL, "eventId"),
             json=json.dumps(event_update),
         )
 
         event_no_booking = requests.put(
-            "{}{}".format(URL, "/eventId"),
+            "{}{}".format(URL, "eventId"),
             json=json.dumps(event_update_wrong_id),
         )
 
         event_no_param = requests.put(
-            "{}{}".format(URL, "/eventId"),
+            "{}{}".format(URL, "eventId"),
         )
 
         self.assertEqual(event_updated.status_code, 200)
