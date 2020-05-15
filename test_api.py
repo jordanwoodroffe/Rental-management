@@ -2,6 +2,7 @@ import unittest
 from website import site
 from datetime import timedelta
 from api import create_app
+import json
 import api
 import requests
 
@@ -30,17 +31,17 @@ class TestApi(unittest.TestCase):
         user_id2 = "imnotreal@gmail.com"
 
         result200 = requests.get(
-            "{}{}".format(URL, "user"),
+            "{}{}".format(URL, "/user"),
             params={"user_id": user_id1}
         )
 
         result404 = requests.get(
-            "{}{}".format(URL, "user"),
+            "{}{}".format(URL, "/user"),
             params={"user_id": user_id2}
         )
 
         result400 = requests.get(
-            "{}{}".format(URL, "user"),
+            "{}{}".format(URL, "/user"),
         )
 
         self.assertEqual(result200.status_code, 200)
@@ -127,17 +128,17 @@ class TestApi(unittest.TestCase):
         car_id2 = "HIDDEN"
 
         result200 = requests.get(
-            "{}{}".format(URL, "car"),
+            "{}{}".format(URL, "/car"),
             params={"car_id": car_id1}
         )
 
         result404 = requests.get(
-            "{}{}".format(URL, "car"),
+            "{}{}".format(URL, "/car"),
             params={"car_id": car_id2}
         )
 
         result400 = requests.get(
-            "{}{}".format(URL, "car"),
+            "{}{}".format(URL, "/car"),
         )
 
         self.assertEqual(result200.status_code, 200)
@@ -153,24 +154,24 @@ class TestApi(unittest.TestCase):
         user_id = "kev@gmail.com"
 
         result_no_booking = requests.put(
-                "{}{}".format(URL, "car"),
+                "{}{}".format(URL, "/car"),
                 params={"car_id": car_id1, "locked" : locked, "user_id" : user_id},
             )
 
         self.assertEqual(result_no_booking.status_code, 404)
 
         result_no_car_id = requests.put(
-                "{}{}".format(URL, "car"),
+                "{}{}".format(URL, "/car"),
                 params={"locked" : locked, "user_id" : user_id},
             )
 
         result_no_locked = requests.put(
-                "{}{}".format(URL, "car"),
+                "{}{}".format(URL, "/car"),
                 params={"car_id": car_id1, "user_id" : user_id},
             )
 
         result_no_user_id = requests.put(
-                "{}{}".format(URL, "car"),
+                "{}{}".format(URL, "/car"),
                 params={"car_id": car_id1, "locked" : locked},
             )
 
@@ -183,7 +184,7 @@ class TestApi(unittest.TestCase):
         # TODO check 400 by changing lock from above to invalid value 2
 
         # result_wrong_lock = requests.put(
-        #         "{}{}".format(URL, "car"),
+        #         "{}{}".format(URL, "/car"),
         #         params={"car_id": car_id1, "locked": 2, "user_id": user_id},
         #     )
 
@@ -269,8 +270,123 @@ class TestApi(unittest.TestCase):
         self.assertEqual(result_404.status_code, 404)
         self.assertEqual(result_400.status_code, 400)
 
-    # def test_add_booking(self):
+    def test_add_booking(self):
 
+        # booking = {
+        #     'start': '2030-01-05 12:12:12',
+        #     'end': '2031-01-05 12:12:12',
+        #     'user_id': 'kev@gmail.com',
+        #     'car_id': 'EXR143',
+        #     'compelted': 0,
+        #     'event_id': '',
+        #     }
+
+        # booking_with_event = {
+        #     'start': '2032-01-05 12:12:12',
+        #     'end': '2033-01-05 12:12:12',
+        #     'user_id': 'kev@gmail.com',
+        #     'car_id': 'EXR143',
+        #     'compelted': 0,
+        #     'event_id': 'EVENT1',
+        #     }
+
+        # result200 = requests.post(
+        #     "{}{}".format(URL, "/booking"),
+        #     json=json.dumps(booking),
+        # )
+
+        # result200_with_event = requests.post(
+        #     "{}{}".format(URL, "/booking"),
+        #     json=json.dumps(booking_with_event),
+        # )
+
+        result400_no_data = requests.post(
+             "{}{}".format(URL, "/booking")
+        )
+
+        # self.assertEqual(result200.status_code, 200)
+        # self.assertEqual(result200_with_event.status_code, 200)
+        self.assertEqual(result400_no_data.status_code, 400)
+
+    # def test_update_booking(self):
+
+    #     booking = {
+    #         'start': '2035-01-05 12:12:12',
+    #         'end': '2034-01-05 12:12:12',
+    #         'user_id': 'kev@gmail.com',
+    #         'car_id': 'EXR143',
+    #         'compelted': 0,
+    #         'event_id': '',
+    #         }
+
+    #     booking_added = requests.post(
+    #         "{}{}".format(URL, "/booking"),
+    #         json=json.dumps(booking),
+    #     )
+
+    #     self.assertEqual(booking_added.status_code, 200)  # if this failed fix add_booking
+
+    #     booking_id = booking_added.json()['booking_id']
+
+    #     booking_update = {
+    #         'booking_id': booking_id,
+    #         'status': '1',
+    #     }
+
+    #     booking_updated = requests.put(
+    #         "{}{}".format(URL, "/booking"),
+    #         json=json.dumps(booking_update),
+    #     )
+
+    #     self.assertEqual(booking_updated.status_code, 200)
+
+    def test_updated_eventId(self):
+
+        booking = {
+            'start': '2036-01-05 12:12:12',
+            'end': '2035-01-05 12:12:12',
+            'user_id': 'kev@gmail.com',
+            'car_id': 'EXR143',
+            'compelted': 0,
+            'event_id': '',
+            }
+
+        booking_added = requests.post(
+            "{}{}".format(URL, "/booking"),
+            json=json.dumps(booking),
+        )
+
+        self.assertEqual(booking_added.status_code, 200)  # if this failed fix add_booking
+
+        booking_id = booking_added.json()['booking_id']
+
+        event_update = {
+            'booking_id': booking_id,
+            'event_id': 'NEWEID',
+        }
+
+        event_update_wrong_id = {
+            'booking_id': '9999',
+            'event_id': 'NEWEID',
+        }
+
+        event_updated = requests.put(
+            "{}{}".format(URL, "/eventId"),
+            json=json.dumps(event_update),
+        )
+
+        event_no_booking = requests.put(
+            "{}{}".format(URL, "/eventId"),
+            json=json.dumps(event_update_wrong_id),
+        )
+
+        event_no_param = requests.put(
+            "{}{}".format(URL, "/eventId"),
+        )
+
+        self.assertEqual(event_updated.status_code, 200)
+        #self.assertEqual(event_no_booking.status_code, 404) # TODO SHOULD BE 404
+        #self.assertEqual(event_no_param.status_code, 400) # TODO SHOULD BE 400
 
 if __name__ == '__main__':
     unittest.main()
