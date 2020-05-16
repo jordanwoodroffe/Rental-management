@@ -153,15 +153,21 @@ def capture_user():
             # check if the post request has the file
             files = request.files.getlist("image")
             if len(files) < 5:
-                print('Need at least 5 photos')
+                flash('You need at least 5 photos to register')
                 return redirect(url_for("site.main"))
+            elif len(files) >= 10:
+                flash('Maxium of 10 photos are accepted')
+                return redirect(url_for("site.main"))
+            for file in files:
+                if not allowed_file(file.filename):
+                    flash('Only images of extensions: txt, pdf, png, jpg, jpeg, gif are allowed')
+                    return redirect(url_for("site.main"))
             for file in files:
                 filename = secure_filename(file.filename)
                 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics', session['user']['email'])
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 file.save(os.path.join(directory, filename))
-                print(filename)
             return redirect(url_for("site.main"))
         return redirect(url_for("site.main"))
     return redirect(url_for("site.home"))
