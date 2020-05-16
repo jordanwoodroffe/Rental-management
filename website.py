@@ -1,11 +1,9 @@
 import json
-import pickle
 import re
 import requests
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
-from flask_datepicker import datepicker
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 from collections import defaultdict
@@ -13,7 +11,6 @@ from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
-from FacialRecognition import FaceDetector
 from utils import allowed_file
 from werkzeug.utils import secure_filename
 
@@ -416,8 +413,7 @@ def add_event():
             json=json.dumps(data)
         )
         print("Add event successfully")
-        return render_template("booking.html", form=BookingQueryForm())
-
+        return redirect(url_for('site.render_booking_page'))
     return redirect(url_for('site.home'))
 
 
