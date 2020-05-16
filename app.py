@@ -1,5 +1,8 @@
-from flask import Flask, render_template
+import pickle
+
+from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
+from FacialRecognition import FaceDetector
 from api import api, db, DB_URI
 from website import site
 from datetime import timedelta
@@ -12,6 +15,28 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(site)
 app.register_blueprint(api)
+
+
+@app.route("/encode_user", methods=['POST'])
+def encode_user():
+    user_id = request.args.get('user_id')
+    if user_id is not None:
+        detector = FaceDetector()
+        encoding = detector.capture_user()
+        if encoding is not None:
+            pickle.dump(encoding, open("pickles/{}".format(user_id), "wb"))
+            return Response("Success", status=200)
+        return Response("Error - unable to capture/encode faces", status=400)
+    return Response("Error - incorrect request params", status=400)
+
+
+@app.route("/get_encoding", methods=['GET'])
+def get_encoding():
+    user_id = request.args.get('user_id')
+    if user_id is not None:
+        data = pickle.load(open("pickles/{}".format(user_id), "rb"))
+        return data
+    return None
 
 
 @app.errorhandler(404)

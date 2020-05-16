@@ -9,7 +9,7 @@
 <script type=text/javascript>
         $(function() {
           $('a#fr_capture').bind('click', function() {
-            $.getJSON('/capture_user',
+            $.getJSON('/capture_user?user_id={{user.email}}',
                 function(data) {
               //do nothing
             });

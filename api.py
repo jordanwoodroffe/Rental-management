@@ -1,4 +1,5 @@
 import json
+import pickle
 import random
 from datetime import datetime
 import pandas as pd
@@ -298,20 +299,31 @@ def user_authentication():
             # response['code'] = 'EMAIL ERROR'
     return response
 
-
-@api.route("/encoding", methods=['POST'])
-def add_encoding():
-    user_id = request.args.get("user_id")
-    data = request.args.get("encoding")
-    if None not in (user_id, data):
-        # TODO: check validity?
-        encoding = Encoding()
-        encoding.user_id = user_id
-        encoding.data = data
-        db.session.add(encoding)
-        db.session.commit()
-        return Response("Success - added encoding", status=200)
-    return Response("Error - invalid request params", status=400)
+#
+# @api.route("/encoding", methods=['POST'])
+# def add_encoding():
+#     user_id = request.args.get("user_id")
+#     if user_id is not None:
+#         # print(request.data)
+#         encs = pickle.loads(request.data)
+#         print(encs)
+#         # TODO: check validity?
+#         encoding = Encoding()
+#         encoding.user_id = user_id
+#         encoding.data = request.data
+#         db.session.add(encoding)
+#         db.session.commit()
+#         return Response("Success - added encoding", status=200)
+#     return Response("Error - invalid request params", status=400)
+#
+#
+# @api.route("/encoding", methods=['GET'])
+# def get_encodings():
+#     user_id = request.args.get('user_id')
+#     encodings = Encoding.query.all() if user_id is None else Encoding.query.filter_by(user_id=user_id)
+#     if encodings is not None:
+#         return Response(EncodingSchema(many=True).dumps(encodings), status=200, mimetype="application/json")
+#     return Response("No encodings found", status=500)
 
 
 @api.route("/cars", methods=['GET'])
