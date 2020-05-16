@@ -33,16 +33,6 @@ class AbstractFaceDetector(ABC):
         Returns:
             a string for matched user_id, or None if no match was found
         """
-    #
-    # @abstractmethod
-    # def pickle_faces(self, encodings: list) -> str:
-    #     """
-    #     Create pickle of encodings: to be stored in database as LONG-BLOB
-    #     Args:
-    #         encodings: list of encodings to format
-    #     Returns:
-    #         filepath of pickle
-    #     """
 
 
 class FaceDetector(AbstractFaceDetector):
@@ -62,23 +52,23 @@ class FaceDetector(AbstractFaceDetector):
         except ImportError as ie:
             print(ie)
 
-    def capture_user(self) -> list:
-        faces = self.__capture_face()
-        if len(faces) > 0:
+    def capture_user(self, images: [str] = None) -> list:
+        faces = self.__capture_face(images)
+        if faces is not None and len(faces) > 0:
             return self.__encode_face(faces)
         return []  # unable to encode/capture faces
 
-    def compare_encodings(self, login_encs: list, db_encs: {str: list}) -> AbstractFaceDetector.Match:
+    def compare_encodings(self, login_encs: list, saved_encs: {str: list}) -> AbstractFaceDetector.Match:
         max_match = self.Match(None, 0)
         if len(login_encs) > 0:
             for encoding in login_encs:
-                for user_id in db_encs.keys():
-                    user_encs = db_encs.get(user_id)
+                for user_id in saved_encs.keys():
+                    user_encs = saved_encs.get(user_id)
                     result = sum(face_recognition.compare_faces(user_encs, encoding))
                     max_match = self.Match(user_id, result) if result > max_match.score else max_match
         return max_match
 
-    def __capture_face(self):
+    def __capture_face(self, images: [str] = None):
         """
         Captures a users face from an image or video stream
         TODO: replace/add image upload - filepath to directory with images, load/capture faces until self.__min_faces
@@ -86,11 +76,22 @@ class FaceDetector(AbstractFaceDetector):
         Returns:
             a list of faces capture from images or video-stream
         """
-        video_stream = cv2.VideoCapture(0)
+
+        if images is not None and len(images) < self.__min_faces:
+            return None
+
+        video_stream = None
         faces = []
+        i = 0
 
         while len(faces) < self.__min_faces:
-            _, img = video_stream.read()
+            if images is None:
+                if video_stream is None:
+                    video_stream = cv2.VideoCapture(0)
+                _, img = video_stream.read()
+            else:
+                img = cv2.imread(images[i])
+                i += 1
 
             img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -111,8 +112,8 @@ class FaceDetector(AbstractFaceDetector):
             k = cv2.waitKey(30) & 0xff
             if k == 27:
                 break
-
-        video_stream.release()
+        if video_stream is not None:
+            video_stream.release()
         return faces
 
     @staticmethod
@@ -139,7 +140,9 @@ if __name__ == "__main__":
     # capture registration faces
     reg_encs = {}
     detector = FaceDetector()
-    don = detector.capture_user()
+    images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
+    # images = None
+    don = detector.capture_user(images)
     temp = pickle.dumps(don)
     reg_encs['don'] = pickle.loads(temp)
 

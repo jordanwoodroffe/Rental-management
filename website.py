@@ -1,11 +1,9 @@
 import json
-import pickle
 import re
 import requests
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
-from flask_datepicker import datepicker
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 from collections import defaultdict
@@ -13,11 +11,8 @@ from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
-from FacialRecognition import FaceDetector
 from utils import allowed_file
 from werkzeug.utils import secure_filename
-
-
 
 site = Blueprint("site", __name__)
 
@@ -164,10 +159,17 @@ def capture_user():
                     return redirect(url_for("site.main"))
             for file in files:
                 filename = secure_filename(file.filename)
-                directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics', session['user']['email'])
+                directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics',
+                                         session['user']['email'])
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 file.save(os.path.join(directory, filename))
+                print(filename)
+                result = requests.post(
+                    "{}{}".format(URL, "/encode_user"),
+                    params={"user_id": session['user']['email'], "directory": directory}
+                )
+                print(result)
             return redirect(url_for("site.main"))
         return redirect(url_for("site.main"))
     return redirect(url_for("site.home"))
@@ -292,7 +294,8 @@ def cancel_booking():
                     )
                     event_id = booking.json()['event_id']
                     if event_id is not None:
-                        delete_event = service.events().delete(calendarId="primary", eventId=event_id, sendUpdates="all").execute()
+                        delete_event = service.events().delete(calendarId="primary", eventId=event_id,
+                                                               sendUpdates="all").execute()
                         booking = result['data']
                         messages.append((
                             "success",
@@ -402,16 +405,15 @@ def add_event():
         add_event = service.events().insert(calendarId="primary", body=event).execute()
         print("Event created: {}".format(add_event.get("htmlLink")))
         data = {
-                'booking_id': booking_id,
-                'event_id': add_event.get("id")
-            }
+            'booking_id': booking_id,
+            'event_id': add_event.get("id")
+        }
         response = requests.put(
-                "{}{}".format(URL, "eventId"),
-                json=json.dumps(data)
-            )
+            "{}{}".format(URL, "eventId"),
+            json=json.dumps(data)
+        )
         print("Add event successfully")
-        return render_template("booking.html", form=BookingQueryForm())
-
+        return redirect(url_for('site.render_booking_page'))
     return redirect(url_for('site.home'))
 
 
@@ -429,8 +431,6 @@ def oauth2callback():
         credentials = flow.step2_exchange(auth_code)
         session['credentials'] = credentials.to_json()
     return redirect(url_for('site.add_event'))
-
-
 
 
 class DateException(ValueError):

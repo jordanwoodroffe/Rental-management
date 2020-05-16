@@ -3,6 +3,7 @@ from datetime import datetime
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
+
 def get_random_alphaNumeric_string(stringLength):
     lettersAndDigits = string.ascii_letters + string.digits
     return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
@@ -23,7 +24,7 @@ def verify_password(stored_password, test_password, salt):
 
 def compare_dates(start: datetime, end: datetime, b_start: datetime, b_end: datetime) -> bool:
     """
-
+    Compares dates
     Args:
         start: proposed booking start datetime
         end: proposed booking end datetime
@@ -34,6 +35,7 @@ def compare_dates(start: datetime, end: datetime, b_start: datetime, b_end: date
         a boolean value indicating whether an overlap occurred
     """
     return True if (start <= b_end) or (end >= b_start) or (start >= b_start and end <= b_end) else False
+
 
 def allowed_file(filename):
     return '.' in filename and \

@@ -1,5 +1,5 @@
 import pickle
-
+import os
 from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
 from FacialRecognition import FaceDetector
@@ -20,11 +20,15 @@ app.register_blueprint(api)
 @app.route("/encode_user", methods=['POST'])
 def encode_user():
     user_id = request.args.get('user_id')
-    if user_id is not None:
+    directory = request.args.get('directory')
+    if None not in (user_id, directory):
         detector = FaceDetector()
-        encoding = detector.capture_user()
+        images = ["{}/{}".format(directory, filename) for filename in os.listdir(directory)]
+        print(images)
+        encoding = detector.capture_user(images)
         if encoding is not None:
-            pickle.dump(encoding, open("pickles/{}".format(user_id), "wb"))
+            pickle.dump(encoding, open("user_data/pickles/{}".format(user_id), "wb"))
+            # TODO: remove user data directory
             return Response("Success", status=200)
         return Response("Error - unable to capture/encode faces", status=400)
     return Response("Error - incorrect request params", status=400)
@@ -34,9 +38,23 @@ def encode_user():
 def get_encoding():
     user_id = request.args.get('user_id')
     if user_id is not None:
-        data = pickle.load(open("pickles/{}".format(user_id), "rb"))
+        data = pickle.load(open("user_data/pickles/{}".format(user_id), "rb"))
         return data
     return None
+
+
+@app.route("/authenticate_encodings", methods=['POST', 'GET'])
+def auth_by_face():
+    # get image: via socket get the pickle, loads, compare, or loads encodings and just compare
+    images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
+    detector = FaceDetector()
+    login = detector.capture_user(images=images)
+    directory = "user_data/pickles"
+    pickles = {
+        filename: pickle.load(open("{}/{}".format(directory, filename), "rb"))
+        for filename in os.listdir(directory)
+    }
+    print(detector.compare_encodings(login_encs=login, saved_encs=pickles))
 
 
 @app.errorhandler(404)
