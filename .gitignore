@@ -104,3 +104,6 @@ credential.json
 
 # user data
 user_data
+
+# pycharm stuff
+.idea
