@@ -33,16 +33,16 @@ class AbstractFaceDetector(ABC):
         Returns:
             a string for matched user_id, or None if no match was found
         """
-
-    @abstractmethod
-    def pickle_faces(self, encodings: list) -> str:
-        """
-        Create pickle of encodings: to be stored in database as LONG-BLOB
-        Args:
-            encodings: list of encodings to format
-        Returns:
-            filepath of pickle
-        """
+    #
+    # @abstractmethod
+    # def pickle_faces(self, encodings: list) -> str:
+    #     """
+    #     Create pickle of encodings: to be stored in database as LONG-BLOB
+    #     Args:
+    #         encodings: list of encodings to format
+    #     Returns:
+    #         filepath of pickle
+    #     """
 
 
 class FaceDetector(AbstractFaceDetector):
@@ -77,9 +77,6 @@ class FaceDetector(AbstractFaceDetector):
                     result = sum(face_recognition.compare_faces(user_encs, encoding))
                     max_match = self.Match(user_id, result) if result > max_match.score else max_match
         return max_match
-
-    def pickle_faces(self, encodings: list) -> str:
-        pass
 
     def __capture_face(self):
         """
@@ -142,7 +139,9 @@ if __name__ == "__main__":
     # capture registration faces
     reg_encs = {}
     detector = FaceDetector()
-    reg_encs["don"] = detector.capture_user()
+    don = detector.capture_user()
+    temp = pickle.dumps(don)
+    reg_encs['don'] = pickle.loads(temp)
 
     # capture login face & compare with reg
     login = detector.capture_user()
