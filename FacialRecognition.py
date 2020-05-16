@@ -5,18 +5,17 @@ Note - can raise a MemoryError when installing packages onto RPI due to limited 
 Solved by using:
     pip --no-cache-dir install <package_name>
 """
-import sys
-import os
-import unittest
 from collections import namedtuple
-
 import numpy as np
 import cv2  # facilitates face recognition: detects faces, does not recognise face landmarks (i.e. recognition)
 import face_recognition  # recognise and encode user faces
+import pickle
 from abc import ABC, abstractmethod
 
 
 class AbstractFaceDetector(ABC):
+    Match = namedtuple("max_match", "user_id score")  # simple data-structure to house encoding comparison results
+
     @abstractmethod
     def capture_user(self) -> list:
         """
@@ -45,81 +44,55 @@ class AbstractFaceDetector(ABC):
             filepath of pickle
         """
 
-    @abstractmethod
-    def register_user(self, user_id: str) -> bool:
-        """
-        Capture a users face and save under their id for login on AP.
-        Args:
-            user_id - a users id, will be associated with captured face encoding
-        Returns:
-            a boolean value indicating if a user was successfully captured
-        """
-
-    @abstractmethod
-    def login_user(self):
-        """
-        Authenticate user by comparing captured encoding to saved encodings.
-        Args:
-
-        Returns:
-            a boolean value indicating whether a successful scan occurred.
-        """
-
 
 class FaceDetector(AbstractFaceDetector):
     """
     TODO: add requirements for install etc. and check imports
     TODO: add option to check by video upload (no usb camera on rpi) - add some sort of file flag
     """
-
-    __encodings = {}  # temp (store in cloud), hold encodings matched to a face/user id
     __haar_model = 'haarcascade_frontalface_default.xml'
-    __min_faces = 5  # minimum required faces for a valid detection
+    __min_faces = 5  # minimum required faces for a valid detection - set to 5 for efficiency on RPI
 
     def __init__(self):
         self.__classifier = cv2.CascadeClassifier(self.__haar_model)
         try:
             test = self.__classifier.load(self.__haar_model)
             if test is False:
-                raise ImportError("Unable to load xml. Check file path.")
+                raise ImportError("Unable to load classifier xml. Check file path before proceeding.")
         except ImportError as ie:
             print(ie)
 
-    @property
-    def encodings(self):
-        return self.__encodings
-
-    @encodings.setter
-    def encodings(self, enc_list):
-        self.__encodings = enc_list
-
-    def register_user(self, user_id: str) -> bool:
+    def capture_user(self) -> list:
         faces = self.__capture_face()
         if len(faces) > 0:
-            encodings = self.__encode_face(faces)
-            if len(encodings) > 0:
-                self.__encodings[user_id] = encodings
-                return True
-        return False
+            return self.__encode_face(faces)
+        return []  # unable to encode/capture faces
 
-    def login_user(self):
-        Match = namedtuple("max_match", "id score")
-        faces = self.__capture_face()
-        if len(faces) > 0:
-            max_match = Match(None, 0)
-            encodings = self.__encode_face(faces)
-            for encoding in encodings:
-                for user_id in self.__encodings.keys():
-                    user_encodings = self.__encodings.get(user_id)
-                    result = sum(face_recognition.compare_faces(user_encodings, encoding))
-                    max_match = Match(user_id, result) if result > max_match.score else max_match
-            print(max_match)
+    def compare_encodings(self, login_encs: list, db_encs: {str: list}) -> AbstractFaceDetector.Match:
+        max_match = self.Match(None, 0)
+        if len(login_encs) > 0:
+            for encoding in login_encs:
+                for user_id in db_encs.keys():
+                    user_encs = db_encs.get(user_id)
+                    result = sum(face_recognition.compare_faces(user_encs, encoding))
+                    max_match = self.Match(user_id, result) if result > max_match.score else max_match
+        return max_match
+
+    def pickle_faces(self, encodings: list) -> str:
+        pass
 
     def __capture_face(self):
+        """
+        Captures a users face from an image or video stream
+        TODO: replace/add image upload - filepath to directory with images, load/capture faces until self.__min_faces
+        TODO: add validation/exceptions for image upload etc.
+        Returns:
+            a list of faces capture from images or video-stream
+        """
         video_stream = cv2.VideoCapture(0)
         faces = []
 
-        while len(faces) > self.__min_faces:
+        while len(faces) < self.__min_faces:
             _, img = video_stream.read()
 
             img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -145,7 +118,8 @@ class FaceDetector(AbstractFaceDetector):
         video_stream.release()
         return faces
 
-    def __encode_face(self, faces) -> list:
+    @staticmethod
+    def __encode_face(faces) -> list:
         """
         encode faces
         Args:
@@ -163,14 +137,14 @@ class FaceDetector(AbstractFaceDetector):
                     encodings.append(face_encodings[0])
         return encodings
 
-    def get_encoding(self, user_id: str):
-        return self.__encodings.get(user_id)
-
 
 if __name__ == "__main__":
+    # capture registration faces
+    reg_encs = {}
     detector = FaceDetector()
-    if not detector.register_user(user_id="temp-user"):
-        print("unable to read face :(")
-    else:
-        detector.login_user()
-    # print("BEGINNING TESTS")
+    reg_encs["don"] = detector.capture_user()
+
+    # capture login face & compare with reg
+    login = detector.capture_user()
+    match = detector.compare_encodings(login, reg_encs)
+    print(match)
