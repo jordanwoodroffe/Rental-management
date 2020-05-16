@@ -5,17 +5,44 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 
 def get_random_alphaNumeric_string(stringLength):
+    """
+
+    Args:
+        stringLength:
+
+    Returns:
+
+    """
     lettersAndDigits = string.ascii_letters + string.digits
     return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
 
 
 def hash_password(password, salt):
+    """
+
+    Args:
+        password:
+        salt:
+
+    Returns:
+
+    """
     saltedpassword = password + salt
     password = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
     return password.hex()
 
 
 def verify_password(stored_password, test_password, salt):
+    """
+
+    Args:
+        stored_password:
+        test_password:
+        salt:
+
+    Returns:
+
+    """
     test_password = hashlib.pbkdf2_hmac('sha256', test_password.encode(), salt.encode(), 100000)
     if test_password.hex() == stored_password:
         return True
