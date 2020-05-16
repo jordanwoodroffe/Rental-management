@@ -150,17 +150,19 @@ def main():
 def capture_user():
     if 'user' in session:
         if request.method == 'POST':
-            # check if the post request has the file part
-            print(request.files)
-            if 'image' not in request.files:
-                print('No selected file')
+            # check if the post request has the file
+            files = request.files.getlist("image")
+            if len(files) < 5:
+                print('Need at least 5 photos')
                 return redirect(url_for("site.main"))
-            else:
-                file = request.files['image']
+            for file in files:
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics', filename))
+                directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics', session['user']['email'])
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                file.save(os.path.join(directory, filename))
                 print(filename)
-                return redirect(url_for("site.main"))
+            return redirect(url_for("site.main"))
         return redirect(url_for("site.main"))
     return redirect(url_for("site.home"))
 
