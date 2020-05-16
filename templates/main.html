@@ -9,7 +9,7 @@
 <script type=text/javascript>
         $(function() {
           $('a#fr_capture').bind('click', function() {
-            $.getJSON('/capture_user',
+            $.getJSON('/capture_user?user_id={{user.email}}',
                 function(data) {
               //do nothing
             });
@@ -42,7 +42,10 @@
           <div class="card-body">
             {% if user.face_id == False %}
             <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
-            <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a>
+            <form action="/capture_user?user_id={{user.email}}" class="form-signup" method="POST">
+              <button type="submit" class="btn btn-primary" name="submit">Book now</button>
+            </form>
+<!--            <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a>-->
             {% else %}
             <small><i>Facial Recognition registration completed</i></small>
             {% endif %}

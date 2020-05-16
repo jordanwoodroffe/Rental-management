@@ -141,29 +141,6 @@ def main():
     return redirect(url_for("site.home"))
 
 
-@site.route("/capture_user")
-def capture_user():
-    if 'user' in session:
-        user = session['user']
-        print("DOOT")
-        detector = FaceDetector()
-        encoding = detector.capture_user()
-        if encoding is not None:
-            user['face_id'] = True
-            data = {
-                "user_id": user['email'],
-                "data": pickle.dumps(encoding)
-            }
-            result = requests.post(
-                "{}{}".format(URL, "/encoding"),
-                json=json.dumps(data)
-            )
-            if result.status_code == 200:
-                return redirect(url_for("site.main"))
-            # else error message
-    return redirect(url_for("site.home"))
-
-
 @site.route("/logout")
 def logout():
     session.pop('user', None)
@@ -189,7 +166,6 @@ def render_booking_page():
             except ValueError as ve:
                 print("Incorrect input format\n{}".format(str(ve)))
                 form.start.errors = ['Incorrect format', 'expected YYYY-mm-dd HH:MM']
-
             else:
                 print(start_dt)
                 print(end_dt)
