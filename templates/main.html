@@ -42,7 +42,40 @@
           <div class="card-body">
             {% if user.face_id == False %}
             <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
-            <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a>
+            <!-- <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a> -->
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+              Register Now
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Upload 5 face pitures</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <form action="/capture_user" method="POST" enctype="multipart/form-data">
+
+                      <div class="form-group">
+                        <label>Select image</label>
+                        <div class="custom-file">
+                          <input type="file" class="custom-file-input" name="image" id="image">
+                          <label class="custom-file-label" for="image">Select image...</label>
+                        </div>
+                      </div>
+              
+                      <button type="submit" class="btn btn-primary">Upload</button>
+              
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
             {% else %}
             <small><i>Facial Recognition registration completed</i></small>
             {% endif %}

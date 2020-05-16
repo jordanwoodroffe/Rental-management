@@ -1,6 +1,7 @@
 import random, string, hashlib
 from datetime import datetime
 
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 def get_random_alphaNumeric_string(stringLength):
     lettersAndDigits = string.ascii_letters + string.digits
@@ -33,6 +34,10 @@ def compare_dates(start: datetime, end: datetime, b_start: datetime, b_end: date
         a boolean value indicating whether an overlap occurred
     """
     return True if (start <= b_end) or (end >= b_start) or (start >= b_start and end <= b_end) else False
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 if __name__ == '__main__':

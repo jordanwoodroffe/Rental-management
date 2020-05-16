@@ -2,7 +2,8 @@ import json
 import pickle
 import re
 import requests
-from flask import Blueprint, render_template, request, redirect, url_for, session
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
 from flask_datepicker import datepicker
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
@@ -13,6 +14,10 @@ from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
 from FacialRecognition import FaceDetector
+from utils import allowed_file
+from werkzeug.utils import secure_filename
+
+
 
 site = Blueprint("site", __name__)
 
@@ -141,12 +146,26 @@ def main():
     return redirect(url_for("site.home"))
 
 
-@site.route("/capture_user")
+@site.route("/capture_user", methods=['POST', 'GET'])
 def capture_user():
     if 'user' in session:
+        if request.method == 'POST':
+            # check if the post request has the file part
+            print(request.files)
+            if 'image' not in request.files:
+                print('No selected file')
+                return redirect(url_for("site.main"))
+            else:
+                file = request.files['image']
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics', filename))
+                print(filename)
+                return redirect(url_for("site.main"))
+        return ''
+
         user = session['user']
         print("DOOT")
-        detector = FaceDetector()
+        # detector = FaceDetector()
         encoding = detector.capture_user()
         if encoding is not None:
             user['face_id'] = True
