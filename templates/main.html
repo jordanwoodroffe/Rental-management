@@ -5,6 +5,7 @@
 {% with page="main"%}
 {% include "nav.html" %}
 {% endwith %}
+<script src="{{ url_for('static', filename='scripts/main.js')}}"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script type=text/javascript>
         $(function() {
@@ -73,11 +74,14 @@
                       <div class="form-group">
                         <label>Select image</label>
                         <div class="custom-file">
-                          <input type="file" class="custom-file-input" name="image" multiple="">
+                          <input type="file" class="custom-file-input" name="image" multiple="" id="image" onchange="updateList()">
                           <label class="custom-file-label" for="image">Select image...</label>
                         </div>
                       </div>
-              
+
+                      <p>Selected files:</p>
+                      <div id="imageList"></div>
+
                       <button type="submit" class="btn btn-primary">Upload</button>
               
                     </form>
