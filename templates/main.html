@@ -5,6 +5,19 @@
 {% with page="main"%}
 {% include "nav.html" %}
 {% endwith %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+        $(function() {
+          $('a#fr_capture').bind('click', function() {
+            $.getJSON('/capture_user',
+                function(data) {
+              //do nothing
+            });
+            return false;
+          });
+        });
+</script>
+
 <script src="https://kit.fontawesome.com/6b539ad364.js" crossorigin="anonymous"></script>
 <body style="padding-top: 4.5rem">
   <div class="container">
@@ -27,9 +40,9 @@
             Facial Recognition
           </div>
           <div class="card-body">
-            <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
             {% if user.face_id == False %}
-            <a href="/main/facial-recognition" class="btn btn-primary">Register Now</a>
+            <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
+            <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a>
             {% else %}
             <small><i>Facial Recognition registration completed</i></small>
             {% endif %}

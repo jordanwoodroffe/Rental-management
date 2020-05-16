@@ -1,4 +1,5 @@
 import json
+import pickle
 import re
 import requests
 from flask import Blueprint, render_template, request, redirect, url_for, session
@@ -11,6 +12,7 @@ from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
+from FacialRecognition import FaceDetector
 
 site = Blueprint("site", __name__)
 
@@ -95,6 +97,7 @@ def login():
             "{}{}".format(URL, "users/authenticate"),
             params={"user_id": form.email.data, "password": form.password.data},
         )
+        print(result.text)
         data = result.json()
         if result.status_code == 200:
             session['user'] = result.json()
@@ -135,8 +138,30 @@ def register():
 def main():
     if 'user' in session:
         return render_template("main.html", user=session['user'])
-    else:
-        return redirect(url_for("site.home"))
+    return redirect(url_for("site.home"))
+
+
+@site.route("/capture_user")
+def capture_user():
+    if 'user' in session:
+        user = session['user']
+        print("DOOT")
+        detector = FaceDetector()
+        encoding = detector.capture_user()
+        if encoding is not None:
+            user['face_id'] = True
+            data = {
+                "user_id": user['email'],
+                "data": pickle.dumps(encoding)
+            }
+            result = requests.post(
+                "{}{}".format(URL, "/encoding"),
+                json=json.dumps(data)
+            )
+            if result.status_code == 200:
+                return redirect(url_for("site.main"))
+            # else error message
+    return redirect(url_for("site.home"))
 
 
 @site.route("/logout")

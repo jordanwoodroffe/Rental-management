@@ -104,9 +104,9 @@ class FaceDetector(AbstractFaceDetector):
                 for x, y, w, h in face_objects:
                     faces.append(img[y: y + h, x: x + w])
 
-            for (x, y, w, h) in face_objects:
-                cv2.rectangle(img, pt1=(x, y), pt2=(x + w, y + h), color=(255, 0, 0), thickness=2)
-            cv2.imshow('img', img)
+            # for (x, y, w, h) in face_objects:
+            #     cv2.rectangle(img, pt1=(x, y), pt2=(x + w, y + h), color=(255, 0, 0), thickness=2)
+            # cv2.imshow('img', img)
 
             k = cv2.waitKey(30) & 0xff
             if k == 27:

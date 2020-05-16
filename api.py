@@ -104,10 +104,10 @@ class Encoding(db.Model):
     user_id = db.Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False)
     user = db.relationship('User')
     data = db.Column('data', LargeBinary(length=(2 ** 32) - 1), nullable=False)
-    name = db.Column('name', VARCHAR(45), nullable=False)
-    type = db.Column('type', VARCHAR(45), nullable=False)
-    size = db.Column('size', VARCHAR(45), nullable=False)
-    details = db.Column('details', VARCHAR(45), nullable=False)
+    name = db.Column('name', VARCHAR(45))
+    type = db.Column('type', VARCHAR(45))
+    size = db.Column('size', VARCHAR(45))
+    details = db.Column('details', VARCHAR(45))
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
@@ -281,8 +281,12 @@ def user_authentication():
             stored_password = user.password.split(':')[0]
             salt = user.password.split(':')[1]
             if verify_password(stored_password, password, salt):
+                data = json.loads(UserSchema(exclude=['password']).dumps(user))
+                enc = json.loads(EncodingSchema().dumps(Encoding.query.join(User).filter(User.email == user_id)))
+                print(enc)
+                data['face_id'] = bool(enc)
                 response = Response(
-                    UserSchema(exclude=['password']).dumps(user), status=200, content_type="application/json"
+                    json.dumps(data), status=200, content_type="application/json"
                 )
                 # response['code'] = 'SUCCESS'
                 # response['user'] = UserSchema(exclude=['password']).dumps(user)
@@ -293,6 +297,21 @@ def user_authentication():
             response = Response(json.dumps({'error': 'EMAIL'}), status=404, content_type="application/json")
             # response['code'] = 'EMAIL ERROR'
     return response
+
+
+@api.route("/encoding", methods=['POST'])
+def add_encoding():
+    user_id = request.args.get("user_id")
+    data = request.args.get("encoding")
+    if None not in (user_id, data):
+        # TODO: check validity?
+        encoding = Encoding()
+        encoding.user_id = user_id
+        encoding.data = data
+        db.session.add(encoding)
+        db.session.commit()
+        return Response("Success - added encoding", status=200)
+    return Response("Error - invalid request params", status=400)
 
 
 @api.route("/cars", methods=['GET'])
@@ -357,8 +376,8 @@ def update_car():
                 return Response("Invalid locked format: expected 1 or 0.\n".format(str(e)), status=400)
             status = 1 if locked_val == 0 else 0  # current locked status should be opposite of new status
             # query returns uncompleted bookings for the user and car, where the car.locked = status
-            bookings = Booking.query\
-                .filter_by(completed=0).filter_by(car_id=car_id).filter_by(user_id=user_id)\
+            bookings = Booking.query \
+                .filter_by(completed=0).filter_by(car_id=car_id).filter_by(user_id=user_id) \
                 .join(Car).filter(Car.car_id == car_id).filter_by(locked=status)
             if bookings.count() > 0:  # if any bookings were found
                 valid_bookings = []
