@@ -550,6 +550,7 @@ def add_booking():
 @api.route("/booking", methods=['PUT'])
 def update_booking():
     """
+    TODO: update to response object
     Update booking status: cancelled or completed
     Returns:
         Success if processed correctly, otherwise error corresponding to the problem

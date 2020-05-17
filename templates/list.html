@@ -7,20 +7,29 @@
 {% endwith %}
 <body style="padding-top: 4.5rem">
   <div class="container">
-    <div class="card-columns">
-    {% for car in cars %}
-      <div class="card bg-light mb-4">
+    {% if cars != None %}
+      <div class="card-columns">
+      {% for car in cars %}
+        <div class="card bg-light mb-4">
+          <div class="card-body">
+            <h5 class="card-title">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
+            <p class="card-text">Capcity: {{car.model.capacity}}</p>
+            <p class="card-text">Colour: {{car.model.colour}}</p>
+            <p class="card-text">Cost: ${{car.cph}} per hour</p>
+            <p class="card-text">Locked: {{car.locked}}</p>
+            <a href="/book?id={{car.car_id}}" class="btn btn-primary">Book now</a>
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
         <div class="card-body">
-          <h5 class="card-title">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
-          <p class="card-text">Capcity: {{car.model.capacity}}</p>
-          <p class="card-text">Colour: {{car.model.colour}}</p>
-          <p class="card-text">Cost: ${{car.cph}} per hour</p>
-          <p class="card-text">Locked: {{car.locked}}</p>
-          <a href="/book?id={{car.car_id}}" class="btn btn-primary">Book now</a>
+          <h5 class="card-title text-center font-italic align-middle">No cars found</h5>
+          <p class="card-text text-center"><small>No available cars found in database</small></p>
         </div>
       </div>
-    {% endfor %}
-    </div>
+    {% endif %}
   </div>
 </body>
 

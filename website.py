@@ -1,5 +1,7 @@
 import json
 import re
+from json.decoder import JSONDecodeError
+
 import requests
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
@@ -97,7 +99,6 @@ def login():
             "{}{}".format(URL, "users/authenticate"),
             params={"user_id": form.email.data, "password": form.password.data},
         )
-        print(result.text)
         data = result.json()
         if result.status_code == 200:
             session['user'] = result.json()
@@ -206,9 +207,13 @@ def render_booking_page():
                 response = requests.get(
                     "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
                 )
+                try:
+                    cars = response.json()
+                except JSONDecodeError as je:
+                    cars = None
                 form.start.data = start_dt
                 form.end.data = end_dt
-                return render_template("booking.html", form=form, cars=response.json(), start=start_dt, end=end_dt)
+                return render_template("booking.html", form=form, cars=cars, start=start_dt, end=end_dt)
         return render_template("booking.html", form=form)
     return redirect(url_for('site.home'))
 
@@ -260,6 +265,12 @@ def process_booking():
 
 @site.route("/cancel", methods=['POST', 'GET'])
 def cancel_booking():
+    """
+    TODO: separate get and post into different methods -- easier to follow logic
+    TODO: api will use response objects
+    Returns:
+
+    """
     if 'user' in session:
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
@@ -317,8 +328,11 @@ def cancel_booking():
                             "data": result['data']
                         }
                     ))
-
-        return render_template("cancel.html", user_bookings=bookings.json(), messages=messages)
+        try:
+            bookings_data = bookings.json()
+        except JSONDecodeError as je:
+            bookings_data = None
+        return render_template("cancel.html", user_bookings=bookings_data, messages=messages)
     return redirect(url_for('site.home'))
 
 
@@ -329,7 +343,11 @@ def view_history():
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['email']}
         )
-        return render_template("history.html", user_bookings=bookings.json())
+        try:
+            bookings_data = bookings.json()
+        except JSONDecodeError as je:
+            bookings_data = None
+        return render_template("history.html", user_bookings=bookings_data)
     return redirect(url_for('site.home'))
 
 
@@ -339,7 +357,11 @@ def available_cars():
         cars = requests.get(
             "{}{}".format(URL, "/cars"), params={"available": 1}
         )
-        return render_template("list.html", cars=cars.json())
+        try:
+            cars_data = cars.json()
+        except JSONDecodeError as je:
+            cars_data = None
+        return render_template("list.html", cars=cars_data)
     return redirect(url_for('site.home'))
 
 
@@ -351,15 +373,19 @@ def search_cars():
         )
         attributes = defaultdict(set)
         if cars.status_code == 200:
-            for car in cars.json():
-                attributes['make'].add(car['model']['make'])
-                attributes['colour'].add(car['model']['colour'])
-                attributes['year'].add(car['model']['year'])
-                attributes['capacity'].add(car['model']['capacity'])
-                attributes['cost'].add(car['cph'])
-
-            return render_template("search.html", cars=cars.json(), attributes=attributes)
-
+            try:
+                car_data = cars.json()
+            except JSONDecodeError as je:
+                attributes = None
+                car_data = None
+            else:
+                for car in car_data:
+                    attributes['make'].add(car['model']['make'])
+                    attributes['colour'].add(car['model']['colour'])
+                    attributes['year'].add(car['model']['year'])
+                    attributes['capacity'].add(car['model']['capacity'])
+                    attributes['cost'].add(car['cph'])
+            return render_template("search.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
