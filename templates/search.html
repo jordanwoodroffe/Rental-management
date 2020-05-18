@@ -1,0 +1,87 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+{% block javascript %}
+  <script src="{{ url_for('static', filename='scripts/search.js')}}"></script>
+{% endblock %}
+{% with page="search"%}
+{% include "nav.html" %}
+{% endwith %}
+    <body style="padding-top: 4.5rem">
+      <div class="container">
+        {% if attributes != None %}
+          <div>
+            <h3>Filter</h3>
+            <label>
+              <div>Make</div>
+              <select class="custom-select" name="make" id="make-filter" onchange="filter()">
+                <option value="All" selected>All</option>
+                {% for make in attributes['make'] %}
+                    <option value="{{ make }}">{{ make }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <div>Year</div>
+              <select class="custom-select" name="year" id="year-filter" onchange="filter()">
+                <option value="All" selected>All</option>
+                {% for year in attributes['year'] %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <div>Colour</div>
+              <select class="custom-select" name="colour" id="colour-filter" onchange="filter()">
+                <option value="All" selected>All</option>
+                {% for colour in attributes['colour'] %}
+                    <option value="{{ colour }}">{{ colour }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <div>Search</div>
+                <div class="">
+                  <input class="form-control" type="search" placeholder="Search.." id="search-box" oninput="filter()">
+                </div>
+            </label>
+            <label>
+              <div>Capacity</div>
+                <div class="slidecontainer">
+                  <span>{{ attributes['capacity'] | min }}</span><input type="range" class="custom-range" value="{{ attributes['capacity'] | min }}" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()" name="capacityVal"><span>{{ attributes['capacity'] | max}}</span>
+                  <output for="capacityVal" onforminput="value = capacityVal.valueAsNumber;"></output>
+                </div>
+            </label>
+            <label>
+              <div>Cost</div>
+                <div class="slidecontainer">
+                  <span>${{ attributes['cost'] | min }}</span><input type="range" class="custom-range" value="{{ attributes['cost'] | min }}" min="{{ attributes['cost'] | min }}" max="{{ attributes['cost'] | max}}" class="slider" id="cost-filter" oninput="filter()" name="costVal"><span>${{ attributes['cost'] | max }}</span>
+                  <output for="costVal" onforminput="value = costVal.valueAsNumber;"></output>
+                </div>
+            </label>
+          </div>
+        {% endif %}
+        {% if cars != None %}
+          <div class="card-columns">
+            {% for car in cars %}
+              <div class="card bg-light mb-4 car">
+                <div class="card-body">
+                  <h5 class="card-title make-value">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
+                  <p class="card-text capacity-value">Capcity: {{car.model.capacity}}</p>
+                  <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
+                  <p class="card-text cost-value">Cost: ${{car.cph}} per hour</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5 class="card-title text-center font-italic align-middle">No cars found</h5>
+              <p class="card-text text-center"><small>No available cars found in database</small></p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </body>
+{% endblock %}

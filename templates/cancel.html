@@ -1,0 +1,54 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% with page="cancel"%}
+{% include "nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0; z-index: 10;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>{{message.message}}</strong>
+        <div>
+          <small class="text-muted">{{message.data}}</small>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+  <div class="container">
+    {% if user_bookings != None %}
+      <div class="card-columns">
+        {% for booking in user_bookings %}
+        {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("") -%}
+          <div class="card bg-light mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Booking ID {{booking.id}}</h5>
+              <p class="card-text">Car: {{booking.car.model.make}} {{booking.car.model.model}}, {{booking.car.model.year}}</p>
+              <p class="card-text">Start date: {{booking.start}}</p>
+              <p class="card-text">End date: {{booking.end}}</p>
+              <p class="card-text">Status: {{status}}</p>
+              {% if booking.completed == 0 %}
+              <form class="form-signup" action="/cancel?booking_id={{booking.booking_id}}&status=2" method="POST">
+                <button type="submit" class="btn btn-primary" name="submit">Cancel</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title text-center font-italic align-middle">No bookings found</h5>
+          <p class="card-text text-center"><small>No booking history found in database</small></p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</body>
+
+{% endblock %}

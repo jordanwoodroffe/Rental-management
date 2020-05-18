@@ -1,0 +1,88 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+
+{% with page="book"%}
+{% include "nav.html" %}
+{% endwith %}
+
+<body style="padding-top: 4.5rem">
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0; z-index: 20;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>{{message.message}}</strong>
+        <div>
+          <small class="text-muted">{{message.data}}</small>
+        </div>
+        {% if category == "success" %}
+          <br><a href="/addevent?booking_id={{message.booking_id}}&car_id={{message.car_id}}&time_start={{message.start}}&time_end={{message.end}}" class="btn btn-primary">Add to calendar</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+  <div class="container bg-light rounded">
+    <div class="row justify-content-center pt-3">
+      <h5>Create Booking</h5>
+    </div>
+    <div class="row">
+      <div class="col">
+        <form id="form" class="form-signin" method="GET">
+          {{ form.hidden_tag() }}
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              {{ wtf.form_field(form.start)}}
+            </div>
+            <div class="form-group col-md-4">
+              {{ wtf.form_field(form.end)}}
+            </div>
+            <div class="form-group col-md-4">
+              <small id="dateHelpBlock" class="form-text text-muted">
+              {% for error in form.start.errors %}
+              {{error}}<br/>
+              {% endfor %}
+              </small>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="container">
+      {% if cars != None %}
+      <div class="card-columns">
+        {% for car in cars %}
+          <div class="card bg-light mb-4">
+            <div class="card-body">
+              <h5 class="card-title">{{car.model.make}} {{car.model.model}},<br/>{{car.model.year}}</h5>
+              <p class="card-text">{{car.car_id}}</p>
+              <p class="card-text">Capcity: {{car.model.capacity}}</p>
+              <p class="card-text">Colour: {{car.model.colour}}</p>
+              <p class="card-text">Cost: ${{car.cph}} per hour</p>
+              <!-- <a href="/book?id={{car.id}}" class="btn btn-primary">Book now</a> -->
+              <form action="/book?car_id={{car.car_id}}&start={{start}}&end={{end}}" class="form-signup" method="POST">
+                <button type="submit" class="btn btn-primary" name="submit">Book now</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title text-center font-italic align-middle">No cars found</h5>
+          <p class="card-text text-center"><small>No available cars found in database</small></p>
+        </div>
+      </div>
+    {% endif %}
+    </div>
+  </div>
+</body>
+{% endblock %}

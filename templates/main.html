@@ -1,0 +1,112 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% with page="main"%}
+{% include "nav.html" %}
+{% endwith %}
+<script src="{{ url_for('static', filename='scripts/main.js')}}"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+        $(function() {
+          $('a#fr_capture').bind('click', function() {
+            $.getJSON('/capture_user?user_id={{user.email}}',
+                function(data) {
+              //do nothing
+            });
+            return false;
+          });
+        });
+</script>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <script>
+      var messages = {{ messages | safe }};
+      for (var i=0; i<messages.length; i++) {
+        alert(messages[i]);
+      }
+    </script>
+  {% endif %}
+{% endwith %}
+<script src="https://kit.fontawesome.com/6b539ad364.js" crossorigin="anonymous"></script>
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card bg-light">
+          <div class="card-header">
+            Profile
+          </div>
+          <div class="card-img-top d-flex justify-content-center" style="padding-top: 5px">
+            <i class="fas fa-user fa-7x"></i>
+          </div>
+          <div class="card-body">
+            <h5>{{user.f_name}} {{user.l_name}}</h5>
+            <p>{{user.email}}</p>
+          </div>
+        </div>
+        <div class="card bg-light mt-3">
+          <div class="card-header">
+            Facial Recognition
+          </div>
+          <div class="card-body">
+            {% if user.face_id == False %}
+            <p class="card-text">Register for Facial Recogntion, used to unlock booked cars.</p>
+            <!-- <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a> -->
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+              Register Now
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Upload 5 face pitures</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <form action="/capture_user" method="POST" enctype="multipart/form-data">
+
+                      <div class="form-group">
+                        <label>Select image</label>
+                        <div class="custom-file">
+                          <input type="file" class="custom-file-input" name="image" multiple="" id="image" onchange="updateList()">
+                          <label class="custom-file-label" for="image">Select image...</label>
+                        </div>
+                      </div>
+
+                      <p>Selected files:</p>
+                      <div id="imageList"></div>
+
+                      <button type="submit" class="btn btn-primary">Upload</button>
+              
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <small><i>Facial Recognition registration completed</i></small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card bg-light mt-3 mt-md-0">
+          <div class="card-header">
+            Map
+          </div>
+          <div class="card-body">
+            <p>TBC</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- where do all car locations get displayed?? -->
+</body>
+{% endblock %}

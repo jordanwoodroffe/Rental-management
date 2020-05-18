@@ -1,0 +1,78 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<!-- Source: bootstrap docs  -->
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="jumbotron">
+        <h1 class="display-4">User Registration</h1>
+        <p class="lead">Please enter your details in order to create an account.</p>
+        <hr class="my-4">
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <form class="form-signin" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.first_name)}}
+            <small id="firstnameHelpBlock" class="form-text text-muted">
+              {% for error in form.first_name.errors %}
+              {{error}}<br/>
+              {% endfor %}
+<!--              Name must not contain number.<br/>-->
+<!--              Name must be in ASCII.<br/>-->
+            </small>
+          </div>
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.last_name)}}
+            <small id="lastnameHelpBlock" class="form-text text-muted">
+              {% for error in form.last_name.errors %}
+              {{error}}<br/>
+              {% endfor %}
+<!--              Name must not contain number.<br/>-->
+<!--              Name must be in ASCII.<br/>-->
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.email)}}
+            <small id="emailHelpBlock" class="form-text text-muted">
+              {% for error in form.email.errors %}
+              {{error}}<br/>
+              {% endfor %}
+<!--              Email must not be registered before.<br/>-->
+<!--              Email must be in email format.<br/>-->
+            </small>
+          </div>
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.password)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              {% for error in form.password.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+<!--            <small id="passwordHelpBlock" class="form-text text-muted">-->
+<!--              Must be between 4 and 20 characters long.<br/>-->
+<!--              Must contain at least one uppercase letter.<br/>-->
+<!--              Must contain at least one lowercase letter.<br/>-->
+<!--              Must contain at least one number.<br/>-->
+<!--              Must contain at least one special character.<br/>-->
+<!--            </small>-->
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
