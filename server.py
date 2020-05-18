@@ -1,14 +1,14 @@
 import socket
 import datetime
 import json, requests
-import threading
 from flask import Flask, render_template, request, redirect, Response
 from datetime import datetime
+
 app = Flask(__name__)
 localIP     = "localhost"
 localPort   = 20001
 bufferSize  = 1024
-URL = "http://127.0.0.1:5000/" 
+URL = "http://127.0.0.1:5000" 
 
 #Initalize server
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -23,11 +23,12 @@ def incomingFeed():
         #Get all required variables
         userIndex = input.find('_user_')
         passIndex = input.find ('_pass_')
+        idCarIndex = input.find('_rentCar')
         email = input [userIndex + 6:passIndex]
-        idCar = input [30:userIndex]
+        idCar = input [idCarIndex + 8:userIndex]
         
         #Set car status to unlocked
-        result = requests.put("{}{}".format(URL, "/car"),params={"car_id": idCar, "user_id": email, locked: 0})    
+        result = requests.put("{}{}".format(URL, "/car"),params={"car_id": idCar, "user_id": email, "locked": 0})    
           
         #If successfully send DB response to client
         if result.status_code == 200:
@@ -49,7 +50,7 @@ def incomingFeed():
         idCar = input [32:userIndex]
                                                                                                                                            
         #Query DB endpoint, if successful updates car locked status and updates booking
-        result = requests.put("{}{}".format(URL, "/car"),params={"car_id": idCar, "user_id": email, locked: 1})    
+        result = requests.put("{}{}".format(URL, "/car"),params={"car_id": idCar, "user_id": email, "locked": 1})    
         
         #If successfully send DB response to client
         if result.status_code == 200:
@@ -70,7 +71,7 @@ def incomingFeed():
         username = input [userIndex + 6:passIndex]
         password = input [passIndex + 6:-1]
         
-        result = requests.get("{}{}".format(URL, "users/authenticate"),params={"user_id": username, "password": password})    
+        result = requests.get("{}{}".format(URL, "/users/authenticate"),params={"user_id": username, "password": password})    
        
         if result.status_code == 200:
             msgFromServer       = "successful"
@@ -90,9 +91,8 @@ def incomingFeed():
         idCarIndex = input.find("_id")
         car_id = input [idCarIndex + 3: -1]
         latitude = input [latitudeIndex + 9:longitudeIndex]
-        longitude = input [longitudeIndex + 1: idCarIndex]
-                                                                                   
-        requests.put("URL/car", params={"car_id": car_id, "lat":latitude, "lng": longitude}
+        longitude = input [longitudeIndex + 1: idCarIndex]                                                                         
+        requests.put(URL + "/car", params={"car_id": car_id, "lat":latitude, "lng": longitude})
         return
 
 
@@ -122,29 +122,12 @@ def incomingFeed():
                 getLocation(clientMsg)
                 break  
     
-
-@app.route('/')
-def index():
-
-    #fetch json dict from db
-    result = requests.get("{}{}".format(URL, "/cars"),params={})    
-    points = result.json()
-        
-    #returns something like this
-    #points = [{"car_id": "s123", "model_id": 123, "model": "test", "name": "ford", "cph": 49000, "locked": 0, "lng": 144.3690243, "lat": -37.8934276},
-             #{"car_id": "s123", "model_id": 123, "model": "test", "name": "hyundai", "cph": 40000, "locked": 0, "lng": 145.3690243, "lat": -37.8934276},
-             #{"car_id": "s123", "model_id": 123, "model": "test", "name": "holden", "cph": 38000, "locked": 0, "lng": 146.3690243, "lat": -37.8934276}] 
-    return render_template('map.html', points=json.dumps(points))
-                
 if __name__ == '__main__':
-    t1 = threading.Thread(target=incomingFeed, args=()) 
-    t2 = threading.Thread(target=app.run, args=())
-    t1.start()
-    t2.start()
-    t1.join()
-    t2.join()
+    incomingFeed()
+  
+
+
       
-    
     
    
    

@@ -4,7 +4,7 @@ import time
 import threading
 import sys
 
-car_id = "HKF607" 
+car_id = "VSB296" 
 
 #Clientside Setup
 serverAddressPort   = ("localhost", 20001)
@@ -40,8 +40,8 @@ def interface():
         while (True):
 
             def unlockCar():
-                print("enter car id")
-                id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
+           
+                id = "_rentCar" + car_id + "_user_" + username + "_pass_" + password
                 #send message to server    
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
@@ -57,7 +57,7 @@ def interface():
                     return
                     
             def returnCar():
-                print("enter car id")
+          
                 id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
                 #send message to server
                 carRequestBytes = str.encode(id)
