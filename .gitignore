@@ -107,3 +107,4 @@ user_data
 
 # pycharm stuff
 .idea
+.DS_Store
