@@ -72,7 +72,7 @@ class Car(db.Model):
     name = db.Column('name', VARCHAR(45), nullable=False)
     cph = db.Column('cph', Float())
     locked = db.Column('available', TINYINT(1), nullable=False)
-    long = db.Column('long', Float())
+    lng = db.Column('lng', Float())
     lat = db.Column('lat', Float())
 
 
@@ -142,7 +142,7 @@ class CarSchema(ma.SQLAlchemyAutoSchema):
     model = fields.Nested(CarModelSchema)
     locked = ma.auto_field()
     cph = ma.auto_field()
-    long = ma.auto_field()
+    lng = ma.auto_field()
     lat = ma.auto_field()
 
 
@@ -427,27 +427,27 @@ def update_location(car_id):
     Returns:
         Corresponding response code: 200 if successful, 404 if missing car_id in table, or 400 for client error
     """
-    long = request.args.get('long')
+    lng = request.args.get('lng')
     lat = request.args.get('lat')
-    if None not in (long, lat):
+    if None not in (lng, lat):
         car = Car.query.get(car_id)
         if car is not None:
             try:
-                fl_long = float(long)
+                fl_lng = float(lng)
                 fl_lat = float(lat)
-                if fl_long > 180 or fl_long < -180:
-                    raise ValueError("long {} outside valid bounds".format(fl_long))
+                if fl_lng > 180 or fl_lng < -180:
+                    raise ValueError("lng {} outside valid bounds".format(fl_lng))
                 if fl_lat > 90 or fl_lat < -90:
                     raise ValueError("lat {}  outside valid bounds".format(fl_lat))
                 car.lat = fl_lat
-                car.long = fl_long
+                car.lng = fl_lng
                 db.session.commit()
-                return Response("Updated coords: {} lat{},long{}".format(car_id, lat, long), status=200)
+                return Response("Updated coords: {} lat{},lng{}".format(car_id, lat, lng), status=200)
             except ValueError as ve:
-                return Response("Invalid lat/long format: {}".format(str(ve)), status=400)
+                return Response("Invalid lat/lng format: {}".format(str(ve)), status=400)
         return Response("Car not found, invalid id{}".format(car_id), status=404)
     else:
-        return Response("Missing required params: lat, long", status=400)
+        return Response("Missing required params: lat, lng", status=400)
 
 
 @api.route("/cars/<start>/<end>", methods=['GET'])

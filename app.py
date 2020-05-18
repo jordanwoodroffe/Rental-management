@@ -14,7 +14,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
 app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(site)
-# app.register_blueprint(api)
+app.register_blueprint(api)
 
 
 @app.route("/encode_user", methods=['POST'])
@@ -74,10 +74,10 @@ def internal(error):
 
 Bootstrap(app)
 
-# db.init_app(app)
+db.init_app(app)
 
 if __name__ == '__main__':
     # app.run(debug=True, host='192.168.1.200')  # use IP of MP: as per forums only has to be accessibly locally
     # db.drop_all(app=app)
-    # db.create_all(app=app)
+    db.create_all(app=app)
     app.run(debug=True)
