@@ -89,6 +89,27 @@ def home():
         return redirect(url_for("site.main"))
     return render_template("index.html")
 
+@site.route("/map", methods=['POST', 'GET'])
+def index():
+
+    #result = requests.get("{}{}".format(URL, "/cars"),params={})    
+    #test = result.json()
+    #print (test)
+    
+    points = [{'car_id': 'EXR143', 'model': {'colour': 'Indigo', 'model': 'Tribeca', 'year': 2008, 'model_id': 9, 'capacity': 4, 'make': 'Subaru'}, 'lng': 144.3690243, 'model_id': 9, 'name': 'Gene Calbrathe', 'lat': -37.8934276, 'locked': 1, 'cph': 67.99}, 
+              {'car_id': 'FYL107', 'model': {'colour': 'Khaki', 'model': '4Runner', 'year': 2002, 'model_id': 19, 'capacity': 3, 'make': 'Toyota'}, 'lng': None, 'model_id': 19, 'name': 'Athena Frammingham', 'lat': None, 'locked': 1, 'cph': 85.67}, 
+              {'car_id': 'XUE914', 'model': {'colour': 'Green', 'model': 'RAV4', 'year': 2005, 'model_id': 16, 'capacity': 3, 'make': 'Toyota'}, 'lng': None, 'model_id': 16, 'name': 'Malina Muscott', 'lat': None, 'locked': 1, 'cph': 64.94},]
+    
+    testset = [{'lat': None, 'model': {'colour': 'Indigo', 'model': 'Tribeca', 'capacity': 4, 'make': 'Subaru', 'year': 2008, 'model_id': 9}, 'locked': 1, 'cph': 67.99, 'lng': None, 'name': 'Gene Calbrathe', 'model_id': 9, 'car_id': 'EXR143'}, 
+               {'lat': None, 'model': {'colour': 'Khaki', 'model': '4Runner', 'capacity': 3, 'make': 'Toyota', 'year': 2002, 'model_id': 19}, 'locked': 1, 'cph': 85.67, 'lng': None, 'name': 'Athena Frammingham', 'model_id': 19, 'car_id': 'FYL107'}, 
+               {'lat': None, 'model': {'colour': 'Green', 'model': 'Grand Cherokee', 'capacity': 4, 'make': 'Jeep', 'year': 2008, 'model_id': 18}, 'locked': 1, 'cph': 15.26, 'lng': None, 'name': 'Hebert Pally', 'model_id': 18, 'car_id': 'HKF607'}, 
+               {'lat': None, 'model': {'colour': 'Green', 'model': 'RAV4', 'capacity': 3, 'make': 'Toyota', 'year': 2005, 'model_id': 16}, 'locked': 1, 'cph': 77.4, 'lng': None, 'name': 'Marley Harrhy', 'model_id': 16, 'car_id': 'IFE660'}, 
+               {'lat': None, 'model': {'colour': 'Indigo', 'model': 'Tribeca', 'capacity': 4, 'make': 'Subaru', 'year': 2008, 'model_id': 9}, 'locked': 1, 'cph': 71.75, 'lng': None, 'name': 'Valerye Colleran', 'model_id': 9, 'car_id': 'MCO334'},
+               {'lat': None, 'model': {'colour': 'Goldenrod', 'model': 'GTI', 'capacity': 4, 'make': 'Volkswagen', 'year': 1988, 'model_id': 7}, 'locked': 1, 'cph': 99.78, 'lng': None, 'name': 'Dieter Bremley', 'model_id': 7, 'car_id': 'RKV859'}, 
+               {'lat': -33.8678, 'model': {'colour': 'Teal', 'model': 'Miata MX-5', 'capacity': 3, 'make': 'Mazda', 'year': 2007, 'model_id': 1}, 'locked': 1, 'cph': 47.46, 'lng': 151.207, 'name': 'Hollie Amsberger', 'model_id': 1, 'car_id': 'VSB296'}, 
+               {'lat': None, 'model': {'colour': 'Green', 'model': 'RAV4', 'capacity': 3, 'make': 'Toyota', 'year': 2005, 'model_id': 16}, 'locked': 1, 'cph': 64.94, 'lng': None, 'name': 'Malina Muscott', 'model_id': 16, 'car_id': 'XUE914'}]
+    
+    return render_template('map.html', points=json.dumps(testset))
 
 @site.route("/login", methods=['POST', 'GET'])
 def login():
