@@ -4,25 +4,21 @@ import time
 import threading
 import sys
 
-var car_id = "HKF607" 
-
-#TO DO
-#DB connectivity + facial recognition
+car_id = "HKF607" 
 
 #Clientside Setup
 serverAddressPort   = ("localhost", 20001)
 bufferSize          = 1024
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
-#Send location to server every 30 seconds
 def locationTimer():
     while True:
-        time.sleep(30)
+        time.sleep(5)
         info = requests.get('http://ipinfo.io/json').json()
-        location = "_location" + info['loc']
+        location = "_location" + info['loc'] + "_id" + car_id
         locationBytes = str.encode(location)
         UDPClientSocket.sendto(locationBytes, serverAddressPort)
-    
+  
 def interface():
     # Login
     print ("Enter Username")
@@ -43,10 +39,10 @@ def interface():
         
         while (True):
 
-            def rentCar():
+            def unlockCar():
                 print("enter car id")
                 id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
-                #conditions are met on server side (car id exists && is not currently rented)
+                #send message to server    
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
                 #recieve message
@@ -54,16 +50,16 @@ def interface():
                 rentResponse = msgFromServer[0]
                     
                 if (rentResponse == b'successful'):
-                    print ("car rented succesfully")
+                    print ("car unlocked successfully")
                     return
                 else:
-                    print ("car is currently rented or car ID is invalid")
+                    print ("car is currently rented")
                     return
                     
             def returnCar():
                 print("enter car id")
                 id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
-                #conditions are met on server side (car id exists && is currently rented)
+                #send message to server
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
                 #recieve message
@@ -71,16 +67,16 @@ def interface():
                 returnResponse = msgFromServer[0]
                     
                 if (returnResponse == b'successful'):
-                    print ("car returned succesfully")
+                    print ("car returned successfully")
                     return
                 else:
-                    print ("car is not currently rented or car ID is invalid")
+                    print ("car is not currently rented")
                     return
             
             def controller():
                 #Menu Controller        
                 options = {
-                    "1: Rent a Car": "",
+                    "1: Unlock Car": "",
                     "2: Return a Car":"",
                     "3: Exit": ""
                 }
@@ -90,7 +86,7 @@ def interface():
                 print ("select an option") 
                 selectedOption = input()
                 if (selectedOption == "1"):
-                    rentCar()
+                    unlockCar()
                     return
                 elif (selectedOption == "2"):
                     returnCar()
@@ -112,5 +108,7 @@ if __name__ == '__main__':
     t2.start()
     t1.join()
     t2.join()
+    
+ 
     
     
