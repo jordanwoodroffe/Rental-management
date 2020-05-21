@@ -52,16 +52,17 @@ def get_encoding():
 @app.route("/authenticate_encodings", methods=['POST', 'GET'])
 def auth_by_face():
     directory = request.args.get('directory')
+    user_id = request.arg.get('user_id')
     if directory is not None:
-        images = []
-        for filename in os.listdir(directory):
-            images.append("{}/{}".format(directory, filename))
+        images = [pickle.load(open("{}{}".format(directory, user_id), 'rb'))]
+        # for filename in os.listdir():
+        #     images.append("{}{}".format(directory, filename))
         detector = FaceDetector()
         login = detector.capture_user(images=images)
-        directory = "user_data/pickles"
+        pickles_dir = "user_data/pickles"
         pickles = {
-            filename: pickle.load(open("{}/{}".format(directory, filename), "rb"))
-            for filename in os.listdir(directory)
+            filename: pickle.load(open("{}/{}".format(pickles_dir, filename), "rb"))
+            for filename in os.listdir(pickles_dir)
         }
         match = detector.compare_encodings(login_encs=login, saved_encs=pickles)
         if match.user_id is not None:

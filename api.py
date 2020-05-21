@@ -12,7 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import fields
 from sqlalchemy.orm import sessionmaker
-from utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates
+from utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates, calc_hours
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
 import hashlib
 import requests
@@ -97,6 +97,7 @@ class Booking(db.Model):
     car = db.relationship('Car')
     start = db.Column('start', DateTime(), nullable=False)
     end = db.Column('end', DateTime(), nullable=False)
+    cost = db.Column('cost', Float())
     completed = db.Column('completed', Integer(), nullable=False)
     event_id = db.Column('event_id', VARCHAR(45))
 
@@ -157,7 +158,7 @@ class CarSchema(ma.Schema):
 class BookingSchema(ma.Schema):
     class Meta:
         model = Booking
-        fields = ("booking_id", "user_id", "user", "car_id", "car", "start", "end", "completed", "event_id")
+        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id")
 
     # booking_id = fields.Integer()
     # user_id = fields.String()
@@ -509,7 +510,7 @@ def get_valid_cars(start, end):
         b_end = datetime.strptime(booking['end'], "%Y-%m-%dT%H:%M:%S")
         start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S")
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
-        if compare_dates(start=start_dt, end=end_dt, b_start=b_start, b_end=b_end):  # overlap found
+        if compare_dates(d1=start_dt, d2=end_dt, b_start=b_start, b_end=b_end):  # overlap found
             booked_cars.append(booking['car_id'])  # add to booked car list
     # get cars that don't match any cars with overlapping bookings
     cars = Car.query.filter(Car.car_id.notin_(booked_cars))
@@ -573,6 +574,7 @@ def add_booking():
         booking.user_id = data['user_id']
         booking.car_id = data['car_id']
         booking.completed = 0
+        booking.cost = calc_cost(float(data['cph']), booking.start, booking.end)
         if data['event_id'] is not None:
             booking.event_id = data['event_id']
         db.session.add(booking)
@@ -584,6 +586,10 @@ def add_booking():
     else:
         response = Response(status=400)
     return response
+
+
+def calc_cost(amount: float, start: datetime, end: datetime) -> float:
+    return float("{:.2f}".format(amount * calc_hours(d1=start, d2=end)))
 
 
 @api.route("/booking", methods=['PUT'])

@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
-from utils import allowed_file
+from utils import allowed_file, calc_hours
 from werkzeug.utils import secure_filename
 
 site = Blueprint("site", __name__)
@@ -237,6 +237,14 @@ def render_booking_page():
                 )
                 try:
                     cars = response.json()
+                    for car in cars:
+                        cph = car['cph']
+                        try:
+                            amount = float(cph)
+                            car['total_cost'] = float("{:.2f}".format(amount * calc_hours(d1=start_dt, d2=end_dt)))
+                        except ValueError:
+                            car['total_cost'] = None
+                        print(car['total_cost'])
                 except JSONDecodeError as je:
                     cars = None
                 form.start.data = start_dt
@@ -254,12 +262,18 @@ def process_booking():
         end = request.args.get('end')
         messages = None
         if None not in (car_id, start, end):
+            response = requests.get(
+                "{}{}".format(URL, "car"), params={"car_id": car_id}
+            )
+            car = response.json()
+            amount = float(car['cph'])
             data = {
                 'start': start,
                 'end': end,
                 'user_id': session['user']['email'],
                 'car_id': car_id,
-                'event_id': None
+                'event_id': None,
+                'cph': amount
             }
             response = requests.post(
                 "{}{}".format(URL, "booking"),
@@ -395,6 +409,10 @@ def view_history():
         )
         try:
             bookings_data = bookings.json()
+            for booking in bookings_data:
+                booking['start'] = booking['start'].replace("T", " ")
+                booking['end'] = booking['end'].replace("T", " ")
+            print(bookings_data)
         except JSONDecodeError as je:
             bookings_data = None
         return render_template("history.html", user_bookings=bookings_data)

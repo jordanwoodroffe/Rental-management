@@ -65,7 +65,12 @@
               <p class="card-text">{{car.car_id}}</p>
               <p class="card-text">Capcity: {{car.model.capacity}}</p>
               <p class="card-text">Colour: {{car.model.colour}}</p>
-              <p class="card-text">Cost: ${{car.cph}} per hour</p>
+              <p class="card-text">Cost: ${{car.cph}} per hour
+              {% if car.total_cost %}
+              <br/><small class="text-muted">Total cost: ${{car.total_cost}}</small>
+              {% endif %}
+              </p>
+
               <!-- <a href="/book?id={{car.id}}" class="btn btn-primary">Book now</a> -->
               <form action="/book?car_id={{car.car_id}}&start={{start}}&end={{end}}" class="form-signup" method="POST">
                 <button type="submit" class="btn btn-primary" name="submit">Book now</button>
