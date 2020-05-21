@@ -49,16 +49,30 @@ def get_encoding():
     return None
 
 
+@app.route("/login_test")
+def test():
+    """
+    Test method to create a login pickle (for FR)
+    Returns:
+
+    """
+    detector = FaceDetector()
+    image = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
+    pickle.dump(image, open("test_data/test_login/{}".format("login"), "wb"))
+    return "succ"
+
+
 @app.route("/authenticate_encodings", methods=['POST', 'GET'])
 def auth_by_face():
     directory = request.args.get('directory')
-    user_id = request.arg.get('user_id')
+    user_id = request.args.get('user_id')
     if directory is not None:
-        images = [pickle.load(open("{}{}".format(directory, user_id), 'rb'))]
-        # for filename in os.listdir():
-        #     images.append("{}{}".format(directory, filename))
         detector = FaceDetector()
-        login = detector.capture_user(images=images)
+
+        # images = []
+        login = pickle.load(open("{}/{}".format(directory, user_id), 'rb'))
+        # images.append(login)
+
         pickles_dir = "user_data/pickles"
         pickles = {
             filename: pickle.load(open("{}/{}".format(pickles_dir, filename), "rb"))
@@ -67,7 +81,7 @@ def auth_by_face():
         match = detector.compare_encodings(login_encs=login, saved_encs=pickles)
         if match.user_id is not None:
             return Response(match.user_id, status=200)
-        return Response("missing request param", status=400)
+        return Response("missing param", status=400)
     return Response("missing request param", status=400)
 
 
