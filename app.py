@@ -4,7 +4,6 @@ import shutil
 
 from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
-from flask_googlemaps import GoogleMaps
 from FacialRecognition import FaceDetector
 from api import api, db, DB_URI
 from website import site
@@ -14,7 +13,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'temp'
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
-app.config["GOOGLEMAPS_KEY"] = "AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ"
 
 app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(site)
@@ -83,7 +81,6 @@ def internal(error):
 
 
 Bootstrap(app)
-GoogleMaps(app)
 db.init_app(app)
 
 if __name__ == '__main__':

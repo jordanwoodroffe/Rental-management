@@ -6,7 +6,6 @@ import requests
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, Response
 from flask_wtf import FlaskForm
-from flask_googlemaps import GoogleMaps, Map
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 from collections import defaultdict
@@ -148,35 +147,7 @@ def register():
 @site.route("/main")
 def main():
     if 'user' in session:
-        result = requests.get("{}{}".format(URL, "/cars"))
-        if result.status_code == 200:
-            try:
-                data = result.json()
-                markers = []
-                for i in range(len(data)):
-                    item = data[i]
-                    markers.append(
-                        {
-                            "infobox": "{}, {}:\n{} {} {} ({})".format(
-                                item['car_id'], item['name'], item['model']['year'],
-                                item['model']['make'], item['model']['model'], item['model']['colour']),
-                            "lat": item['lat'],
-                            "lng": item['lng']
-                        }
-                    )
-            except JSONDecodeError as je:
-                markers = []
-        else:
-            markers = []
-        car_map = Map(
-            identifier="view-side",
-            lat=-37.781255,
-            lng=145.135217,
-            zoom=9,
-            style="height:400px;width:100%;margin:0;padding:0;",
-            markers=markers
-        )
-        return render_template("main.html", user=session['user'], map=car_map)
+        return render_template("main.html", user=session['user'])
     return redirect(url_for("site.home"))
 
 
