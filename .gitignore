@@ -105,6 +105,8 @@ credential.json
 # user data
 user_data
 
-# pycharm stuff
+# ignore IDEA config files
 .idea
 .DS_Store
+.vscode
+.vs
