@@ -501,7 +501,7 @@ def get_valid_cars(start, end):
         JSON object containing valid options for booking
     """
     bookings = Booking.query.filter_by(completed=0)
-    data = json.loads(BookingSchema(many=True, exclude=['user.password']).dumps(bookings))
+    data = json.loads(BookingSchema(many=True).dumps(bookings))
     booked_cars = []
     for booking in data:
         # TODO - check for conversion/datatype error
@@ -534,7 +534,7 @@ def get_bookings():
         else:
             bookings = Booking.query.join(User).filter(User.email == user_id)
     return Response(
-        BookingSchema(many=True, exclude=['user.password']).dumps(bookings), status=200, mimetype="application/json"
+        BookingSchema(many=True).dumps(bookings), status=200, mimetype="application/json"
     )
 
 
