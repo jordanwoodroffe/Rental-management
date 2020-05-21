@@ -13,7 +13,7 @@ UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
 def locationTimer():
     while True:
-        time.sleep(5)
+        time.sleep(10)
         info = requests.get('http://ipinfo.io/json').json()
         location = "_location" + info['loc'] + "_id" + car_id
         locationBytes = str.encode(location)

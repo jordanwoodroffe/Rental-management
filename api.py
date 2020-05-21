@@ -7,7 +7,7 @@ from json.decoder import JSONDecodeError
 import requests
 from sqlalchemy import MetaData, Table, Column, DateTime, Integer, Float, String, insert, select, update, delete, \
     ForeignKey, LargeBinary
-from flask import Blueprint, jsonify, request, Response
+from flask import Flask, Blueprint, jsonify, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import fields
@@ -174,6 +174,12 @@ class EncodingSchema(ma.SQLAlchemyAutoSchema):
     size = ma.auto_field()
     details = ma.auto_field()
 
+
+def create_app():
+    app = Flask(__name__)
+    db.init_app(app)
+    return app
+    
 
 """
 Database RESTful API

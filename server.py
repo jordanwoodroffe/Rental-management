@@ -95,7 +95,6 @@ def incomingFeed():
         requests.put(URL + "/car", params={"car_id": car_id, "lat":latitude, "lng": longitude})
         return
 
-
     while(True):
 
         bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
@@ -121,6 +120,9 @@ def incomingFeed():
             if ("_location" in clientMsg):
                 getLocation(clientMsg)
                 break  
+
+def main():
+    incomingFeed()
     
 if __name__ == '__main__':
     incomingFeed()

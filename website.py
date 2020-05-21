@@ -89,6 +89,14 @@ def home():
         return redirect(url_for("site.main"))
     return render_template("index.html")
 
+@site.route("/map", methods=['POST', 'GET'])
+def map():
+
+    result = requests.get("{}{}".format(URL, "/cars"),params={})    
+    test = result.json()
+    print (test)
+    
+    return render_template('map.html', points=json.dumps(test))
 
 @site.route("/login", methods=['POST', 'GET'])
 def login():
