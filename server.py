@@ -1,6 +1,9 @@
 import socket
 import datetime
 import json, requests
+import Image
+import os
+import io
 from flask import Flask, render_template, request, redirect, Response
 from datetime import datetime
 
@@ -83,6 +86,30 @@ def incomingFeed():
             bytesToSend         = str.encode(msgFromServer)
             UDPServerSocket.sendto(bytesToSend, address)
         return
+
+        #login into system, checks credentials
+    def face_login(input):
+        userIndex = input.find('_user_')
+        fileIndex = input.find('_file_')
+        username = input[userIndex + 6:passIndex]
+        fileBytes = input[fileIndex + 6:-1]
+        image = Image.open(io.BytesIO(fileBytes))
+        image.save("user_data/login/{}.jpg".format(username))
+
+        result = requests.get("{}{}".format(URL, "/users/authenticate_encodings"), params={"user_data/login/","user_id": username})
+
+        os.remove("user_data/login/{}.jpg".format(username))
+
+        if result.status_code == 200:
+            msgFromServer       = "successful"
+            bytesToSend         = str.encode(msgFromServer)
+            UDPServerSocket.sendto(bytesToSend, address)
+        
+        else:
+            msgFromServer       = "unsuccessful"
+            bytesToSend         = str.encode(msgFromServer)
+            UDPServerSocket.sendto(bytesToSend, address)
+        return
     
     #Updates car longitude and latitude (every 5 seconds)
     def getLocation(input):
@@ -107,6 +134,10 @@ def incomingFeed():
         while(True):
             if ("_rentCar" in clientMsg):
                 unlockCar(clientMsg)
+                break
+
+            if ("_login_face" in clientMsg):
+                login(clientMsg)
                 break
            
             if ("_login" in clientMsg):
