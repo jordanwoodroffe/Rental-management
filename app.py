@@ -1,7 +1,10 @@
 import pickle
 import os
+import shutil
+
 from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
+from flask_googlemaps import GoogleMaps
 from FacialRecognition import FaceDetector
 from api import api, db, DB_URI
 from website import site
@@ -11,6 +14,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'temp'
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
+app.config["GOOGLEMAPS_KEY"] = "AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ"
 
 app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(site)
@@ -21,17 +25,23 @@ app.register_blueprint(api)
 def encode_user():
     user_id = request.args.get('user_id')
     directory = request.args.get('directory')
+    # os.remove("user_data/pickles/{}".format(user_id))
     if None not in (user_id, directory):
         detector = FaceDetector()
-        images = ["{}/{}".format(directory, filename) for filename in os.listdir(directory)]
-        print(images)
+        images = []
+        for filename in os.listdir(directory):
+            images.append("{}/{}".format(directory, filename))
+        print("images: {}".format(images))
         encoding = detector.capture_user(images)
         if encoding is not None:
             pickle.dump(encoding, open("user_data/pickles/{}".format(user_id), "wb"))
-            # TODO: remove user data directory
-            return Response("Success", status=200)
-        return Response("Error - unable to capture/encode faces", status=400)
-    return Response("Error - incorrect request params", status=400)
+            response = Response("Success", status=200)
+        else:
+            response = Response("Error - unable to capture/encode faces", status=400)
+    else:
+        response = Response("Error - incorrect request params", status=400)
+    # shutil.rmtree(directory)
+    return response
 
 
 @app.route("/get_encoding", methods=['GET'])
@@ -73,7 +83,7 @@ def internal(error):
 
 
 Bootstrap(app)
-
+GoogleMaps(app)
 db.init_app(app)
 
 if __name__ == '__main__':

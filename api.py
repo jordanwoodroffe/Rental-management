@@ -62,6 +62,7 @@ class User(db.Model):
     f_name = db.Column('first_name', VARCHAR(45), nullable=False)
     l_name = db.Column('last_name', VARCHAR(45), nullable=False)
     password = db.Column('password', TEXT(75), nullable=False)
+    face_id = db.Column('face_id', TINYINT(1))
 
 
 class Car(db.Model):
@@ -118,6 +119,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     email = ma.auto_field()
     f_name = ma.auto_field()
     l_name = ma.auto_field()
+    face_id = ma.auto_field()
 
 
 class CarModelSchema(ma.SQLAlchemyAutoSchema):
@@ -179,7 +181,7 @@ def create_app():
     app = Flask(__name__)
     db.init_app(app)
     return app
-    
+
 
 """
 Database RESTful API
@@ -289,9 +291,9 @@ def user_authentication():
             salt = user.password.split(':')[1]
             if verify_password(stored_password, password, salt):
                 data = json.loads(UserSchema(exclude=['password']).dumps(user))
-                enc = json.loads(EncodingSchema().dumps(Encoding.query.join(User).filter(User.email == user_id)))
-                print(enc)
-                data['face_id'] = bool(enc)
+                # enc = json.loads(EncodingSchema().dumps(Encoding.query.join(User).filter(User.email == user_id)))
+                # print(enc)
+                # data['face_id'] = bool(enc)
                 response = Response(
                     json.dumps(data), status=200, content_type="application/json"
                 )
@@ -304,6 +306,30 @@ def user_authentication():
             response = Response(json.dumps({'error': 'EMAIL'}), status=404, content_type="application/json")
             # response['code'] = 'EMAIL ERROR'
     return response
+
+
+@api.route("/user", methods=['PUT'])
+def update_user():
+    user_id = request.args.get("user_id")
+    face_id = request.args.get("face_id")
+    if None not in (user_id, face_id):
+        user = User.query.get(user_id)
+        if user is not None:
+            try:
+                val = int(face_id)
+                if val not in (0, 1):
+                    raise ValueError
+                user.face_id = val
+                db.session.commit()
+                return Response(
+                    UserSchema(exclude=['password']).dumps(User.query.get(user_id)),
+                    status=200
+                )
+            except ValueError:
+                return Response("Incorrect face_id param: {}".format(face_id), status=400)
+        return Response("User {} not found".format(user_id), status=404)
+    return Response("Missing request params", status=400)
+
 
 #
 # @api.route("/encoding", methods=['POST'])
@@ -640,6 +666,7 @@ def populate():
             user.f_name = row['f_name']
             user.l_name = row['l_name']
             user.password = row['password']
+            user.face_id = False
             db.session.add(user)
         db.session.commit()
         response['users'] = True
@@ -659,7 +686,7 @@ def populate():
             db.session.add(model)
         response['models'] = True
         # cars (references car models)
-        car_cols = ['car_id', 'name', 'cph', 'available']
+        car_cols = ['car_id', 'name', 'cph', 'lat', 'lng']
         cars = pd.read_csv('./test_data/car.csv', engine='python', sep=',', names=car_cols, error_bad_lines=False)
         for index, row in cars.iterrows():
             print(row)
@@ -668,6 +695,8 @@ def populate():
             car.model_id = random.choice(models.model_id.unique().tolist())
             car.cph = row['cph']
             car.name = row['name']
+            car.lat = row['lat']
+            car.lng = row['lng']
             car.locked = 1
             db.session.add(car)
         response['cars'] = True

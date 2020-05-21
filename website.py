@@ -4,8 +4,9 @@ from json.decoder import JSONDecodeError
 
 import requests
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, Response
 from flask_wtf import FlaskForm
+from flask_googlemaps import GoogleMaps, Map
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
 from collections import defaultdict
@@ -89,14 +90,15 @@ def home():
         return redirect(url_for("site.main"))
     return render_template("index.html")
 
+
 @site.route("/map", methods=['POST', 'GET'])
 def map():
-
-    result = requests.get("{}{}".format(URL, "/cars"),params={})    
+    result = requests.get("{}{}".format(URL, "/cars"), params={})
     test = result.json()
-    print (test)
-    
+    print(test)
+
     return render_template('map.html', points=json.dumps(test))
+
 
 @site.route("/login", methods=['POST', 'GET'])
 def login():
@@ -146,7 +148,35 @@ def register():
 @site.route("/main")
 def main():
     if 'user' in session:
-        return render_template("main.html", user=session['user'])
+        result = requests.get("{}{}".format(URL, "/cars"))
+        if result.status_code == 200:
+            try:
+                data = result.json()
+                markers = []
+                for i in range(len(data)):
+                    item = data[i]
+                    markers.append(
+                        {
+                            "infobox": "{}, {}:\n{} {} {} ({})".format(
+                                item['car_id'], item['name'], item['model']['year'],
+                                item['model']['make'], item['model']['model'], item['model']['colour']),
+                            "lat": item['lat'],
+                            "lng": item['lng']
+                        }
+                    )
+            except JSONDecodeError as je:
+                markers = []
+        else:
+            markers = []
+        car_map = Map(
+            identifier="view-side",
+            lat=-37.781255,
+            lng=145.135217,
+            zoom=9,
+            style="height:400px;width:100%;margin:0;padding:0;",
+            markers=markers
+        )
+        return render_template("main.html", user=session['user'], map=car_map)
     return redirect(url_for("site.home"))
 
 
@@ -166,19 +196,35 @@ def capture_user():
                 if not allowed_file(file.filename):
                     flash('Only images of extensions: txt, pdf, png, jpg, jpeg, gif are allowed')
                     return redirect(url_for("site.main"))
+            directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics',
+                                     session['user']['email'])
+            if not os.path.exists(directory):
+                os.makedirs(directory)
             for file in files:
                 filename = secure_filename(file.filename)
-                directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics',
-                                         session['user']['email'])
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
                 file.save(os.path.join(directory, filename))
                 print(filename)
-                result = requests.post(
-                    "{}{}".format(URL, "/encode_user"),
-                    params={"user_id": session['user']['email'], "directory": directory}
+            result = requests.post(
+                "{}{}".format(URL, "/encode_user"),
+                params={"user_id": session['user']['email'], "directory": directory}
+            )
+            print(result)
+            if result.status_code == 200:
+                result = requests.put(
+                    "{}{}".format(URL, "/user"),
+                    params={"user_id": session['user']['email'], "face_id": 1}
                 )
-                print(result)
+                print(result.status_code)
+                if result.status_code == 200:
+                    try:
+                        new_user = result.json()
+                        print(new_user)
+                    except JSONDecodeError as je:
+                        session['user']['face_id'] = True
+                    else:
+                        session['user'] = new_user
+                    finally:
+                        print(session['user'])
             return redirect(url_for("site.main"))
         return redirect(url_for("site.main"))
     return redirect(url_for("site.home"))
@@ -271,7 +317,29 @@ def process_booking():
     return redirect(url_for('site.home'))
 
 
-@site.route("/cancel", methods=['POST', 'GET'])
+@site.route("/cancel", methods=['GET'])
+def render_cancel_page():
+    if 'user' in session:
+        bookings = requests.get(
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
+        )
+        try:
+            bookings_data = bookings.json()
+        except JSONDecodeError as je:
+            bookings_data = None
+        messages = request.args.get('messages')
+        if messages is not None:
+            try:
+                message_data = json.loads(messages)
+            except JSONDecodeError as je:
+                message_data = None
+        else:
+            message_data = None
+        return render_template("cancel.html", user_bookings=bookings_data, messages=message_data)
+    return redirect(url_for('site.home'))
+
+
+@site.route("/cancel", methods=['POST'])
 def cancel_booking():
     """
     TODO: separate get and post into different methods -- easier to follow logic
@@ -280,34 +348,41 @@ def cancel_booking():
 
     """
     if 'user' in session:
-        bookings = requests.get(
-            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
-        )
-        messages = None
-        if request.method == "POST":
-            booking_id = request.args.get('booking_id')
-            status = request.args.get('status')
-            if None not in (booking_id, status):
-                data = {
-                    "booking_id": booking_id,
-                    "status": status
-                }
-                response = requests.put(
-                    "{}{}".format(URL, "booking"),
-                    json=json.dumps(data)
-                )
-                result = response.json()
-                messages = []
-                if result['code'] == 'SUCCESS':
-                    if 'credentials' not in session:
-                        return redirect(url_for('site.oauth2callback'))
-                    credentials = client.OAuth2Credentials.from_json(session['credentials'])
-                    if credentials.access_token_expired:
-                        return redirect(url_for('site.oauth2callback'))
-                    else:
-                        http_auth = credentials.authorize(Http())
-                        service = discovery.build('calendar', 'v3', http=http_auth)
+        messages = []
+        booking_id = request.args.get('booking_id')
+        status = request.args.get('status')
+        if None not in (booking_id, status):
+            data = {
+                "booking_id": booking_id,
+                "status": status
+            }
+            response = requests.put(
+                "{}{}".format(URL, "booking"),
+                json=json.dumps(data)
+            )
+            result = response.json()
+            if result['code'] == 'SUCCESS':  # TODO: replace with Response.status_code (in API too)
+                # cal_result = requests.get(
+                #     "{}{}".format(URL, "cancelevent"),
+                #     params={"booking_id": booking_id}
+                # )
+                cal_data = None
 
+                if booking_id is not None:
+                    session['cancel'] = booking_id
+
+                if 'credentials' not in session:
+                    return redirect(url_for('site.oauth2callback'))
+                credentials = client.OAuth2Credentials.from_json(session['credentials'])
+                if credentials.access_token_expired:
+                    return redirect(url_for('site.oauth2callback'))
+                else:
+                    http_auth = credentials.authorize(Http())
+                    service = discovery.build('calendar', 'v3', http=http_auth)
+
+                if 'cancel' in session:
+                    booking_id = session['cancel']
+                    session.pop('cancel', None)
                     booking = requests.get(
                         "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
                     )
@@ -315,32 +390,25 @@ def cancel_booking():
                     if event_id is not None:
                         delete_event = service.events().delete(calendarId="primary", eventId=event_id,
                                                                sendUpdates="all").execute()
-                        booking = result['data']
-                        messages.append((
-                            "success",
-                            {
-                                "message": "Booking successfully cancelled!",
-                                "data": "With {}\n{} - {}".format(
-                                    booking['car_id'], booking['start'], booking['end']
-                                )
-                            }
-                        ))
-                    bookings = requests.get(
-                        "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
-                    )
-                else:
-                    messages.append((
-                        "warning",
-                        {
-                            "message": "Unable to cancel booking",
-                            "data": result['data']
-                        }
-                    ))
-        try:
-            bookings_data = bookings.json()
-        except JSONDecodeError as je:
-            bookings_data = None
-        return render_template("cancel.html", user_bookings=bookings_data, messages=messages)
+                booking = result['data']
+                messages.append((
+                    "success",
+                    {
+                        "message": "Booking successfully cancelled!",
+                        "data": "With {}\n{} - {}".format(
+                            booking['car_id'], booking['start'], booking['end']
+                        )
+                    }
+                ))
+            else:
+                messages.append((
+                    "warning",
+                    {
+                        "message": "Unable to cancel booking",
+                        "data": result['data']
+                    }
+                ))
+        return redirect(url_for('site.render_cancel_page', messages=json.dumps(messages)))
     return redirect(url_for('site.home'))
 
 
@@ -400,6 +468,20 @@ def search_cars():
 @site.route("/addevent")
 def add_event():
     if 'user' in session:
+        car_id = request.args.get('car_id')
+        start = request.args.get('time_start')
+        end = request.args.get('time_end')
+        booking_id = request.args.get('booking_id')
+        if None not in (start, end, booking_id, car_id):
+            time_start = start.replace(" ", "T") + "+10:00"
+            time_end = end.replace(" ", "T") + "+10:00"
+            session['booking'] = {
+                "car_id": car_id,
+                "booking_id": booking_id,
+                "time_start": time_start,
+                "time_end": time_end
+            }
+
         if 'credentials' not in session:
             return redirect(url_for('site.oauth2callback'))
         credentials = client.OAuth2Credentials.from_json(session['credentials'])
@@ -409,46 +491,79 @@ def add_event():
             http_auth = credentials.authorize(Http())
             service = discovery.build('calendar', 'v3', http=http_auth)
 
-        car_id = request.args.get('car_id')
-        time_start = request.args.get('time_start').replace(" ", "T") + "+10:00"
-        time_end = request.args.get('time_end').replace(" ", "T") + "+10:00"
-        booking_id = request.args.get('booking_id')
-
-        event = {
-            "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
-                       session['user']['l_name'],
-            "start": {
-                "dateTime": time_start,
-                "timeZone": "Australia/Melbourne",
-            },
-            "end": {
-                "dateTime": time_end,
-                "timeZone": "Australia/Melbourne",
-            },
-            "attendees": [
-                {"email": session['user']['email']},
-            ],
-            "reminders": {
-                "useDefault": False,
-                "overrides": [
-                    {"method": "email", "minutes": 5},
-                    {"method": "popup", "minutes": 10},
+        if 'booking' in session:
+            time_start = session['booking']['time_start']
+            time_end = session['booking']['time_end']
+            booking_id = session['booking']['booking_id']
+            car_id = session['booking']['car_id']
+            session.pop('booking', None)
+            event = {
+                "summary": "Booking car number: " + car_id + " for " + session['user']['f_name'] + " " +
+                           session['user']['l_name'],
+                "start": {
+                    "dateTime": time_start,
+                    "timeZone": "Australia/Melbourne",
+                },
+                "end": {
+                    "dateTime": time_end,
+                    "timeZone": "Australia/Melbourne",
+                },
+                "attendees": [
+                    {"email": session['user']['email']},
                 ],
+                "reminders": {
+                    "useDefault": False,
+                    "overrides": [
+                        {"method": "email", "minutes": 5},
+                        {"method": "popup", "minutes": 10},
+                    ],
+                }
             }
-        }
-        add_event = service.events().insert(calendarId="primary", body=event).execute()
-        print("Event created: {}".format(add_event.get("htmlLink")))
-        data = {
-            'booking_id': booking_id,
-            'event_id': add_event.get("id")
-        }
-        response = requests.put(
-            "{}{}".format(URL, "eventId"),
-            json=json.dumps(data)
-        )
-        print("Add event successfully")
-        return redirect(url_for('site.render_booking_page'))
+            add_event = service.events().insert(calendarId="primary", body=event).execute()
+            print("Event created: {}".format(add_event.get("htmlLink")))
+            data = {
+                'booking_id': booking_id,
+                'event_id': add_event.get("id")
+            }
+            response = requests.put(
+                "{}{}".format(URL, "eventId"),
+                json=json.dumps(data)
+            )
+            print("Add event successfully")
+            return redirect(url_for('site.render_booking_page'))
     return redirect(url_for('site.home'))
+
+
+# @site.route("/cancelevent")
+# def cancel_event():
+#     booking_id = request.args.get('booking_id')
+#
+#     if booking_id is not None:
+#         session['cancel'] = booking_id
+#
+#     if 'credentials' not in session:
+#         return redirect(url_for('site.oauth2callback'))
+#     credentials = client.OAuth2Credentials.from_json(session['credentials'])
+#     if credentials.access_token_expired:
+#         return redirect(url_for('site.oauth2callback'))
+#     else:
+#         http_auth = credentials.authorize(Http())
+#         service = discovery.build('calendar', 'v3', http=http_auth)
+#
+#     if 'cancel' in session:
+#         booking_id = session['cancel']
+#         session.pop('cancel', None)
+#         booking = requests.get(
+#             "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
+#         )
+#         event_id = booking.json()['event_id']
+#         print("event id" + event_id)
+#         if event_id is not None:
+#             delete_event = service.events().delete(calendarId="primary", eventId=event_id,
+#                                                    sendUpdates="all").execute()
+#             print(delete_event)
+#             return Response(status=200)
+#     return Response("Missing booking_id in session", status=404)
 
 
 @site.route('/oauth2callback')
