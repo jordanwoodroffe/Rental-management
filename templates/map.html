@@ -1,54 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Car Locations</title>
-  <style>
-    #map{
-      height:400px;
-      width:100%;
-    }
-  </style>
-</head>
-<body>
-  <h1>Car Locations</h1>
-  <div id="map"></div>
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% block javascript %}
   <script>
-    function initMap(){
-      // Map options
-      var options = {
+    function initMap() {
+    // Map options
+    var options = {
         zoom:8,
         center:{lat:-37.3601,lng:144.0589}
-      }
-	 
+    }
+
       // New map
       var map = new google.maps.Map(document.getElementById('map'), options);
-	  
-	  // Get dict from python flask as json
-	  var points = {{ points|safe }}
-	  var infowindow = new google.maps.InfoWindow();
-	  var marker, i;
 
-	 
-		for (var i = 0; i < points.length; i++) {                               
-			marker = new google.maps.Marker({                                   
-				position: new google.maps.LatLng(points[i].lat, points[i].lng),   
-				map: map
-			});
-			google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
-			return function() {
-				infowindow.setContent('<h1>' + 'Name: ' + points[i].name + '<BR>' 
-											 + 'Miles: ' + points[i].cph  + '<BR></h1>');
-				infowindow.open(map, marker);
-				}
-			})(marker, i));
-		}	    
-	}
+      // Get dict from python flask as json
+      var points = {{ points|safe }}
+      var infowindow = new google.maps.InfoWindow();
+      var marker, i;
+
+    for (var i = 0; i < points.length; i++) {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(points[i].lat, points[i].lng),
+            map: map
+        });
+        google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
+        return function() {
+            infowindow.setContent('<h1>' + 'Name: ' + points[i].name + '<BR>'
+                                         + 'Miles: ' + points[i].cph  + '<BR></h1>');
+            infowindow.open(map, marker);
+            }
+        })(marker, i));
+    }
+  }
   </script>
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ&callback=initMap">
-    </script>
-</body>
-</html>
+  </script>
+{% endblock %}
+{% with page="map"%}
+{% include "nav.html" %}
+{% endwith %}
+  <body>
+    <div class="container">
+      <div>
+        <h3>Car Locations</h3>
+      </div>
+      <div id="map"></div>
+    </div>
+  </body>
+{% endblock %}
