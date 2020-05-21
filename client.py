@@ -1,4 +1,6 @@
 import socket
+import FacialRecognition
+import pickle
 import json, requests
 import time
 import threading
@@ -25,23 +27,23 @@ def interface():
     username = input()
     print ("Type 1 if you are login via password. Type 2 if logging in via face unlock.")
     option = input()
-    while (option != "1" | "2"):
-        if (option == "1"):
-            print ("Enter Password")
-            password = input()
-            print ("Logging in...")
-            loginDetails = "_login" + "_user_" + username + "_pass_" + password
-        
-        elif (option == "2"):
+    if (option == "1"):
+        print ("Enter Password")
+        password = input()
+        print ("Logging in...")
+        loginDetails = "_login" + "_user_" + username + "_pass_" + password
 
-            print ("Logging in...")
-            with open("face.img", "rb") as image:
-                f = image.read()
-                b = bytearray(f)
-            loginDetails = "_login" + "_user_" + username + "_file_" + b
+    elif (option == "2"):
 
-        else:
-            print("Please enter a correct option.")
+        detector = FacialRecognition.FaceDetector()
+        login = detector.capture_user(images=["face.jpg"], min_faces=1)
+        temp = pickle.dumps(login)
+        #file = temp.decode("utf-8")
+        #str(file, 'utf-8')
+
+        print ("Logging in...")
+        loginDetails = "_logface" + "_user_" + username + "_file_" + str(temp)
+
 
     # Encode and send login details
     loginBytes = str.encode(loginDetails)

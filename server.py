@@ -1,7 +1,8 @@
 import socket
 import datetime
+import pickle
 import json, requests
-import Image
+from PIL import Image
 import os
 import io
 from flask import Flask, render_template, request, redirect, Response
@@ -89,14 +90,18 @@ def incomingFeed():
 
         #login into system, checks credentials
     def face_login(input):
+        print("GOT HERE")
         userIndex = input.find('_user_')
         fileIndex = input.find('_file_')
         username = input[userIndex + 6:passIndex]
         fileBytes = input[fileIndex + 6:-1]
-        image = Image.open(io.BytesIO(fileBytes))
-        image.save("user_data/login/{}.jpg".format(username))
+        the_pickle = fileBytes.decode()
+        pickle.dump(the_pickle, open("user_data/login/{}".format(username), "wb"))
 
-        result = requests.get("{}{}".format(URL, "/users/authenticate_encodings"), params={"user_data/login/","user_id": username})
+        #image = Image.open(io.BytesIO(fileBytes))
+        #image.save("user_data/login/{}.jpg".format(username))
+
+        result = requests.get("{}{}".format(URL, "/users/authenticate_encoding"),params={"directory": "user_data/login/", "filename": username})
 
         os.remove("user_data/login/{}.jpg".format(username))
 
@@ -136,8 +141,8 @@ def incomingFeed():
                 unlockCar(clientMsg)
                 break
 
-            if ("_login_face" in clientMsg):
-                login(clientMsg)
+            if ("_logface" in clientMsg):
+                face_login(clientMsg)
                 break
            
             if ("_login" in clientMsg):
