@@ -23,10 +23,26 @@ def interface():
     # Login
     print ("Enter Username")
     username = input()
-    print ("Enter Password")
-    password = input()
-    print ("Logging in...")
-    loginDetails = "_login" + "_user_" + username + "_pass_" + password
+    print ("Type 1 if you are login via password. Type 2 if logging in via face unlock.")
+    option = input()
+    while (option != "1" | "2"):
+        if (option == "1"):
+            print ("Enter Password")
+            password = input()
+            print ("Logging in...")
+            loginDetails = "_login" + "_user_" + username + "_pass_" + password
+        
+        elif (option == "2"):
+
+            print ("Logging in...")
+            with open("face.img", "rb") as image:
+                f = image.read()
+                b = bytearray(f)
+            loginDetails = "_login" + "_user_" + username + "_file_" + b
+
+        else:
+            print("Please enter a correct option.")
+
     # Encode and send login details
     loginBytes = str.encode(loginDetails)
     UDPClientSocket.sendto(loginBytes, serverAddressPort)
@@ -40,7 +56,7 @@ def interface():
         while (True):
 
             def unlockCar():
-           
+        
                 id = "_rentCar" + car_id + "_user_" + username + "_pass_" + password
                 #send message to server    
                 carRequestBytes = str.encode(id)
@@ -57,7 +73,7 @@ def interface():
                     return
                     
             def returnCar():
-          
+        
                 id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
                 #send message to server
                 carRequestBytes = str.encode(id)
@@ -82,7 +98,7 @@ def interface():
                 }
                 for x in options: 
                     print (x)
-                  
+                
                 print ("select an option") 
                 selectedOption = input()
                 if (selectedOption == "1"):
