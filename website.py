@@ -4,6 +4,7 @@ from json.decoder import JSONDecodeError
 
 import requests
 import os
+from api import LOCAL_IP
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, Response
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
@@ -18,7 +19,7 @@ from werkzeug.utils import secure_filename
 
 site = Blueprint("site", __name__)
 
-URL = "http://127.0.0.1:5000/"  # TODO: replace with method somewhere/auto-generate
+URL = "http://127.0.0.1:5000/"
 
 
 def valid_name(form, field):
@@ -147,7 +148,9 @@ def register():
 @site.route("/main")
 def main():
     if 'user' in session:
-        return render_template("main.html", user=session['user'])
+        result = requests.get("{}{}".format(URL, "/cars"), params={})
+        test = result.json()
+        return render_template("main.html", user=session['user'], points=json.dumps(test))
     return redirect(url_for("site.home"))
 
 

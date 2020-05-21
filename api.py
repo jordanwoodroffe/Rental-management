@@ -1,8 +1,8 @@
 import json
 import pickle
 import random
+import csv
 from datetime import datetime
-import pandas as pd
 from json.decoder import JSONDecodeError
 import requests
 from sqlalchemy import MetaData, Table, Column, DateTime, Integer, Float, String, insert, select, update, delete, \
@@ -42,7 +42,8 @@ DB_NAME = env("DB_NAME")
 DB_USER = env("DB_USER")
 DB_PASS = env("DB_PASS")
 PORT_NUMBER = env("PORT_NUMBER")
-DB_URI = "mysql+pymysql://{}:{}@127.0.0.1:{}/{}".format(DB_USER, DB_PASS, PORT_NUMBER, DB_NAME)
+LOCAL_IP = env("LOCAL_IP")
+DB_URI = "mysql+pymysql://{}:{}@{}:{}/{}".format(DB_USER, DB_PASS, LOCAL_IP, PORT_NUMBER, DB_NAME)
 
 api = Blueprint("api", __name__)
 
@@ -112,69 +113,75 @@ class Encoding(db.Model):
     details = db.Column('details', VARCHAR(45))
 
 
-class UserSchema(ma.SQLAlchemyAutoSchema):
+class UserSchema(ma.Schema):
     class Meta:
         model = User
+        fields = ("email", "f_name", "l_name", "face_id")
+    #
+    # email = fields.String()
+    # f_name = fields.String()
+    # l_name = fields.String()
+    # face_id = fields.Boolean()
 
-    email = ma.auto_field()
-    f_name = ma.auto_field()
-    l_name = ma.auto_field()
-    face_id = ma.auto_field()
 
-
-class CarModelSchema(ma.SQLAlchemyAutoSchema):
+class CarModelSchema(ma.Schema):
     class Meta:
         model = CarModel
+        fields = ("model_id", "make", "model", "year", "capacity", "colour")
 
-    model_id = ma.auto_field()
-    make = ma.auto_field()
-    model = ma.auto_field()
-    year = ma.auto_field()
-    capacity = ma.auto_field()
-    colour = ma.auto_field()
+    # model_id = fields.Integer()
+    # make = fields.String()
+    # model = fields.String()
+    # year = fields.Integer()
+    # capacity = fields.Integer()
+    # colour = fields.String()
 
 
-class CarSchema(ma.SQLAlchemyAutoSchema):
+class CarSchema(ma.Schema):
     class Meta:
         model = Car
+        fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
 
-    car_id = ma.auto_field()
-    name = ma.auto_field()
-    model_id = ma.auto_field()
     model = fields.Nested(CarModelSchema)
-    locked = ma.auto_field()
-    cph = ma.auto_field()
-    lng = ma.auto_field()
-    lat = ma.auto_field()
+
+    # car_id = fields.Integer()
+    # name = fields.String()
+    # model_id = fields.Integer()
+    # model = fields.Nested(CarModelSchema)
+    # locked = fields.Boolean()
+    # cph = fields.Float()
+    # lng = fields.Float()
+    # lat = fields.Float()
 
 
-class BookingSchema(ma.SQLAlchemyAutoSchema):
+class BookingSchema(ma.Schema):
     class Meta:
         model = Booking
+        fields = ("booking_id", "user_id", "user", "car_id", "car", "start", "end", "completed", "event_id")
 
-    booking_id = ma.auto_field()
-    user_id = ma.auto_field()
+    # booking_id = fields.Integer()
+    # user_id = fields.String()
     user = fields.Nested(UserSchema)
-    car_id = ma.auto_field()
+    # car_id = fields.Integer()
     car = fields.Nested(CarSchema)
-    start = ma.auto_field()
-    end = ma.auto_field()
-    completed = ma.auto_field()
-    event_id = ma.auto_field()
+    # start = fields.DateTime()
+    # end = fields.DateTime()
+    # completed = fields.Integer()
+    # event_id = fields.String()
 
 
-class EncodingSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Encoding
-
-    enc_id = ma.auto_field()
-    user_id = ma.auto_field()
-    user = fields.Nested(UserSchema)
-    data = ma.auto_field()
-    name = ma.auto_field()
-    type = ma.auto_field()
-    size = ma.auto_field()
-    details = ma.auto_field()
+# class EncodingSchema(ma.Schema):
+#     class Meta:
+#         model = Encoding
+#
+#     enc_id = ma.auto_field()
+#     user_id = ma.auto_field()
+#     user = fields.Nested(UserSchema)
+#     data = ma.auto_field()
+#     name = ma.auto_field()
+#     type = ma.auto_field()
+#     size = ma.auto_field()
+#     details = ma.auto_field()
 
 
 def create_app():
@@ -197,7 +204,7 @@ def get_users():
     users = User.query.all()
     if users is not None:
         return Response(
-            UserSchema(many=True, exclude=['password']).dumps(users), status=200, mimetype="application/json"
+            UserSchema(many=True).dumps(users), status=200, mimetype="application/json"
         )
     return Response("No users found", status=500)
 
@@ -217,7 +224,7 @@ def get_user():
     if user_id is not None:
         user = User.query.get(user_id)
         if user is not None:
-            return Response(UserSchema(exclude=['password']).dumps(user), status=200, mimetype="application/json")
+            return Response(UserSchema().dumps(user), status=200, mimetype="application/json")
         return Response("User {} not found".format(user_id), status=404)
     return Response("user_id param not found", status=400)
 
@@ -290,7 +297,7 @@ def user_authentication():
             stored_password = user.password.split(':')[0]
             salt = user.password.split(':')[1]
             if verify_password(stored_password, password, salt):
-                data = json.loads(UserSchema(exclude=['password']).dumps(user))
+                data = json.loads(UserSchema().dumps(user))
                 # enc = json.loads(EncodingSchema().dumps(Encoding.query.join(User).filter(User.email == user_id)))
                 # print(enc)
                 # data['face_id'] = bool(enc)
@@ -298,7 +305,7 @@ def user_authentication():
                     json.dumps(data), status=200, content_type="application/json"
                 )
                 # response['code'] = 'SUCCESS'
-                # response['user'] = UserSchema(exclude=['password']).dumps(user)
+                # response['user'] = UserSchema().dumps(user)
             else:
                 response = Response(json.dumps({'error': 'PASSWORD'}), status=404, content_type="application/json")
                 # response['code'] = 'PASSWORD ERROR'
@@ -322,7 +329,7 @@ def update_user():
                 user.face_id = val
                 db.session.commit()
                 return Response(
-                    UserSchema(exclude=['password']).dumps(User.query.get(user_id)),
+                    UserSchema().dumps(User.query.get(user_id)),
                     status=200
                 )
             except ValueError:
@@ -657,63 +664,73 @@ def populate():
     response = {}
     if User.query.first() is None:
         # users
-        user_cols = ['email', 'f_name', 'l_name', 'password']
-        users = pd.read_csv('./test_data/user.csv', engine='python', sep=',', names=user_cols, error_bad_lines=False)
-        for index, row in users.iterrows():
-            print(row)
-            user = User()
-            user.email = row['email']
-            user.f_name = row['f_name']
-            user.l_name = row['l_name']
-            user.password = row['password']
-            user.face_id = False
-            db.session.add(user)
-        db.session.commit()
-        response['users'] = True
+        # user_cols = ['email', 'f_name', 'l_name', 'password']
+        # users = pd.read_csv('./test_data/user.csv', engine='python', sep=',', names=user_cols, error_bad_lines=False)
+        with open('./test_data/user.csv') as users:
+            reader = csv.reader(users, delimiter=',')
+            for row in reader:
+                print(row)
+                user = User()
+                user.email = row[0]
+                user.f_name = row[1]
+                user.l_name = row[2]
+                user.password = row[3]
+                user.face_id = False
+                db.session.add(user)
+            response['users'] = True
         # car models
-        cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour']
-        models = pd.read_csv('./test_data/car_model.csv', engine='python', sep=',', names=cm_cols,
-                             error_bad_lines=False)
-        for index, row in models.iterrows():
-            print(row)
-            model = CarModel()
-            model.id = row['model_id']
-            model.make = row['make']
-            model.model = row['model']
-            model.year = row['year']
-            model.capacity = row['capacity']
-            model.colour = row['colour']
-            db.session.add(model)
-        response['models'] = True
+        # cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour']
+        # models = pd.read_csv('./test_data/car_model.csv', engine='python', sep=',', names=cm_cols,
+        #                      error_bad_lines=False)
+        model_ids = []
+        with open('./test_data/car_model.csv') as models:
+            reader = csv.reader(models, delimiter=',')
+            for row in reader:
+                print(row)
+                model = CarModel()
+                model.id = row[0]
+                model_ids.append(row[0])
+                model.make = row[1]
+                model.model = row[2]
+                model.year = row[3]
+                model.capacity = row[4]
+                model.colour = row[5]
+                db.session.add(model)
+            response['models'] = True
         # cars (references car models)
-        car_cols = ['car_id', 'name', 'cph', 'lat', 'lng']
-        cars = pd.read_csv('./test_data/car.csv', engine='python', sep=',', names=car_cols, error_bad_lines=False)
-        for index, row in cars.iterrows():
-            print(row)
-            car = Car()
-            car.car_id = row['car_id']
-            car.model_id = random.choice(models.model_id.unique().tolist())
-            car.cph = row['cph']
-            car.name = row['name']
-            car.lat = row['lat']
-            car.lng = row['lng']
-            car.locked = 1
-            db.session.add(car)
-        response['cars'] = True
+        # car_cols = ['car_id', 'name', 'cph', 'lat', 'lng']
+        # cars = pd.read_csv('./test_data/car.csv', engine='python', sep=',', names=car_cols, error_bad_lines=False)
+        with open('./test_data/car.csv') as cars:
+            reader = csv.reader(cars, delimiter=',')
+            i = 0
+            for row in reader:
+                print(row)
+                car = Car()
+                car.car_id = row[0]
+                # car.model_id = random.choice(models.model_id.unique().tolist())
+                car.model_id = model_ids[i]
+                car.name = row[1]
+                car.cph = row[2]
+                car.lat = row[3]
+                car.lng = row[4]
+                car.locked = 1
+                db.session.add(car)
+                i += 1
+            response['cars'] = True
         # bookings
-        book_cols = ['start', 'end']
-        bookings = pd.read_csv('./test_data/booking.csv', engine='python', sep=',', names=book_cols,
-                               error_bad_lines=False)
-        for index, row in bookings.iterrows():
-            print(row)
-            booking = Booking()
-            booking.user_id = "donald@gmail.com"
-            booking.car_id = random.choice(cars.car_id.unique().tolist())
-            booking.start = row['start']
-            booking.end = row['end']
-            booking.completed = 0
-            db.session.add(booking)
-        response['bookings'] = True
+        # book_cols = ['start', 'end']
+        # bookings = pd.read_csv('./test_data/booking.csv', engine='python', sep=',', names=book_cols,
+        #                        error_bad_lines=False)
+        # for index, row in bookings.iterrows():
+        #     print(row)
+        #     booking = Booking()
+        #     booking.user_id = "donald@gmail.com"
+        #     booking.car_id = random.choice(cars.car_id.unique().tolist())
+        #     booking.start = row['start']
+        #     booking.end = row['end']
+        #     booking.completed = 0
+        #     db.session.add(booking)
+        # response['bookings'] = True
         db.session.commit()
     else:
         response['users'] = False

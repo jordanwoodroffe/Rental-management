@@ -1,7 +1,51 @@
 {% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block head %}
+{{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% endblock %}
 
 {% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% block javascript %}
+  <script>
+    function initMap() {
+    // Map options
+    var options = {
+        zoom:8,
+        center:{lat:-37.3601,lng:144.0589}
+    }
 
+      // New map
+      var map = new google.maps.Map(document.getElementById('map'), options);
+
+      // Get dict from python flask as json
+      var points = {{ points|safe }}
+      var infowindow = new google.maps.InfoWindow();
+      var marker;
+
+    for (let i = 0; i < points.length; i++) {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(points[i].lat, points[i].lng),
+            map: map
+        });
+        let content = '<h5 class="card-title">' + points[i].car_id + ': ' + points[i].name + '</h5>' +
+                '<p class="card-text">' + points[i].model.year  + ' ' + points[i].model.make + ' '
+                + points[i].model.model + '</p>'
+        google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
+        return function() {
+            infowindow.setContent(content);
+            infowindow.open(map, marker);
+            }
+        })(marker, i));
+    }
+  }
+  </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ&callback=initMap">
+  </script>
+{% endblock %}
 {% with page="main"%}
 {% include "nav.html" %}
 {% endwith %}
@@ -83,7 +127,7 @@
                       <div id="imageList"></div>
 
                       <button type="submit" class="btn btn-primary">Upload</button>
-              
+
                     </form>
                   </div>
                 </div>
@@ -100,8 +144,7 @@
           <div class="card-header">
             Map
           </div>
-          <div id="map" class="card-body" style="padding:0;">
-          </div>
+          <div id="map"></div>
         </div>
       </div>
     </div>
