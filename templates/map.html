@@ -18,17 +18,19 @@
       // Get dict from python flask as json
       var points = {{ points|safe }}
       var infowindow = new google.maps.InfoWindow();
-      var marker, i;
+      var marker;
 
-    for (var i = 0; i < points.length; i++) {
+    for (let i = 0; i < points.length; i++) {
         marker = new google.maps.Marker({
             position: new google.maps.LatLng(points[i].lat, points[i].lng),
             map: map
         });
+        let content = '<h5 class="card-title">' + points[i].car_id + ': ' + points[i].name + '</h5>' +
+                '<p class="card-text">' + points[i].model.year  + ' ' + points[i].model.make + ' '
+                + points[i].model.model + '</p>'
         google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
         return function() {
-            infowindow.setContent('<h1>' + 'Name: ' + points[i].name + '<BR>'
-                                         + 'Miles: ' + points[i].cph  + '<BR></h1>');
+            infowindow.setContent(content);
             infowindow.open(map, marker);
             }
         })(marker, i));

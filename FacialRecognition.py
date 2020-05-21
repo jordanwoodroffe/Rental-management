@@ -52,8 +52,9 @@ class FaceDetector(AbstractFaceDetector):
         except ImportError as ie:
             print(ie)
 
-    def capture_user(self, images: [str] = None) -> list:
-        faces = self.__capture_face(images)
+    def capture_user(self, images: [str] = None, min_faces: int = None) -> list:
+        min_faces = self.__min_faces if min_faces is None else min_faces
+        faces = self.__capture_face(min_faces=min_faces, images=images)
         if faces is not None and len(faces) > 0:
             return self.__encode_face(faces)
         return []  # unable to encode/capture faces
@@ -68,7 +69,7 @@ class FaceDetector(AbstractFaceDetector):
                     max_match = self.Match(user_id, result) if result > max_match.score else max_match
         return max_match
 
-    def __capture_face(self, images: [str] = None):
+    def __capture_face(self, min_faces, images: [str] = None):
         """
         Captures a users face from an image or video stream
         TODO: replace/add image upload - filepath to directory with images, load/capture faces until self.__min_faces
@@ -77,14 +78,15 @@ class FaceDetector(AbstractFaceDetector):
             a list of faces capture from images or video-stream
         """
 
-        if images is not None and len(images) < self.__min_faces:
+        if images is not None and len(images) < min_faces:
             return None
 
         video_stream = None
         faces = []
         i = 0
+        print(images)
 
-        while len(faces) < self.__min_faces:
+        while len(faces) < min_faces:
             if images is None:
                 if video_stream is None:
                     video_stream = cv2.VideoCapture(0)
@@ -108,10 +110,6 @@ class FaceDetector(AbstractFaceDetector):
             # for (x, y, w, h) in face_objects:
             #     cv2.rectangle(img, pt1=(x, y), pt2=(x + w, y + h), color=(255, 0, 0), thickness=2)
             # cv2.imshow('img', img)
-
-            k = cv2.waitKey(30) & 0xff
-            if k == 27:
-                break
         if video_stream is not None:
             video_stream.release()
         return faces
@@ -129,7 +127,7 @@ class FaceDetector(AbstractFaceDetector):
                 continue
             else:
                 face_img = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
-                frames = face_recognition.face_locations(face_img, model='cnn')
+                frames = face_recognition.face_locations(face_img, model='hog')
                 face_encodings = face_recognition.face_encodings(face_img, frames)
                 if len(face_encodings) > 0:
                     encodings.append(face_encodings[0])
@@ -140,13 +138,14 @@ if __name__ == "__main__":
     # capture registration faces
     reg_encs = {}
     detector = FaceDetector()
+    # images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
     images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
     # images = None
-    don = detector.capture_user(images)
+    don = detector.capture_user(images=images)
     temp = pickle.dumps(don)
     reg_encs['don'] = pickle.loads(temp)
 
     # capture login face & compare with reg
-    login = detector.capture_user()
+    login = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
     match = detector.compare_encodings(login, reg_encs)
     print(match)
