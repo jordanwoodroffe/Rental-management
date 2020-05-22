@@ -303,7 +303,8 @@ def process_booking():
                     "warning",
                     {
                         "message": "Booking unsuccessful",
-                        "data": "Unable to create booking"
+                        "data": "Unable to create booking",
+                        "error": response.text
                     }
                 )]
         return render_template("booking.html", form=BookingQueryForm(), messages=messages)
@@ -353,14 +354,7 @@ def cancel_booking():
                 "{}{}".format(URL, "booking"),
                 json=json.dumps(data)
             )
-            result = response.json()
-            if result['code'] == 'SUCCESS':  # TODO: replace with Response.status_code (in API too)
-                # cal_result = requests.get(
-                #     "{}{}".format(URL, "cancelevent"),
-                #     params={"booking_id": booking_id}
-                # )
-                cal_data = None
-
+            if response.status_code == 200:
                 if booking_id is not None:
                     session['cancel'] = booking_id
 
@@ -383,14 +377,16 @@ def cancel_booking():
                     if event_id is not None:
                         delete_event = service.events().delete(calendarId="primary", eventId=event_id,
                                                                sendUpdates="all").execute()
-                booking = result['data']
+                try:
+                    booking = response.json()
+                    data = "With {}\n{} - {}".format(booking['car_id'], booking['start'], booking['end'])
+                except JSONDecodeError:
+                    data = "server error - invalid json"
                 messages.append((
                     "success",
                     {
                         "message": "Booking successfully cancelled!",
-                        "data": "With {}\n{} - {}".format(
-                            booking['car_id'], booking['start'], booking['end']
-                        )
+                        "data": data
                     }
                 ))
             else:
@@ -398,7 +394,7 @@ def cancel_booking():
                     "warning",
                     {
                         "message": "Unable to cancel booking",
-                        "data": result['data']
+                        "data": response.text
                     }
                 ))
         return redirect(url_for('site.render_cancel_page', messages=json.dumps(messages)))
