@@ -62,10 +62,6 @@ def compare_dates(d_start: datetime, d_end: datetime, b_start: datetime, b_end: 
     Returns:
         a boolean value indicating whether an overlap occurred: True if there was an overlap
     """
-    # return min(d_end - b_start, b_end - d_start).days + 1 > 0
-    # latest_start = max(d_start, b_start)
-    # earliest_end = min(d_end, b_end)
-    # return (earliest_end - latest_start).seconds > 0
     if b_start <= d_end <= b_end:
         return True
     elif d_start <= b_end <= d_end:
