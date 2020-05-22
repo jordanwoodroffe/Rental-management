@@ -28,15 +28,18 @@
             <div class="card-body">
               <h5 class="card-title">{{booking.car.model.make}} {{booking.car.model.model}},
                 <br/>{{booking.car.model.year}}</h5>
-              <p class="card-text">{{booking.car.car_id}}</p>
+              <p class="card-text">Rego: {{booking.car.car_id}}</p>
               <p class="card-text">Start date: {{booking.start}}</p>
               <p class="card-text">End date: {{booking.end}}</p>
-              <p class="card-text">Cost: ${{booking.cost}}</p>
-              <p class="card-text">Status: {{status}}</p>
+              <p class="card-text">Cost: ${{booking.car.cph}} per hour
+              <br/><small class="text-muted">Total cost: ${{booking.cost}}</small>
+              </p>
               {% if booking.completed == 0 %}
               <form class="form-signup" action="/cancel?booking_id={{booking.booking_id}}&status=2" method="POST">
                 <button type="submit" class="btn btn-primary" name="submit">Cancel</button>
               </form>
+              {% else %}
+              <p class="card-text">Status: {{status}}</p>
               {% endif %}
             </div>
           </div>

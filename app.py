@@ -21,6 +21,14 @@ app.register_blueprint(api)
 
 @app.route("/encode_user", methods=['POST'])
 def encode_user():
+    """
+
+    Params:
+        user_id: id/email of user to encode (i.e. register their face)
+        directory: path to directory to take images from
+    Returns:
+        Response object, 200 if successful otherwise returns a corresponding error (400 for missing param)
+    """
     user_id = request.args.get('user_id')
     directory = request.args.get('directory')
     if None not in (user_id, directory):
@@ -34,7 +42,7 @@ def encode_user():
             pickle.dump(encoding, open("user_data/pickles/{}".format(user_id), "wb"))
             response = Response("Success", status=200)
         else:
-            response = Response("Error - unable to capture/encode faces", status=400)
+            response = Response("Error - unable to capture/encode faces", status=404)
     else:
         response = Response("Error - incorrect request params", status=400)
     return response
@@ -53,8 +61,6 @@ def get_encoding():
 def test():
     """
     Test method to create a login pickle (for FR)
-    Returns:
-
     """
     detector = FaceDetector()
     image = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
@@ -64,14 +70,18 @@ def test():
 
 @app.route("/authenticate_encodings", methods=['POST', 'GET'])
 def auth_by_face():
+    """
+    Used to authenticate a user via facial recognition: compares existing encodings against a new encoding
+    Att:
+
+
+    """
     directory = request.args.get('directory')
     user_id = request.args.get('user_id')
     if directory is not None:
         detector = FaceDetector()
 
-        # images = []
         login = pickle.load(open("{}/{}".format(directory, user_id), 'rb'))
-        # images.append(login)
 
         pickles_dir = "user_data/pickles"
         pickles = {

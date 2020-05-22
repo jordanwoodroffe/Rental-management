@@ -279,7 +279,12 @@ def process_booking():
                 "{}{}".format(URL, "booking"),
                 json=json.dumps(data)
             )
-            if response.json()['status_code'] == 200:
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    booking_id = data['booking_id']
+                except JSONDecodeError:
+                    booking_id = "JSON Decode Error"
                 messages = [(
                     "success",
                     {
@@ -290,7 +295,7 @@ def process_booking():
                         "car_id": car_id,
                         "start": start,
                         "end": end,
-                        "booking_id": response.json()['booking_id']
+                        "booking_id": booking_id
                     }
                 )]
             else:
@@ -403,16 +408,11 @@ def cancel_booking():
 @site.route("/history")
 def view_history():
     if 'user' in session:
-        print(session['user'])
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['email']}
         )
         try:
             bookings_data = bookings.json()
-            for booking in bookings_data:
-                booking['start'] = booking['start'].replace("T", " ")
-                booking['end'] = booking['end'].replace("T", " ")
-            print(bookings_data)
         except JSONDecodeError as je:
             bookings_data = None
         return render_template("history.html", user_bookings=bookings_data)

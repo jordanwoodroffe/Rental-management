@@ -32,6 +32,7 @@ Install the proxy client (as per google doc instructions), make it executable
 
 Invoke proxy:
     ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<PORT> &
+    ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<LOCAL_IP>:<PORT> &
     
 And update the below/db code to use the right port number, database name, etc.
 """
@@ -534,8 +535,12 @@ def get_bookings():
             bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.email == user_id)
         else:
             bookings = Booking.query.join(User).filter(User.email == user_id)
+    data = json.loads(BookingSchema(many=True).dumps(bookings))
+    for booking in data:
+        booking['start'] = booking['start'].replace("T", " ")
+        booking['end'] = booking['end'].replace("T", " ")
     return Response(
-        BookingSchema(many=True).dumps(bookings), status=200, mimetype="application/json"
+        json.dumps(data), status=200, mimetype="application/json"
     )
 
 
@@ -567,7 +572,10 @@ def add_booking():
     """
     request_data = request.get_json()
     if request_data is not None:
-        data = json.loads(request_data)
+        try:
+            data = json.loads(request_data)
+        except JSONDecodeError:
+            return Response("Invalid json data received", status=400)
         booking = Booking()
         booking.start = datetime.strptime(data['start'], "%Y-%m-%d %H:%M:%S")
         booking.end = datetime.strptime(data['end'], "%Y-%m-%d %H:%M:%S")
@@ -579,13 +587,8 @@ def add_booking():
             booking.event_id = data['event_id']
         db.session.add(booking)
         db.session.commit()
-        response = {
-            "status_code": 200,
-            "booking_id": booking.booking_id
-        }
-    else:
-        response = Response(status=400)
-    return response
+        return Response(json.dumps({"booking_id": booking.booking_id}), status=200, mimetype="application/json")
+    return Response("Invalid request data", status=400)
 
 
 def calc_cost(amount: float, start: datetime, end: datetime) -> float:
