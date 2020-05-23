@@ -80,8 +80,10 @@ def valid_username(form, field):
     Raises:
         ValidationError: if username is invalid
     """
+    # Username must contain characters or digits
     if not re.match("[a-zA-Z0-9]+", field.data):
         raise ValidationError("Invalid username: must contain characters or digits")
+    # Username must be between 6 and 12 characters long
     if not 6 <= len(field.data) <= 12:
         raise ValidationError("Invalid username: be between 6 and 12 characters long")
 
@@ -98,10 +100,11 @@ def validate_date(form, field):
 
     """
     try:
-        dt = datetime.strptime(field.data, "%Y-%m-%d %H:%M")
+        dt = datetime.strptime(field.data, "%Y-%m-%d %H:%M")  # Get datetime data from the form field
     except Exception:
         raise ValidationError('Incorrect input format. Please input as YYYY-mm-dd  HH:MM')
     else:
+        # Datetime must be later than current datetime
         if dt < datetime.now():
             raise ValidationError('Date must be later than current date')
 
@@ -139,10 +142,12 @@ def home():
         or renders index.html if user has not logged in
     """
     response = requests.get(
-        "{}{}".format(URL, "populate")
+        "{}{}".format(URL, "populate")  # Populate database if it's empty
     )
+    # If user is logged in, go to main page
     if 'user' in session:
         return redirect(url_for("site.main"))
+    # Else, go to home page
     return render_template("index.html")
 
 
@@ -164,10 +169,12 @@ def login():
         if result.status_code == 200:
             session['user'] = result.json()
         elif result.status_code == 404:
+            # If the username is not in the database
             if data['error'] == 'USER':
-                form.username.errors.append('This username has not been registered')
+                form.username.errors.append('This username has not been registered')  # Form error message
+            # If the password is incorrect
             elif data['error'] == 'PASSWORD':
-                form.password.errors.append('Incorrect password')
+                form.password.errors.append('Incorrect password')  # Form error message
     if 'user' in session:
         return redirect(url_for("site.main"))
     return render_template("login.html", form=form)
@@ -210,11 +217,11 @@ def main():
     Returns:
         renders main.html if user logged in or site.home if user not logged in
     """
-    if 'user' in session:
+    if 'user' in session:  # If user is logged in, go to main page and display cars's location
         result = requests.get("{}{}".format(URL, "/cars"), params={})
         test = result.json()
         return render_template("main.html", user=session['user'], points=json.dumps(test))
-    return redirect(url_for("site.home"))
+    return redirect(url_for("site.home"))  # Else go to home page
 
 
 @site.route("/capture_user", methods=['POST', 'GET'])
@@ -232,7 +239,7 @@ def capture_user():
                 flash('You need at least 5 photos to register')
                 return redirect(url_for("site.main"))
             elif len(files) >= 10:
-                flash('Maxium of 10 photos are accepted')
+                flash('Maximum of 10 photos are accepted')
                 return redirect(url_for("site.main"))
             for file in files:
                 if not allowed_file(file.filename):
@@ -244,12 +251,13 @@ def capture_user():
                 os.makedirs(directory)
             for file in files:
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(directory, filename))
+                file.save(os.path.join(directory, filename))  # Add user photos to user_data/face_pics/user_name
+            # folder
             result = requests.post(
                 "{}{}".format(URL, "/encode_user"),
                 params={"user_id": session['user']['username'], "directory": directory}
-            )
-            if result.status_code == 200:
+            )  # Encode user photos
+            if result.status_code == 200:  # If encode successful, add facial login option to user object in user table
                 result = requests.put(
                     "{}{}".format(URL, "/user"),
                     params={"user_id": session['user']['username'], "face_id": 1}
@@ -273,7 +281,7 @@ def logout():
     Returns:
         redirects to site.login
     """
-    session.pop('user', None)
+    session.pop('user', None)  # Remove user from session
     return redirect(url_for('site.login'))
 
 
@@ -304,10 +312,10 @@ def render_booking_page():
             else:
                 response = requests.get(
                     "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
-                )
+                )  # get all cars available during the time frame
                 try:
                     cars = response.json()
-                    attributes = make_attributes(cars)
+                    attributes = make_attributes(cars)  # Send cars's attributes to the front end
                     for car in cars:
                         cph = car['cph']
                         try:
@@ -319,7 +327,8 @@ def render_booking_page():
                     cars = None
                 form.start.data = start_dt
                 form.end.data = end_dt
-                return render_template("booking.html", form=form, cars=cars, start=start_dt, end=end_dt, attributes=attributes)
+                return render_template("booking.html", form=form, cars=cars, start=start_dt, end=end_dt,
+                                       attributes=attributes)
         return render_template("booking.html", form=form, attributes=attributes)
     return redirect(url_for('site.home'))
 
@@ -331,12 +340,12 @@ def process_booking():
     Returns:
         renders booking.html with confirmation/error messages
     """
-    if 'user' in session:
+    if 'user' in session:  # Check is user is logged in
         car_id = request.args.get('car_id')
         start = request.args.get('start')
         end = request.args.get('end')
         messages = None
-        if None not in (car_id, start, end):
+        if None not in (car_id, start, end):  # Check if car_id, start and end time are provided
             response = requests.get(
                 "{}{}".format(URL, "car"), params={"car_id": car_id}
             )
@@ -353,7 +362,7 @@ def process_booking():
             response = requests.post(
                 "{}{}".format(URL, "booking"),
                 json=json.dumps(data)
-            )
+            )  # Add booking to booking table
             if response.status_code == 200:
                 try:
                     data = response.json()
@@ -393,10 +402,10 @@ def render_cancel_page():
     Returns:
         renders cancel.html if logged in, otherwise redirects to site.login
     """
-    if 'user' in session:
+    if 'user' in session:  # Check if user is logged in
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['username'], "status": 0}
-        )
+        )  # Get all booking of user with username
         try:
             bookings_data = bookings.json()
         except JSONDecodeError as je:
@@ -415,16 +424,25 @@ def render_cancel_page():
 
 @site.route("/cancel", methods=['POST'])
 def cancel_booking():
-    """Attempts to cancel a booking for a user
+    """Attempts to cancel a booking/bookings for a user
 
     Returns:
         redirects to site.render_cancel_page with confirmation/error messages
     """
     if 'user' in session:
+        bookings = request.form.getlist('cancel')
         messages = []
-        booking_id = request.args.get('booking_id')
-        status = request.args.get('status')
-        if None not in (booking_id, status):
+        for booking in bookings:
+            booking_id = int(booking)
+            status = 2
+            result = requests.get(
+                "{}{}".format(URL, "booking"), params={"booking_id": booking_id}
+            )
+            if result.status_code == 200:
+                data = result.json()
+                if data['user_id'] != session['user']['username']:
+                    messages.append(("warning", {"message": "Booking is not for current user"}))
+                    return redirect(url_for('site.render_cancel_page', messages=json.dumps(messages)))
             data = {
                 "booking_id": booking_id,
                 "status": status
@@ -437,10 +455,10 @@ def cancel_booking():
                 if booking_id is not None:
                     session['cancel'] = booking_id
 
-                if 'credentials' not in session:
-                    return redirect(url_for('site.oauth2callback'))
+                if 'credentials' not in session:  # Check if user is logged in to google or not
+                    return redirect(url_for('site.oauth2callback'))  # If not, get credential
                 credentials = client.OAuth2Credentials.from_json(session['credentials'])
-                if credentials.access_token_expired:
+                if credentials.access_token_expired:  # If token is expired, get a new one
                     return redirect(url_for('site.oauth2callback'))
                 else:
                     http_auth = credentials.authorize(Http())
@@ -453,7 +471,7 @@ def cancel_booking():
                         "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
                     )
                     event_id = booking.json()['event_id']
-                    if event_id is not None:
+                    if event_id is not None:  # Remove event from google calendar
                         delete_event = service.events().delete(calendarId="primary", eventId=event_id,
                                                                sendUpdates="all").execute()
                 try:
@@ -487,10 +505,10 @@ def view_history():
     Returns:
         renders history.html with booking data
     """
-    if 'user' in session:
+    if 'user' in session:  # Check if user is logged in
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['username']}
-        )
+        )  # Get all booking for user with username
         try:
             bookings_data = bookings.json()
         except JSONDecodeError as je:
@@ -507,10 +525,10 @@ def available_cars():
     Returns:
         list.html if user in session, otherwise index.html
     """
-    if 'user' in session:
+    if 'user' in session:  # Check if user is logged in
         cars = requests.get(
             "{}{}".format(URL, "/cars"), params={"available": 1}
-        )
+        )  # Get all available cars in the database
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
@@ -532,8 +550,9 @@ def render_map():
     Returns:
         renders map.html if user logged in, otherwise redirects to index.html
     """
-    if 'user' in session:
-        result = requests.get("{}{}".format(URL, "/cars"), params={})
+    if 'user' in session:  # Check if user is logged in
+        result = requests.get("{}{}".format(URL, "/cars"), params={})  # Get all cars in the database for cars's
+        # location
         test = result.json()
         return render_template('map.html', points=json.dumps(test))
     return redirect(url_for("site.home"))
@@ -548,10 +567,10 @@ def search_cars():
     Returns:
         search.html if user logged in, otherwise index.html
     """
-    if 'user' in session:
+    if 'user' in session:  # Check if user is logged in
         cars = requests.get(
             "{}{}".format(URL, "/cars")
-        )
+        )  # Retrieve all cars in car table
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
@@ -559,7 +578,7 @@ def search_cars():
                 attributes = None
                 car_data = None
             else:
-                attributes = make_attributes(car_data)
+                attributes = make_attributes(car_data)  # Get cars's attributes to send to front-end for filter
             return render_template("search.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
 
@@ -596,12 +615,12 @@ def add_event():
     Returns:
         redirects to the booking page after attempting to add/authenticate
     """
-    if 'user' in session:
+    if 'user' in session:  # Check if user is logged in
         car_id = request.args.get('car_id')
         start = request.args.get('time_start')
         end = request.args.get('time_end')
         booking_id = request.args.get('booking_id')
-        if None not in (start, end, booking_id, car_id):
+        if None not in (start, end, booking_id, car_id):  # create booking object and add booking data to session
             time_start = start.replace(" ", "T") + "+10:00"
             time_end = end.replace(" ", "T") + "+10:00"
             session['booking'] = {
@@ -611,10 +630,10 @@ def add_event():
                 "time_end": time_end
             }
 
-        if 'credentials' not in session:
-            return redirect(url_for('site.oauth2callback'))
+        if 'credentials' not in session:  # Check for google credential
+            return redirect(url_for('site.oauth2callback'))  # If not, get one
         credentials = client.OAuth2Credentials.from_json(session['credentials'])
-        if credentials.access_token_expired:
+        if credentials.access_token_expired:  # Get new credential if the current one is expired
             return redirect(url_for('site.oauth2callback'))
         else:
             http_auth = credentials.authorize(Http())
@@ -647,16 +666,17 @@ def add_event():
                         {"method": "popup", "minutes": 10},
                     ],
                 }
-            }
-            add_event = service.events().insert(calendarId="primary", body=event).execute()
+            }  # Create new event object
+            new_event = service.events().insert(calendarId="primary", body=event).execute()  # Add new event to
+            # google calendar
             data = {
                 'booking_id': booking_id,
-                'event_id': add_event.get("id")
+                'event_id': new_event.get("id")
             }
             response = requests.put(
                 "{}{}".format(URL, "eventId"),
                 json=json.dumps(data)
-            )
+            )  # Add event_id to booking table
             return redirect(url_for('site.render_booking_page'))
     return redirect(url_for('site.home'))
 

@@ -1,3 +1,9 @@
+"""
+MP Flask Web App
+
+Creates Flask app and registers database API and website endpoints
+
+"""
 import pickle
 import os
 
@@ -27,7 +33,7 @@ def encode_user():
         directory: path to directory to take images from
 
     Returns:
-        Response object, 200 if successful otherwise returns a corresponding error (400 for missing param)
+        :class:`flask.Response` object, 200 if successful otherwise returns a corresponding error (400 for missing param)
     """
     user_id = request.args.get('user_id')
     directory = request.args.get('directory')
@@ -50,6 +56,11 @@ def encode_user():
 
 @app.route("/get_encoding", methods=['GET'])
 def get_encoding():
+    """Returns an encoding for a user: stored in user_data/pickles
+
+    Returns:
+        data for a user, otherwise None if not found
+    """
     user_id = request.args.get('user_id')
     if user_id is not None:
         data = pickle.load(open("user_data/pickles/{}".format(user_id), "rb"))
@@ -59,20 +70,29 @@ def get_encoding():
 
 @app.route("/authenticate_encodings", methods=['POST', 'GET'])
 def auth_by_face():
-    """Used to authenticate a user via facial recognition: compares existing encodings against a new encoding"""
+    """Used to authenticate a user via facial recognition: compares existing encodings against a new encoding
+
+    Args:
+        directory: path to directory to read from
+        user_id: username of user
+
+    Returns:
+        :class:`flask.Response` with 200 and :class:`FacialRecognition.AbstractFaceDetector.Match` if successful, or 400
+        if incorrect request params
+    """
     directory = request.args.get('directory')
     user_id = request.args.get('user_id')
     if directory is not None:
         detector = FaceDetector()
         with open("{}/{}".format(directory, user_id), 'rb') as log_pickle:
-            login = pickle.load(log_pickle)
+            login = pickle.load(log_pickle)  # load login encodings
         pickles_dir = "user_data/pickles"
         pickles = {
             filename: pickle.load(open("{}/{}".format(pickles_dir, filename), "rb"))
             for filename in os.listdir(pickles_dir)
-        }
+        }  # load existing registration encodings
         match = detector.compare_encodings(login_encs=login, saved_encs=pickles)
-        if match.user_id is not None:
+        if match.user_id is not None:  # found a match
             return Response(match.user_id, status=200)
         return Response("missing param", status=400)
     return Response("missing request param", status=400)
@@ -80,16 +100,19 @@ def auth_by_face():
 
 @app.errorhandler(404)
 def page_not_found(error):
+    """Renders when page is not found"""
     return render_template("404.html"), 404
 
 
 @app.errorhandler(403)
 def access_forbidden(error):
+    """Renders when user attempts to access forbidden page"""
     return render_template("403.html"), 403
 
 
 @app.errorhandler(500)
 def internal(error):
+    """Renders when server error occurs"""
     return render_template("500.html"), 500
 
 

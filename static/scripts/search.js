@@ -1,3 +1,5 @@
+/* Update capacity range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_capacity_range() {
   minLabel = document.getElementById("min-capacity");
   maxLabel = document.getElementById("max-capacity");
@@ -22,6 +24,8 @@ function update_capacity_range() {
   filter();
 }
 
+/* Update cost range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_cost_range() {
   minLabel = document.getElementById("min-cost");
   maxLabel = document.getElementById("max-cost");
@@ -46,6 +50,8 @@ function update_cost_range() {
   filter();
 }
 
+/* Update load_index range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_load_index_range() {
   minLabel = document.getElementById("min-load-index");
   maxLabel = document.getElementById("max-load-index");
@@ -70,6 +76,8 @@ function update_load_index_range() {
   filter();
 }
 
+/* Update clearance range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_clearance_range() {
   minLabel = document.getElementById("min-clearance");
   maxLabel = document.getElementById("max-clearance");
@@ -94,6 +102,8 @@ function update_clearance_range() {
   filter();
 }
 
+/* Update weight range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_weight_range() {
   minLabel = document.getElementById("min-weight");
   maxLabel = document.getElementById("max-weight");
@@ -118,6 +128,8 @@ function update_weight_range() {
   filter();
 }
 
+/* Update length range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_length_range() {
   minLabel = document.getElementById("min-length");
   maxLabel = document.getElementById("max-length");
@@ -142,20 +154,22 @@ function update_length_range() {
   filter();
 }
 
+/* Update engine capacity range options, the min options must be smaller then max value and the max options must be greater
+than the min value */
 function update_engine_capacity_range() {
   minLabel = document.getElementById("min-engine-capacity");
   maxLabel = document.getElementById("max-engine-capacity");
   minSelect = document.getElementById("engine-capacity-filter-min");
   maxSelect = document.getElementById("engine-capacity-filter-max");
   for (var i = 0; i < minSelect.options.length; i++) {
-    if (parseInt(minSelect[i].value) > parseInt(maxSelect.value)) {
+    if (parseFloat(minSelect[i].value) > parseFloat(maxSelect.value)) {
       minSelect[i].disabled = true;
     } else {
       minSelect[i].disabled = false;
     }
   }
   for (var i = 0; i < maxSelect.options.length; i++) {
-    if (parseInt(maxSelect[i].value) < parseInt(minSelect.value)) {
+    if (parseFloat(maxSelect[i].value) < parseFloat(minSelect.value)) {
       maxSelect[i].disabled = true;
     } else {
       maxSelect[i].disabled = false;
@@ -166,6 +180,7 @@ function update_engine_capacity_range() {
   filter();
 }
 
+/* Filter car based on the values input */
 var filter = function () {
   yearVal = document.getElementById("year-filter").value;
   makeVal = document.getElementById("make-filter").value;
@@ -242,8 +257,8 @@ var filter = function () {
         parseFloat(length) >= parseFloat(lengthMin)
       ) ||
       !(
-        parseInt(engine) <= parseInt(engineMax) &&
-        parseInt(engine) >= parseInt(engineMin)
+        parseFloat(engine) <= parseFloat(engineMax) &&
+        parseFloat(engine) >= parseFloat(engineMin)
       )
     ) {
       x[i].style.display = "none";
@@ -253,38 +268,45 @@ var filter = function () {
   }
 };
 
+// Show dropdown menu for capacity
 function capacityDropdown() {
   document.getElementById("select-capacity-container").classList.toggle("show");
 }
 
+// Show dropdown menu for cost
 function costDropdown() {
   document.getElementById("select-cost-container").classList.toggle("show");
 }
 
+// Show dropdown menu for load index
 function loadIndexDropdown() {
   document
     .getElementById("select-load-index-container")
     .classList.toggle("show");
 }
 
+// Show dropdown menu for clearance
 function clearanceDropdown() {
   document
     .getElementById("select-clearance-container")
     .classList.toggle("show");
 }
 
+// Show dropdown menu for weight
 function weightDropdown() {
   document
     .getElementById("select-weight-container")
     .classList.toggle("show");
 }
 
+// Show dropdown menu for length
 function lengthDropdown() {
   document
     .getElementById("select-length-container")
     .classList.toggle("show");
 }
 
+// Show dropdown menu for engine capacity
 function engineCapacityDropdown() {
   document
     .getElementById("select-engine-capacity-container")

@@ -1,3 +1,6 @@
+"""
+Houses utility methods used in MasterPI application
+"""
 import hashlib
 import random
 import string
@@ -8,26 +11,27 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 def get_random_alphaNumeric_string(stringLength):
     """
+    generates a random alphaNumeric string for salt value
 
     Args:
-        stringLength:
+        stringLength: length of random string
 
     Returns:
-
+        generated string of desired length
     """
     lettersAndDigits = string.ascii_letters + string.digits
     return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
 
 
 def hash_password(password, salt):
-    """
+    """hashes a password for storing in database
 
     Args:
-        password:
-        salt:
+        password: plaintext password to hash
+        salt: salt to hash with password
 
     Returns:
-
+        hash & salt password
     """
     saltedpassword = password + salt
     password = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
@@ -35,15 +39,15 @@ def hash_password(password, salt):
 
 
 def verify_password(stored_password, test_password, salt):
-    """
+    """verifies that a password matches the encrypted password
 
     Args:
-        stored_password:
-        test_password:
-        salt:
+        stored_password: stored encrypted password
+        test_password: password to test against
+        salt: salt to encode with
 
     Returns:
-
+        boolean value indicating successful match
     """
     test_password = hashlib.pbkdf2_hmac('sha256', test_password.encode(), salt.encode(), 100000)
     if test_password.hex() == stored_password:
@@ -93,24 +97,25 @@ def calc_hours(d1: datetime, d2: datetime) -> int:
 
 def allowed_file(filename):
     """
+    Checks if a filename matches any in an allowed extensions list
 
     Args:
-        filename:
+        filename: filename to check
 
     Returns:
-
+        boolean value indicating if found in allowed extensions
     """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 if __name__ == '__main__':
-    # start = datetime(2020, 11, 11, 10, 00, 00)
-    # end = datetime(2020, 12, 12, 13, 00, 00)
-    # calc_hours(start, end)
-    # b_start = datetime(2020, 11, 11, 11, 00, 00)
-    # b_end = datetime(2020, 11, 11, 11, 30, 00)
-    # print(start <= b_start and end >= b_end)
+    start = datetime(2020, 11, 11, 10, 00, 00)
+    end = datetime(2020, 12, 12, 13, 00, 00)
+    print(calc_hours(start, end))
+    b_start = datetime(2020, 11, 11, 11, 00, 00)
+    b_end = datetime(2020, 11, 11, 11, 30, 00)
+    print(start <= b_start and end >= b_end)
     d_start = datetime(2022, 5, 23, 20, 00, 00)
     d_end = datetime(2022, 5, 23, 20, 30, 00)
     b_start = datetime(2022, 5, 23, 20, 31, 00)

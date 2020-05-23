@@ -1,4 +1,4 @@
-
+/* Update list of the file chose to be uploaded */
 updateList = function() {
     var input = document.getElementById('image');
     var output = document.getElementById('imageList');
