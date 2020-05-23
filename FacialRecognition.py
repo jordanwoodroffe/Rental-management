@@ -123,7 +123,7 @@ class FaceDetector(AbstractFaceDetector):
     @staticmethod
     def __encode_face(faces) -> list:
         """
-        encode faces
+        Encodes captured faces
 
         Args:
             faces: list of faces captured by camera/from video to encode
@@ -145,18 +145,6 @@ if __name__ == "__main__":
     images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
     detector = FaceDetector()
     encoding = detector.capture_user(images, min_faces=1)
-    pickle.dump(encoding, open("test_data/test_login/temp", "wb"))
-
-    # # capture registration faces
-    # reg_encs = {}
-    # # images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
-    # images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
-    # # images = None
-    # don = detector.capture_user(images=images)
-    # temp = pickle.dumps(don)
-    # reg_encs['don'] = pickle.loads(temp)
-    #
-    # # capture login face & compare with reg
-    # login = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
-    # match = detector.compare_encodings(login, reg_encs)
-    # print(match)
+    data = pickle.dumps(encoding)
+    temp = pickle.loads(data)
+    pickle.dump(temp, open("test_data/test_login/temp", "wb"))
