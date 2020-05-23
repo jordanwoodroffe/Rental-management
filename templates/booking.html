@@ -2,6 +2,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/booking.css') }}">
 {% block javascript %}
   <script src="{{ url_for('static', filename='scripts/booking.js')}}"></script>
 {% endblock %}
@@ -115,15 +116,59 @@
             <label>
               <div>Capacity</div>
                 <div class="slidecontainer">
-                  <span>{{ attributes['capacity'] | min }}</span><input type="range" class="custom-range" value="{{ attributes['capacity'] | min }}" min="{{ attributes['capacity'] | min }}" max="{{ attributes['capacity'] | max}}" class="slider" id="capacity-filter" oninput="filter()" name="capacityVal"><span>{{ attributes['capacity'] | max}}</span>
-                  <output for="capacityVal" onforminput="value = capacityVal.valueAsNumber;"></output>
+                  <button id="capacity-dropdown" class="dropbtn btn btn-default" onclick="capacityDropdown()"><span id="min-capacity">{{ attributes['capacity'] | min }}</span> to <span id="max-capacity">{{ attributes['capacity'] | max}}</span> People</button>
+                  <div id="select-capacity-container" class="dropdown-content">
+                    <select class="custom-select" name="capacity-min-select" id="capacity-filter-min" onchange="update_capacity_range()">
+                      {% for capacity in attributes['capacity'] %}
+                        {% if capacity == attributes['capacity'] | min %}
+                          <option value="{{ capacity }}" selected>{{ capacity }}</option>
+                        {% else %}
+                          <option value="{{ capacity }}">{{ capacity }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <select class="custom-select" name="capacity-max-select" id="capacity-filter-max" onchange="update_capacity_range()">
+                      {% for capacity in attributes['capacity'] %}
+                        {% if capacity == attributes['capacity'] | max %}
+                          <option value="{{ capacity }}" selected>{{ capacity }}</option>
+                        {% else %}
+                          <option value="{{ capacity }}">{{ capacity }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                  </div>
                 </div>
             </label>
             <label>
-              <div>Cost</div>
+              <div>Cost Per Hour</div>
                 <div class="slidecontainer">
-                  <span>${{ attributes['cost'] | min }}</span><input type="range" class="custom-range" value="{{ attributes['cost'] | min }}" min="{{ attributes['cost'] | min }}" max="{{ attributes['cost'] | max}}" class="slider" id="cost-filter" oninput="filter()" name="costVal"><span>${{ attributes['cost'] | max }}</span>
-                  <output for="costVal" onforminput="value = costVal.valueAsNumber;"></output>
+                  <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
+                  <div id="select-cost-container" class="dropdown-content">
+                    <select class="custom-select" name="cost-min-select" id="cost-filter-min" onchange="update_cost_range()">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                        <option value="40">40</option>
+                        <option value="50">50</option>
+                        <option value="60">60</option>
+                        <option value="70">70</option>
+                        <option value="80">80</option>
+                        <option value="90">90</option>
+                        <option value="100">100</option>
+                    </select>
+                    <select class="custom-select" name="cost-max-select" id="cost-filter-max" onchange="update_cost_range()">
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="30">30</option>
+                      <option value="40">40</option>
+                      <option value="50">50</option>
+                      <option value="60">60</option>
+                      <option value="70">70</option>
+                      <option value="80">80</option>
+                      <option value="90">90</option>
+                      <option value="100" selected>100</option>
+                    </select>
+                  </div>
                 </div>
             </label>
           </div>
