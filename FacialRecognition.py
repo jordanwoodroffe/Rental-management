@@ -14,12 +14,16 @@ from abc import ABC, abstractmethod
 
 
 class AbstractFaceDetector(ABC):
-    Match = namedtuple("max_match", "user_id score")  # simple data-structure to house encoding comparison results
+    """
+    Match - simple data-structure to house encoding comparison results
+    """
+    Match = namedtuple("max_match", "user_id score")
 
     @abstractmethod
     def capture_user(self) -> list:
         """
         Captures a user and encodes face: used for storing in database, or for sending to MP for login/authentication
+
         Returns:
             a list containing the users login authentication
         """
@@ -30,6 +34,7 @@ class AbstractFaceDetector(ABC):
         Args:
             login: encoded face of user attempting to login
             users: a dictionary of user_ids to their saved encodings
+
         Returns:
             a string for matched user_id, or None if no match was found
         """
@@ -74,6 +79,7 @@ class FaceDetector(AbstractFaceDetector):
         Captures a users face from an image or video stream
         TODO: replace/add image upload - filepath to directory with images, load/capture faces until self.__min_faces
         TODO: add validation/exceptions for image upload etc.
+
         Returns:
             a list of faces capture from images or video-stream
         """
@@ -118,6 +124,7 @@ class FaceDetector(AbstractFaceDetector):
     def __encode_face(faces) -> list:
         """
         encode faces
+
         Args:
             faces: list of faces captured by camera/from video to encode
         """

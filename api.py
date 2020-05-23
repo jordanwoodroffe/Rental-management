@@ -570,6 +570,7 @@ def add_booking():
 def calc_cost(amount: float, start: datetime, end: datetime) -> float:
     """
     Calculates the cost for a booking
+
     Args:
         amount: cph value for the car
         start: booking start date
@@ -584,6 +585,7 @@ def calc_cost(amount: float, start: datetime, end: datetime) -> float:
 def valid_booking(proposed: Booking) -> bool:
     """
     Validates on server whether proposed booking overlaps any existing bookings for the vehicle
+
     Args:
         proposed: a proposed booking record (new booking)
 

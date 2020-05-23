@@ -25,9 +25,11 @@ URL = "http://127.0.0.1:5000/"
 def valid_name(form, field):
     """
     Form validation method for name fields - checks to ensure all chars are ascii and are not digits
+
     Args:
         form: FlaskForm to check
         field: fields to validate
+
     Raises:
         ValidationError: if name is invalid (not ascii or contains digit)
     """
@@ -42,6 +44,7 @@ def valid_name(form, field):
 def valid_password(form, field):
     """
     Form validation method to ensure password is correct format
+
     Args:
         form: FlaskForm to validate
         field: field to check
@@ -68,6 +71,7 @@ def valid_password(form, field):
 def validate_date(form, field):
     """
     Form validation method for date fields
+
     Args:
         form: FlaskForm to validate
         field: field to check
@@ -117,6 +121,7 @@ class BookingQueryForm(FlaskForm):
 def home():
     """
     Index page for site - user can choose to login or register
+
     Returns:
         renders main.html if user has logged in
         renders index.html if user has not logged in
@@ -458,6 +463,7 @@ def available_cars():
     """
     Lists available cars
     NOTE - currently removed from nav as this functionality is covered by site.render_booking_page
+
     Returns:
         list.html if user in session, otherwise index.html
     """
@@ -489,6 +495,7 @@ def available_cars():
 def render_map():
     """
     Map page - displays car locations
+
     Returns:
         renders map.html if user logged in, otherwise redirects to index.html
     """
@@ -504,6 +511,7 @@ def search_cars():
     """
     Search cars by attributes
     NOTE - functionality also available on booking.html
+
     Returns:
         search.html if user logged in, otherwise index.html
     """
