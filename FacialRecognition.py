@@ -1,5 +1,5 @@
 """
-FacialRecognition.py
+FacialRecognition
 
 Note - can raise a MemoryError when installing packages onto RPI due to limited cache size/memory.
 Solved by using:
@@ -142,17 +142,21 @@ class FaceDetector(AbstractFaceDetector):
 
 
 if __name__ == "__main__":
-    # capture registration faces
-    reg_encs = {}
+    images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
     detector = FaceDetector()
-    # images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
-    images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
-    # images = None
-    don = detector.capture_user(images=images)
-    temp = pickle.dumps(don)
-    reg_encs['don'] = pickle.loads(temp)
+    encoding = detector.capture_user(images, min_faces=1)
+    pickle.dump(encoding, open("test_data/test_login/temp", "wb"))
 
-    # capture login face & compare with reg
-    login = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
-    match = detector.compare_encodings(login, reg_encs)
-    print(match)
+    # # capture registration faces
+    # reg_encs = {}
+    # # images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
+    # images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
+    # # images = None
+    # don = detector.capture_user(images=images)
+    # temp = pickle.dumps(don)
+    # reg_encs['don'] = pickle.loads(temp)
+    #
+    # # capture login face & compare with reg
+    # login = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
+    # match = detector.compare_encodings(login, reg_encs)
+    # print(match)

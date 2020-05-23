@@ -1,11 +1,10 @@
 import pickle
 import os
-import shutil
 
 from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
 from FacialRecognition import FaceDetector
-from api import api, db, DB_URI, LOCAL_IP
+from api import api, db, DB_URI
 from website import site
 from datetime import timedelta
 
@@ -19,7 +18,7 @@ app.register_blueprint(site)
 app.register_blueprint(api)
 
 
-@app.route("/encode_user", methods=['POST'])
+@app.route("/encode_user", methods=['POST', 'GET'])
 def encode_user():
     """
 
@@ -72,9 +71,6 @@ def test():
 def auth_by_face():
     """
     Used to authenticate a user via facial recognition: compares existing encodings against a new encoding
-    Att:
-
-
     """
     directory = request.args.get('directory')
     user_id = request.args.get('user_id')

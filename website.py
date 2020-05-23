@@ -1,16 +1,20 @@
+"""
+MP Web App
+
+website.py renders html templates and handles page endpoints
+handles input validation for login, register, booking, and cancel
+"""
 import json
 import re
 from json.decoder import JSONDecodeError
-
 import requests
 import os
-from api import LOCAL_IP
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, Response
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, IntegerField, DateTimeField
-from wtforms.validators import InputRequired, Email, Length, NumberRange, ValidationError
+from wtforms import StringField, PasswordField, DateTimeField
+from wtforms.validators import InputRequired, Email, Length, ValidationError
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
@@ -124,7 +128,7 @@ def home():
 
     Returns:
         renders main.html if user has logged in
-        renders index.html if user has not logged in
+        or renders index.html if user has not logged in
     """
     response = requests.get(
         "{}{}".format(URL, "populate")
@@ -136,9 +140,15 @@ def home():
 
 @site.route("/login", methods=['POST', 'GET'])
 def login():
+    """
+    Authenticates a user when they log in to the MP web app
+
+    Returns:
+        redirect site.main or if user successfully authenticated
+        or renders login.html on load, with error messages if incorrect login attempt
+    """
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-        # result = db.user_authentication(form.email.data, form.password.data)
         result = requests.get(
             "{}{}".format(URL, "users/authenticate"),
             params={"user_id": form.email.data, "password": form.password.data},
@@ -158,6 +168,12 @@ def login():
 
 @site.route("/register", methods=['POST', 'GET'])
 def register():
+    """
+    Registers a user: captures details from form and attempts to append to User table
+
+    Returns:
+        redirect site.login if successful or renders register.html on load, with errors if incorrect register attempt
+    """
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         #  should be using response = requests.get(<DB_API_URL>)
@@ -181,6 +197,12 @@ def register():
 
 @site.route("/main")
 def main():
+    """
+    Renders the home page for MP web app
+
+    Returns:
+        renders main.html if user logged in or site.home if user not logged in
+    """
     if 'user' in session:
         result = requests.get("{}{}".format(URL, "/cars"), params={})
         test = result.json()
@@ -190,6 +212,12 @@ def main():
 
 @site.route("/capture_user", methods=['POST', 'GET'])
 def capture_user():
+    """
+    Captures/encodes a user for face recognition login
+
+    Returns:
+        redirect site.main if successful or site.home if user not logged in
+    """
     if 'user' in session:
         if request.method == 'POST':
             # check if the post request has the file
@@ -234,12 +262,23 @@ def capture_user():
 
 @site.route("/logout")
 def logout():
+    """
+    Logs the user out of MP web app
+    Returns:
+        redirects to site.login
+    """
     session.pop('user', None)
     return redirect(url_for('site.login'))
 
 
 @site.route("/book", methods=['GET'])
 def render_booking_page():
+    """
+    Renders the booking page - loads cars if start/end dates are valid
+
+    Returns:
+        renders booking.html with cars if applicable or site.home if user not logged in
+    """
     if 'user' in session:
         start = request.args.get('start')
         end = request.args.get('end')
@@ -261,28 +300,11 @@ def render_booking_page():
                 response = requests.get(
                     "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
                 )
-                # if cars.status_code == 200:
-                #     try:
-                #         car_data = cars.json()
-                #     except JSONDecodeError as je:
-                #         attributes = None
-                #         car_data = None
-                #     else:
-                #         for car in car_data:
-                #             attributes['make'].add(car['model']['make'])
-                #             attributes['colour'].add(car['model']['colour'])
-                #             attributes['year'].add(car['model']['year'])
-                #             attributes['capacity'].add(car['model']['capacity'])
-                #             attributes['cost'].add(car['cph'])
                 try:
                     cars = response.json()
+                    attributes = make_attributes(cars)
                     for car in cars:
                         cph = car['cph']
-                        attributes['make'].add(car['model']['make'])
-                        attributes['colour'].add(car['model']['colour'])
-                        attributes['year'].add(car['model']['year'])
-                        attributes['capacity'].add(car['model']['capacity'])
-                        attributes['cost'].add(car['cph'])
                         try:
                             amount = float(cph)
                             car['total_cost'] = float("{:.2f}".format(amount * calc_hours(d1=start_dt, d2=end_dt)))
@@ -299,6 +321,12 @@ def render_booking_page():
 
 @site.route("/book", methods=['POST'])
 def process_booking():
+    """
+    Sends new booking request to database api
+
+    Returns:
+        renders booking.html with confirmation/error messages
+    """
     if 'user' in session:
         car_id = request.args.get('car_id')
         start = request.args.get('start')
@@ -356,6 +384,12 @@ def process_booking():
 
 @site.route("/cancel", methods=['GET'])
 def render_cancel_page():
+    """
+    Renders the booking cancellation page, with booked bookings for a user
+
+    Returns:
+        renders cancel.html if logged in, otherwise redirects to site.login
+    """
     if 'user' in session:
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
@@ -379,10 +413,10 @@ def render_cancel_page():
 @site.route("/cancel", methods=['POST'])
 def cancel_booking():
     """
-    TODO: separate get and post into different methods -- easier to follow logic
-    TODO: api will use response objects
-    Returns:
+    Attempts to cancel a booking for a user
 
+    Returns:
+        redirects to site.render_cancel_page with confirmation/error messages
     """
     if 'user' in session:
         messages = []
@@ -446,6 +480,12 @@ def cancel_booking():
 
 @site.route("/history")
 def view_history():
+    """
+    Renders booking history for a user - view cars previously/currently booked, and filter by status or car rego
+
+    Returns:
+        renders history.html with booking data
+    """
     if 'user' in session:
         bookings = requests.get(
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['email']}
@@ -471,16 +511,10 @@ def available_cars():
         cars = requests.get(
             "{}{}".format(URL, "/cars"), params={"available": 1}
         )
-        attributes = defaultdict(set)
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
-                for car in car_data:
-                    attributes['make'].add(car['model']['make'])
-                    attributes['colour'].add(car['model']['colour'])
-                    attributes['year'].add(car['model']['year'])
-                    attributes['capacity'].add(car['model']['capacity'])
-                    attributes['cost'].add(car['cph'])
+                attributes = make_attributes(car_data)
             except JSONDecodeError as je:
                 attributes = None
                 car_data = None
@@ -519,7 +553,6 @@ def search_cars():
         cars = requests.get(
             "{}{}".format(URL, "/cars")
         )
-        attributes = defaultdict(set)
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
@@ -527,22 +560,38 @@ def search_cars():
                 attributes = None
                 car_data = None
             else:
-                for car in car_data:
-                    attributes['make'].add(car['model']['make'])
-                    attributes['colour'].add(car['model']['colour'])
-                    attributes['year'].add(car['model']['year'])
-                    attributes['capacity'].add(car['model']['capacity'])
-                    attributes['cost'].add(car['cph'])
+                attributes = make_attributes(car_data)
             return render_template("search.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
+
+
+def make_attributes(car_data: []) -> {set}:
+    """
+    Creates a list of attributes for displaying on search & booking page
+
+    Args:
+        car_data:
+
+    Returns:
+        car_attributes: list of data to display
+    """
+    attributes = defaultdict(set)
+    for car in car_data:
+        attributes['make'].add(car['model']['make'])
+        attributes['colour'].add(car['model']['colour'])
+        attributes['year'].add(car['model']['year'])
+        attributes['capacity'].add(car['model']['capacity'])
+        attributes['cost'].add(car['cph'])
+    return attributes
 
 
 @site.route("/addevent")
 def add_event():
     """
+    Adds an event for a booking to the users Google Calendar
 
     Returns:
-
+        redirects to the booking page after attempting to add/authenticate
     """
     if 'user' in session:
         car_id = request.args.get('car_id')
@@ -609,40 +658,14 @@ def add_event():
     return redirect(url_for('site.home'))
 
 
-# @site.route("/cancelevent")
-# def cancel_event():
-#     booking_id = request.args.get('booking_id')
-#
-#     if booking_id is not None:
-#         session['cancel'] = booking_id
-#
-#     if 'credentials' not in session:
-#         return redirect(url_for('site.oauth2callback'))
-#     credentials = client.OAuth2Credentials.from_json(session['credentials'])
-#     if credentials.access_token_expired:
-#         return redirect(url_for('site.oauth2callback'))
-#     else:
-#         http_auth = credentials.authorize(Http())
-#         service = discovery.build('calendar', 'v3', http=http_auth)
-#
-#     if 'cancel' in session:
-#         booking_id = session['cancel']
-#         session.pop('cancel', None)
-#         booking = requests.get(
-#             "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
-#         )
-#         event_id = booking.json()['event_id']
-#         print("event id" + event_id)
-#         if event_id is not None:
-#             delete_event = service.events().delete(calendarId="primary", eventId=event_id,
-#                                                    sendUpdates="all").execute()
-#             print(delete_event)
-#             return Response(status=200)
-#     return Response("Missing booking_id in session", status=404)
-
-
 @site.route('/oauth2callback')
 def oauth2callback():
+    """
+    Callback function for Google Calendar Integration
+
+    Returns:
+        redirects to add_event if successful
+    """
     flow = client.flow_from_clientsecrets(
         'credentials.json',
         scope='https://www.googleapis.com/auth/calendar',
@@ -658,4 +681,7 @@ def oauth2callback():
 
 
 class DateException(ValueError):
+    """
+    Used to raise incorrect date exceptions when validating a FlaskForm
+    """
     pass
