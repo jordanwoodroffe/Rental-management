@@ -124,6 +124,7 @@ class Encoding(db.Model):
 
 class UserSchema(ma.Schema):
     """Schema to expose User record information"""
+
     class Meta:
         model = User
         fields = ("username", "email", "f_name", "l_name", "face_id")
@@ -131,6 +132,7 @@ class UserSchema(ma.Schema):
 
 class CarModelSchema(ma.Schema):
     """Schema to expose CarModel record information"""
+
     class Meta:
         model = CarModel
         fields = ("model_id", "make", "model", "year", "capacity", "colour", "transmission", "weight", "length",
@@ -139,6 +141,7 @@ class CarModelSchema(ma.Schema):
 
 class CarSchema(ma.Schema):
     """Schema to expose Car record information, including nested/foreign key records"""
+
     class Meta:
         model = Car
         fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
@@ -148,6 +151,7 @@ class CarSchema(ma.Schema):
 
 class BookingSchema(ma.Schema):
     """Schema to expose Booking record information, including nested/foreign key records"""
+
     class Meta:
         model = Booking
         fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id")
@@ -186,9 +190,9 @@ def get_user():
         400 if request parameters were missing
     """
     user_id = request.args.get('user_id')
-    if user_id is not None:
+    if user_id is not None:  # Check if user_id is provided
         user = User.query.get(user_id)
-        if user is not None:
+        if user is not None:  # If user is in database
             return Response(UserSchema().dumps(user), status=200, mimetype="application/json")
         return Response("User {} not found".format(user_id), status=404)
     return Response("user_id param not found", status=400)
@@ -199,7 +203,7 @@ def add_user():
     """Adds a user to the database
 
     Params:
-        user_data: data to be added (name, email, password) in the form of a json object
+        user_data: data to be added (name, email, password, username) in the form of a json object
 
     Returns:
         200 if successful
@@ -209,20 +213,20 @@ def add_user():
     user_data = request.get_json()
     response = None
     try:
-        if user_data is None:
+        if user_data is None:  # Check if user_data is provided or not
             response = Response(status=400)
         else:
             data = json.loads(user_data)
-            user = User.query.get(data['username'])
+            user = User.query.get(data['username'])  # Check if username is already used
             if user is None:
-                salt = get_random_alphaNumeric_string(10)
-                user = User()
+                salt = get_random_alphaNumeric_string(10)  # Randomise salt
+                user = User()  # Create user object and add user_data to it
                 user.username = data['username']
                 user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
                 user.password = hash_password(data['password'], salt) + ':' + salt
-                db.session.add(user)
+                db.session.add(user)  # Add user to database
                 db.session.commit()
                 response = Response(status=200)
             else:
@@ -250,17 +254,18 @@ def user_authentication():
     """
     user_id = request.args.get('user_id')
     password = request.args.get('password')
-    if user_id is None:
+    if user_id is None:  # Check if user_id is provided
         response = Response("No username parameter found", status=400)
-    elif password is None:
+    elif password is None:  # Check if password is provided
         response = Response("No password parameter found", status=400)
     else:
-        user = User.query.get(user_id)
+        user = User.query.get(user_id)  # Retrieve user with user_id from database
         if user is not None:
-            stored_password = user.password.split(':')[0]
-            salt = user.password.split(':')[1]
-            if verify_password(stored_password, password, salt):
-                data = json.loads(UserSchema().dumps(user))
+            stored_password = user.password.split(':')[0]  # Retrieve hashed password from password string
+            salt = user.password.split(':')[1]  # Retrieve salt from password string
+            if verify_password(stored_password, password, salt):  # Verify provided password using hashed password
+                # and salt
+                data = json.loads(UserSchema().dumps(user))  # Return user detail for session (no password returned)
                 response = Response(
                     json.dumps(data), status=200, content_type="application/json"
                 )
@@ -282,12 +287,12 @@ def update_user():
     """
     user_id = request.args.get("user_id")
     face_id = request.args.get("face_id")
-    if None not in (user_id, face_id):
-        user = User.query.get(user_id)
+    if None not in (user_id, face_id):  # Check if user_id and face_id are provided
+        user = User.query.get(user_id)  # Retrieve user with user_id
         if user is not None:
             try:
                 val = int(face_id)
-                if val not in (0, 1):
+                if val not in (0, 1):  # Update face_id boolean (1 if face_id is registered, 0 if not)
                     raise ValueError
                 user.face_id = val
                 db.session.commit()
@@ -303,13 +308,13 @@ def update_user():
 
 @api.route("/cars", methods=['GET'])
 def get_cars():
-    """Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
+    """Endpoint to return all the car objects in the database
 
     Returns:
         200 if successful, along with all cars as a json object
         500 if no cars found in database
     """
-    cars = Car.query.all()
+    cars = Car.query.all()  # Get all cars in the Car table
     if cars is not None:
         return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
     return Response("No cars found", status=500)
@@ -317,7 +322,7 @@ def get_cars():
 
 @api.route("/car", methods=['GET'])
 def get_car():
-    """Endpoint to return a car from the database
+    """Endpoint to return a car from the database with a specific car_id
 
     Params:
         car_id: id of car to fetch
@@ -328,10 +333,11 @@ def get_car():
         404 if car_id was invalid (not in DB)
     """
     car_id = request.args.get('car_id')
-    if car_id is not None:
-        car = Car.query.get(car_id)
+    if car_id is not None:  # Check if car_id is provided
+        car = Car.query.get(car_id)  # Retrieve car with car_id
         if car is not None:
-            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
+            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")  # If car with car_id is
+            # in the database, return car object
         return Response("Car not found", status=404)
     return Response("car_id param was not found", status=400)
 
@@ -350,7 +356,7 @@ def update_car():
 
     Returns:
         200 if successful
-        400 if there are client errors (invalid json format, missing paramters)
+        400 if there are client errors (invalid json format, missing parameters)
         404 if no valid results found: no bookings for car, or no valid bookings (valid start/end dates) for the car
     """
     car_id = request.args.get('car_id')

@@ -53,7 +53,7 @@
             </label>
             <label class="mr-1">
               <div>Capacity</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="capacity-dropdown" class="dropbtn btn btn-default" onclick="capacityDropdown()"><span id="min-capacity">{{ attributes['capacity'] | min }}</span> to <span id="max-capacity">{{ attributes['capacity'] | max}}</span> People</button>
                   <div id="select-capacity-container" class="dropdown-content">
                     <select class="custom-select" name="capacity-min-select" id="capacity-filter-min" onchange="update_capacity_range()">
@@ -79,7 +79,7 @@
             </label>
             <label class="mr-1">
               <div>Cost Per Hour</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
                   <div id="select-cost-container" class="dropdown-content">
                     <select class="custom-select" name="cost-min-select" id="cost-filter-min" onchange="update_cost_range()">
@@ -111,7 +111,7 @@
             </label>
             <label class="mr-1">
               <div>Engine Capacity</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="engine-capacity-dropdown" class="dropbtn btn btn-default" onclick="engineCapacityDropdown()">from <span id="min-engine-capacity">1</span> litres to <span id="max-engine-capacity">4</span> litres</button>
                   <div id="select-engine-capacity-container" class="dropdown-content">
                     <select class="custom-select" name="engine-capacity-min-select" id="engine-capacity-filter-min" onchange="update_engine_capacity_range()">
@@ -131,7 +131,7 @@
             </label>
             <label class="mr-1">
               <div>Length</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="length-dropdown" class="dropbtn btn btn-default" onclick="lengthDropdown()">from <span id="min-length">3</span> m to <span id="max-length">5</span> m</button>
                   <div id="select-length-container" class="dropdown-content">
                     <select class="custom-select" name="length-min-select" id="length-filter-min" onchange="update_length_range()">
@@ -153,7 +153,7 @@
             </label>
             <label class="mr-1">
               <div>Weight</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="weight-dropdown" class="dropbtn btn btn-default" onclick="weightDropdown()">from <span id="min-weight">950</span> kg to <span id="max-weight">2300</span> kg</button>
                   <div id="select-weight-container" class="dropdown-content">
                     <select class="custom-select" name="weight-min-select" id="weight-filter-min" onchange="update_weight_range()">
@@ -179,7 +179,7 @@
             </label>
             <label class="mr-1">
               <div>Clearance</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="clearance-dropdown" class="dropbtn btn btn-default" onclick="clearanceDropdown()"><span id="min-clearance">100</span> - <span id="max-clearance">250</span></button>
                   <div id="select-clearance-container" class="dropdown-content">
                     <select class="custom-select" name="clearance-min-select" id="clearance-filter-min" onchange="update_clearance_range()">
@@ -205,7 +205,7 @@
             </label>
             <label class="mr-1">
               <div>Load Index</div>
-                <div class="slidecontainer">
+                <div>
                   <button id="load-index-dropdown" class="dropbtn btn btn-default" onclick="loadIndexDropdown()"><span id="min-load-index">75</span> - <span id="max-load-index">100</span></button>
                   <div id="select-load-index-container" class="dropdown-content">
                     <select class="custom-select" name="load-index-min-select" id="load-index-filter-min" onchange="update_load_index_range()">
@@ -243,18 +243,18 @@
               <div class="card bg-light mb-4 car">
                 <div class="card-body">
                   <h5 class="card-title make-value">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
-                  <p class="card-text capacity-value">Capcity: {{car.model.capacity}}</p>
+                  <p class="card-text capacity-value">Capacity: {{car.model.capacity}}</p>
                   <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
                   <p class="card-text cost-value">Cost: ${{car.cph}} per hour</p>
                   <a class="btn btn-secondary" data-toggle="collapse" href="#additionalDetails-{{car.car_id}}" role="button" aria-expanded="false" aria-controls="additionalDetails">Additional details</a>
                   <div class="collapse" id="additionalDetails-{{car.car_id}}" style="position: absolute; z-index: 100;">
                     <div class="card card-body">
                       <p class="card-text">Transmission: <span class="transmission-value">{{car.model.transmission}}</span></p>
-                      <p class="card-text">Engine capcity: <span class="engine-value">{{car.model.engine_capacity}}</span> litres</p>
+                      <p class="card-text">Engine capacity: <span class="engine-value">{{car.model.engine_capacity}}</span> litres</p>
                       <p class="card-text">Length: <span class="length-value">{{car.model.length}}</span>m</p>
                       <p class="card-text">Weight: <span class="weight-value">{{car.model.weight}}</span>kg</p>
                       <p class="card-text">Clearance: <span class="clearance-value">{{car.model.ground_clearance}}</span>mm</p>
-                      <p class="card-text">Load index: <span class="load-value">{{car.model.load_index}}</span></p>
+                      <p class="card-text">Load index: <span class="load-index-value">{{car.model.load_index}}</span></p>
                     </div>
                   </div>
                 </div>
