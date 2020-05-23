@@ -77,6 +77,7 @@ def compare_dates(d_start: datetime, d_end: datetime, b_start: datetime, b_end: 
 def calc_hours(d1: datetime, d2: datetime) -> int:
     """
     Calculates the number of hours between two dates
+
     Args:
         d1: first date to compare
         d2: second date to compare

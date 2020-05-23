@@ -1,5 +1,5 @@
 """
-FacialRecognition.py
+FacialRecognition
 
 Note - can raise a MemoryError when installing packages onto RPI due to limited cache size/memory.
 Solved by using:
@@ -14,12 +14,16 @@ from abc import ABC, abstractmethod
 
 
 class AbstractFaceDetector(ABC):
-    Match = namedtuple("max_match", "user_id score")  # simple data-structure to house encoding comparison results
+    """
+    Match - simple data-structure to house encoding comparison results
+    """
+    Match = namedtuple("max_match", "user_id score")
 
     @abstractmethod
     def capture_user(self) -> list:
         """
         Captures a user and encodes face: used for storing in database, or for sending to MP for login/authentication
+
         Returns:
             a list containing the users login authentication
         """
@@ -30,6 +34,7 @@ class AbstractFaceDetector(ABC):
         Args:
             login: encoded face of user attempting to login
             users: a dictionary of user_ids to their saved encodings
+
         Returns:
             a string for matched user_id, or None if no match was found
         """
@@ -74,6 +79,7 @@ class FaceDetector(AbstractFaceDetector):
         Captures a users face from an image or video stream
         TODO: replace/add image upload - filepath to directory with images, load/capture faces until self.__min_faces
         TODO: add validation/exceptions for image upload etc.
+
         Returns:
             a list of faces capture from images or video-stream
         """
@@ -118,6 +124,7 @@ class FaceDetector(AbstractFaceDetector):
     def __encode_face(faces) -> list:
         """
         encode faces
+
         Args:
             faces: list of faces captured by camera/from video to encode
         """
@@ -135,17 +142,21 @@ class FaceDetector(AbstractFaceDetector):
 
 
 if __name__ == "__main__":
-    # capture registration faces
-    reg_encs = {}
+    images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
     detector = FaceDetector()
-    # images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
-    images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
-    # images = None
-    don = detector.capture_user(images=images)
-    temp = pickle.dumps(don)
-    reg_encs['don'] = pickle.loads(temp)
+    encoding = detector.capture_user(images, min_faces=1)
+    pickle.dump(encoding, open("test_data/test_login/temp", "wb"))
 
-    # capture login face & compare with reg
-    login = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
-    match = detector.compare_encodings(login, reg_encs)
-    print(match)
+    # # capture registration faces
+    # reg_encs = {}
+    # # images = ["user_data/face_pics/donald@gmail.com/img1.jpg"]
+    # images = ["user_data/face_pics/donald@gmail.com/img{}.jpg".format(i) for i in range(1, 6)]
+    # # images = None
+    # don = detector.capture_user(images=images)
+    # temp = pickle.dumps(don)
+    # reg_encs['don'] = pickle.loads(temp)
+    #
+    # # capture login face & compare with reg
+    # login = detector.capture_user(images=["user_data/face_pics/donald@gmail.com/img1.jpg"], min_faces=1)
+    # match = detector.compare_encodings(login, reg_encs)
+    # print(match)
