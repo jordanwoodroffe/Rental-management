@@ -246,11 +246,9 @@ def add_user():
             else:
                 response = Response("Invalid user_id: already exists", status=404)
     except JSONDecodeError as de:
-        print("{}\n{}".format("Unable to decode user object", str(de)))
-        response = Response(status=400)
+        response = Response("Unable to decode user object", status=400)
     except ValueError as ve:
-        print("{}\n{}".format("Unable to access value", str(ve)))
-        response = Response(status=400)
+        response = Response("Unable to access value", status=400)
     finally:
         return response
 

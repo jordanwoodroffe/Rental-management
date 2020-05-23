@@ -23,6 +23,14 @@ URL = "http://127.0.0.1:5000/"
 
 
 def valid_name(form, field):
+    """
+    Form validation method for name fields - checks to ensure all chars are ascii and are not digits
+    Args:
+        form: FlaskForm to check
+        field: fields to validate
+    Raises:
+        ValidationError: if name is invalid (not ascii or contains digit)
+    """
     # names must be in ASCII
     if not field.data.isascii():
         raise ValidationError('Please enter valid name')
@@ -32,6 +40,16 @@ def valid_name(form, field):
 
 
 def valid_password(form, field):
+    """
+    Form validation method to ensure password is correct format
+    Args:
+        form: FlaskForm to validate
+        field: field to check
+
+    Raises:
+        ValidationError: if password is invalid (no number, no upper/lowercase, no special char)
+
+    """
     # password must contain at least one number
     if not any(char.isdigit() for char in field.data):
         raise ValidationError('Password must contain at least one number')
@@ -48,6 +66,16 @@ def valid_password(form, field):
 
 
 def validate_date(form, field):
+    """
+    Form validation method for date fields
+    Args:
+        form: FlaskForm to validate
+        field: field to check
+
+    Raises:
+        ValidationError: if invalid date entry (incorrect format, or <= current datetime)
+
+    """
     try:
         dt = datetime.strptime(field.data, "%Y-%m-%d %H:%M")
     except Exception:
@@ -58,46 +86,47 @@ def validate_date(form, field):
 
 
 class LoginForm(FlaskForm):
+    """
+    Login form to capture existing user details - rendered on login.html
+    """
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
     password = PasswordField('Password', validators=[InputRequired()])
 
 
 class RegistrationForm(FlaskForm):
+    """
+    Registration form to capture new user details - rendered on register.html
+    """
     first_name = StringField('First Name', validators=[InputRequired(), valid_name])
     last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
     password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
 
 
-# replace choices with result of db query
 class BookingQueryForm(FlaskForm):
+    """
+    Booking form to capture new booking date range information - rendered on booking.html
+    """
     start = DateTimeField('Start', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
                           default=datetime.now)
     end = DateTimeField('End', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
                         default=datetime.now)
 
 
-class BookingForm(FlaskForm):
-    car_id = StringField('Car', render_kw={'readonly': True})
-
-
 @site.route("/")
 def home():
+    """
+    Index page for site - user can choose to login or register
+    Returns:
+        renders main.html if user has logged in
+        renders index.html if user has not logged in
+    """
     response = requests.get(
         "{}{}".format(URL, "populate")
     )
     if 'user' in session:
         return redirect(url_for("site.main"))
     return render_template("index.html")
-
-
-@site.route("/map", methods=['POST', 'GET'])
-def map():
-    result = requests.get("{}{}".format(URL, "/cars"), params={})
-    test = result.json()
-    print(test)
-
-    return render_template('map.html', points=json.dumps(test))
 
 
 @site.route("/login", methods=['POST', 'GET'])
@@ -177,28 +206,22 @@ def capture_user():
             for file in files:
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(directory, filename))
-                print(filename)
             result = requests.post(
                 "{}{}".format(URL, "/encode_user"),
                 params={"user_id": session['user']['email'], "directory": directory}
             )
-            print(result)
             if result.status_code == 200:
                 result = requests.put(
                     "{}{}".format(URL, "/user"),
                     params={"user_id": session['user']['email'], "face_id": 1}
                 )
-                print(result.status_code)
                 if result.status_code == 200:
                     try:
                         new_user = result.json()
-                        print(new_user)
                     except JSONDecodeError as je:
                         session['user']['face_id'] = True
                     else:
                         session['user'] = new_user
-                    finally:
-                        print(session['user'])
             return redirect(url_for("site.main"))
         return redirect(url_for("site.main"))
     return redirect(url_for("site.home"))
@@ -227,11 +250,8 @@ def render_booking_page():
             except DateException as de:
                 form.start.errors = [str(de)]
             except ValueError as ve:
-                print("Incorrect input format\n{}".format(str(ve)))
                 form.start.errors = ['Incorrect format', 'expected YYYY-mm-dd HH:MM']
             else:
-                print(start_dt)
-                print(end_dt)
                 response = requests.get(
                     "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
                 )
@@ -244,7 +264,6 @@ def render_booking_page():
                             car['total_cost'] = float("{:.2f}".format(amount * calc_hours(d1=start_dt, d2=end_dt)))
                         except ValueError:
                             car['total_cost'] = None
-                        print(car['total_cost'])
                 except JSONDecodeError as je:
                     cars = None
                 form.start.data = start_dt
@@ -417,6 +436,12 @@ def view_history():
 
 @site.route("/list")
 def available_cars():
+    """
+    Lists available cars
+    NOTE - currently removed from nav as this functionality is covered by site.render_booking_page
+    Returns:
+        list.html if user in session, otherwise index.html
+    """
     if 'user' in session:
         cars = requests.get(
             "{}{}".format(URL, "/cars"), params={"available": 1}
@@ -425,22 +450,44 @@ def available_cars():
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
-            except JSONDecodeError as je:
-                attributes = None
-                car_data = None
-            else:
                 for car in car_data:
                     attributes['make'].add(car['model']['make'])
                     attributes['colour'].add(car['model']['colour'])
                     attributes['year'].add(car['model']['year'])
                     attributes['capacity'].add(car['model']['capacity'])
                     attributes['cost'].add(car['cph'])
+            except JSONDecodeError as je:
+                attributes = None
+                car_data = None
+        else:
+            car_data = None
+            attributes = None
         return render_template("list.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
+@site.route("/map", methods=['POST', 'GET'])
+def render_map():
+    """
+    Map page - displays car locations
+    Returns:
+        renders map.html if user logged in, otherwise redirects to index.html
+    """
+    if 'user' in session:
+        result = requests.get("{}{}".format(URL, "/cars"), params={})
+        test = result.json()
+        return render_template('map.html', points=json.dumps(test))
+    return redirect(url_for("site.home"))
+
+
 @site.route("/search")
 def search_cars():
+    """
+    Search cars by attributes
+    NOTE - functionality also available on booking.html
+    Returns:
+        search.html if user logged in, otherwise index.html
+    """
     if 'user' in session:
         cars = requests.get(
             "{}{}".format(URL, "/cars")
@@ -465,6 +512,11 @@ def search_cars():
 
 @site.route("/addevent")
 def add_event():
+    """
+
+    Returns:
+
+    """
     if 'user' in session:
         car_id = request.args.get('car_id')
         start = request.args.get('time_start')
@@ -518,7 +570,6 @@ def add_event():
                 }
             }
             add_event = service.events().insert(calendarId="primary", body=event).execute()
-            print("Event created: {}".format(add_event.get("htmlLink")))
             data = {
                 'booking_id': booking_id,
                 'event_id': add_event.get("id")
@@ -527,7 +578,6 @@ def add_event():
                 "{}{}".format(URL, "eventId"),
                 json=json.dumps(data)
             )
-            print("Add event successfully")
             return redirect(url_for('site.render_booking_page'))
     return redirect(url_for('site.home'))
 
