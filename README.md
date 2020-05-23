@@ -2,7 +2,7 @@
 Private repo for Assignment 2 PIoT - Car Share Application
 
 ## About the project
-[](https://github.com/jordanwoodroffe/IOTA2/blob/develop/wiki/app%20screen_shoot.png)
+![App screenshot](https://github.com/jordanwoodroffe/IOTA2/blob/develop/wiki/app%20screen_shoot.png)
 This is an university project attempting to develop a Internet of Things application for a cer booking service. The development team have 4 members, the project lasts 8 weeks in totals.
 
 ### Built with
