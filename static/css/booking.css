@@ -18,6 +18,21 @@
   display: inline-block;
 }
 
+#weight-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+#length-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+#engine-capacity-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
 .dropdown-content {
   display: none;
   position: absolute;

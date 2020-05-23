@@ -124,6 +124,7 @@ class Encoding(db.Model):
 
 class UserSchema(ma.Schema):
     """Schema to expose User record information"""
+
     class Meta:
         model = User
         fields = ("username", "email", "f_name", "l_name", "face_id")
@@ -131,6 +132,7 @@ class UserSchema(ma.Schema):
 
 class CarModelSchema(ma.Schema):
     """Schema to expose CarModel record information"""
+
     class Meta:
         model = CarModel
         fields = ("model_id", "make", "model", "year", "capacity", "colour", "transmission", "weight", "length",
@@ -139,6 +141,7 @@ class CarModelSchema(ma.Schema):
 
 class CarSchema(ma.Schema):
     """Schema to expose Car record information, including nested/foreign key records"""
+
     class Meta:
         model = Car
         fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
@@ -148,6 +151,7 @@ class CarSchema(ma.Schema):
 
 class BookingSchema(ma.Schema):
     """Schema to expose Booking record information, including nested/foreign key records"""
+
     class Meta:
         model = Booking
         fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id")
@@ -186,9 +190,9 @@ def get_user():
         400 if request parameters were missing
     """
     user_id = request.args.get('user_id')
-    if user_id is not None:
+    if user_id is not None:  # Check if user_id is provided
         user = User.query.get(user_id)
-        if user is not None:
+        if user is not None:  # If user is in database
             return Response(UserSchema().dumps(user), status=200, mimetype="application/json")
         return Response("User {} not found".format(user_id), status=404)
     return Response("user_id param not found", status=400)
@@ -199,7 +203,7 @@ def add_user():
     """Adds a user to the database
 
     Params:
-        user_data: data to be added (name, email, password) in the form of a json object
+        user_data: data to be added (name, email, password, username) in the form of a json object
 
     Returns:
         200 if successful
@@ -209,20 +213,20 @@ def add_user():
     user_data = request.get_json()
     response = None
     try:
-        if user_data is None:
+        if user_data is None:  # Check if user_data is provided or not
             response = Response(status=400)
         else:
             data = json.loads(user_data)
-            user = User.query.get(data['username'])
+            user = User.query.get(data['username'])  # Check if username is already used
             if user is None:
-                salt = get_random_alphaNumeric_string(10)
-                user = User()
+                salt = get_random_alphaNumeric_string(10)  # Randomise salt
+                user = User()  # Create user object and add user_data to it
                 user.username = data['username']
                 user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
                 user.password = hash_password(data['password'], salt) + ':' + salt
-                db.session.add(user)
+                db.session.add(user)  # Add user to database
                 db.session.commit()
                 response = Response(status=200)
             else:
@@ -250,17 +254,18 @@ def user_authentication():
     """
     user_id = request.args.get('user_id')
     password = request.args.get('password')
-    if user_id is None:
+    if user_id is None:  # Check if user_id is provided
         response = Response("No username parameter found", status=400)
-    elif password is None:
+    elif password is None:  # Check if password is provided
         response = Response("No password parameter found", status=400)
     else:
-        user = User.query.get(user_id)
+        user = User.query.get(user_id)  # Retrieve user with user_id from database
         if user is not None:
-            stored_password = user.password.split(':')[0]
-            salt = user.password.split(':')[1]
-            if verify_password(stored_password, password, salt):
-                data = json.loads(UserSchema().dumps(user))
+            stored_password = user.password.split(':')[0]  # Retrieve hashed password from password string
+            salt = user.password.split(':')[1]  # Retrieve salt from password string
+            if verify_password(stored_password, password, salt):  # Verify provided password using hashed password
+                # and salt
+                data = json.loads(UserSchema().dumps(user))  # Return user detail for session (no password returned)
                 response = Response(
                     json.dumps(data), status=200, content_type="application/json"
                 )
@@ -282,12 +287,12 @@ def update_user():
     """
     user_id = request.args.get("user_id")
     face_id = request.args.get("face_id")
-    if None not in (user_id, face_id):
-        user = User.query.get(user_id)
+    if None not in (user_id, face_id):  # Check if user_id and face_id are provided
+        user = User.query.get(user_id)  # Retrieve user with user_id
         if user is not None:
             try:
                 val = int(face_id)
-                if val not in (0, 1):
+                if val not in (0, 1):  # Update face_id boolean (1 if face_id is registered, 0 if not)
                     raise ValueError
                 user.face_id = val
                 db.session.commit()
@@ -303,13 +308,13 @@ def update_user():
 
 @api.route("/cars", methods=['GET'])
 def get_cars():
-    """Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
+    """Endpoint to return all the car objects in the database
 
     Returns:
         200 if successful, along with all cars as a json object
         500 if no cars found in database
     """
-    cars = Car.query.all()
+    cars = Car.query.all()  # Get all cars in the Car table
     if cars is not None:
         return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
     return Response("No cars found", status=500)
@@ -317,7 +322,7 @@ def get_cars():
 
 @api.route("/car", methods=['GET'])
 def get_car():
-    """Endpoint to return a car from the database
+    """Endpoint to return a car from the database with a specific car_id
 
     Params:
         car_id: id of car to fetch
@@ -328,10 +333,11 @@ def get_car():
         404 if car_id was invalid (not in DB)
     """
     car_id = request.args.get('car_id')
-    if car_id is not None:
-        car = Car.query.get(car_id)
+    if car_id is not None:  # Check if car_id is provided
+        car = Car.query.get(car_id)  # Retrieve car with car_id
         if car is not None:
-            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")
+            return Response(CarSchema().dumps(car), status=200, mimetype="application/json")  # If car with car_id is
+            # in the database, return car object
         return Response("Car not found", status=404)
     return Response("car_id param was not found", status=400)
 
@@ -350,40 +356,40 @@ def update_car():
 
     Returns:
         200 if successful
-        400 if there are client errors (invalid json format, missing paramters)
+        400 if there are client errors (invalid json format, missing parameters)
         404 if no valid results found: no bookings for car, or no valid bookings (valid start/end dates) for the car
     """
     car_id = request.args.get('car_id')
-    if car_id is not None:
+    if car_id is not None:  # Check if car_id is is provided
         locked = request.args.get('locked')
         user_id = request.args.get('user_id')
-        if None in (user_id, locked):
+        if None in (user_id, locked):  # Check if user_id and locked (1 or 0) are provided
             return update_location(car_id)
         else:
             try:
                 locked_val = int(locked)
-            except ValueError as e:
+            except ValueError as e:  # Locked value must be 0 or 1 exception
                 return Response("Invalid locked format: expected 1 or 0.\n".format(str(e)), status=400)
             status = 1 if locked_val == 0 else 0  # current locked status should be opposite of new status
             # query returns uncompleted bookings for the user and car, where the car.locked = status
             bookings = Booking.query \
                 .filter_by(completed=0).filter_by(car_id=car_id).filter_by(user_id=user_id) \
                 .join(Car).filter(Car.car_id == car_id).filter_by(locked=status)
-            if bookings.count() > 0:  # if any bookings were found
+            if bookings.count() > 0:  # If any bookings were found
                 valid_bookings = []
                 for booking in bookings:
                     # TODO: booking.start <= datetime.now() <= booking.end? check overdue return?
-                    if booking.start <= datetime.now():  # booking has started and booking has not ended
+                    if booking.start <= datetime.now():  # Booking has started and booking has not ended
                         valid_bookings.append(booking)
-                if len(valid_bookings) == 0:  # no bookings found for user/car
+                if len(valid_bookings) == 0:  # No bookings found for user/car
                     return Response("No valid bookings were found", status=404)
-                elif len(valid_bookings) > 1:  # there can only be one valid booking for a user and car
+                elif len(valid_bookings) > 1:  # There can only be one valid booking for a user and car
                     return Response("Multiple bookings found: database error", status=500)
-                else:  # valid booking found, so details are updated
+                else:  # Valid booking found, so details are updated
                     Car.query.get(car_id).locked = locked_val
                     db.session.commit()
                     message = "Successful: car is {}".format("locked" if locked_val == 1 else "unlocked")
-                if locked_val == 1:  # if car is to be locked/returned
+                if locked_val == 1:  # If car is to be locked/returned
                     Booking.query.get(valid_bookings[0].booking_id).completed = 1
                     db.session.commit()
                     message += ", booking has been completed"
@@ -394,7 +400,7 @@ def update_car():
 
 
 def update_location(car_id):
-    """Updates the cars location coords in the db
+    """Updates the cars location coordinates in the db
 
     Args:
         car_id: id of car in db
@@ -406,18 +412,18 @@ def update_location(car_id):
     """
     lng = request.args.get('lng')
     lat = request.args.get('lat')
-    if None not in (lng, lat):
-        car = Car.query.get(car_id)
+    if None not in (lng, lat):  # Check if longitude and latitude are provided
+        car = Car.query.get(car_id)  # Retrieve car with car_id
         if car is not None:
             try:
                 fl_lng = float(lng)
                 fl_lat = float(lat)
-                if fl_lng > 180 or fl_lng < -180:
+                if fl_lng > 180 or fl_lng < -180:  # Check if longitude is valid bound
                     raise ValueError("lng {} outside valid bounds".format(fl_lng))
-                if fl_lat > 90 or fl_lat < -90:
+                if fl_lat > 90 or fl_lat < -90:  # Check if latitude is in valid bound
                     raise ValueError("lat {}  outside valid bounds".format(fl_lat))
-                car.lat = fl_lat
-                car.lng = fl_lng
+                car.lat = fl_lat  # Update car latitude
+                car.lng = fl_lng  # Update car longitude
                 db.session.commit()
                 return Response("Updated coords: {} lat{},lng{}".format(car_id, lat, lng), status=200)
             except ValueError as ve:
@@ -458,14 +464,16 @@ def get_bookings():
         JSON object containing user bookings
     """
     user_id = request.args.get('user_id')
-    if user_id is None:
-        bookings = Booking.query.all()
+    if user_id is None:  # Check if user_id is provided
+        bookings = Booking.query.all()  # If no user_id provided, get all bookings in the database
     else:
-        status = request.args.get('status')
-        if status is not None:
-            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.username == user_id)
+        status = request.args.get('status')  # Get status from parameter
+        if status is not None:  # If status is provided
+            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.username == user_id)  #
+            # booking of user with user_id and status is status
         else:
-            bookings = Booking.query.join(User).filter(User.username == user_id)
+            bookings = Booking.query.join(User).filter(User.username == user_id)  # If no status is provided,
+            # retrieve all booking of user with user_id
     data = json.loads(BookingSchema(many=True).dumps(bookings))
     for booking in data:
         booking['start'] = booking['start'].replace("T", " ")
@@ -486,8 +494,8 @@ def get_booking():
         404 if booking id is invalid: not in database
     """
     booking_id = request.args.get('booking_id')
-    if booking_id is not None:
-        booking = Booking.query.get(booking_id)
+    if booking_id is not None:  # Check if booking_id is provided
+        booking = Booking.query.get(booking_id)  # Retrieve booking with booking_id
         if booking is not None:
             return Response(BookingSchema().dumps(booking), status=200, content_type="application/json")
         else:
@@ -507,23 +515,23 @@ def add_booking():
         400 if invalid: overlapped with existing bookings
         400 if invalid/missing params, or invalid json structure
     """
-    request_data = request.get_json()
+    request_data = request.get_json()  # Get booking data from parameter
     if request_data is not None:
         try:
             data = json.loads(request_data)
         except JSONDecodeError:
             return Response("Invalid json data received", status=400)
-        booking = Booking()
+        booking = Booking()  # Create booking object and add booking data
         booking.start = datetime.strptime(data['start'], "%Y-%m-%d %H:%M:%S")
         booking.end = datetime.strptime(data['end'], "%Y-%m-%d %H:%M:%S")
         booking.user_id = data['user_id']
         booking.car_id = data['car_id']
         booking.completed = 0
         booking.cost = calc_cost(float(data['cph']), booking.start, booking.end)
-        if data['event_id'] is not None:
+        if data['event_id'] is not None:  # If event_id is provided, add event_id to booking
             booking.event_id = data['event_id']
-        if valid_booking(booking):
-            db.session.add(booking)
+        if valid_booking(booking):  # Check if booking is valid
+            db.session.add(booking)  # Add booking to database
             db.session.commit()
             return Response(json.dumps({"booking_id": booking.booking_id}), status=200, mimetype="application/json")
         else:
@@ -575,10 +583,10 @@ def update_booking():
     if data is not None:
         json_data = json.loads(data)
         booking_id = json_data['booking_id']
-        if booking_id is not None:
-            booking = Booking.query.get(booking_id)
+        if booking_id is not None:  # Check if booking_id is provided
+            booking = Booking.query.get(booking_id)  # Retrieve booking with booking id
             if booking is not None:
-                booking.completed = 2
+                booking.completed = 2  # Update booking status = cancelled
                 db.session.commit()
                 b_data = json.loads(BookingSchema().dumps(booking))
                 response = Response(
@@ -588,7 +596,7 @@ def update_booking():
                             'start': b_data["start"].replace("T", " "),
                             'end': b_data["end"].replace("T", " ")
                         }
-                    ), status=200, mimetype='application/json')
+                    ), status=200, mimetype='application/json')  # Return booking object
             else:
                 response = Response("Invalid BookingID", status=404)
     else:
@@ -609,10 +617,10 @@ def update_eventId():
         json_data = json.loads(data)
         event_id = json_data['event_id']
         booking_id = json_data['booking_id']
-        if None not in (event_id, booking_id):
-            booking = Booking.query.get(booking_id)
+        if None not in (event_id, booking_id):  # Check if event_id and booking_id are provided
+            booking = Booking.query.get(booking_id)  # Retrieve booking with booking_id
             if booking is not None:
-                booking.event_id = event_id
+                booking.event_id = event_id  # Add event_id to booking object
                 db.session.commit()
                 response['code'] = 'SUCCESS'
                 response['data'] = {

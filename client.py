@@ -59,7 +59,7 @@ def interface():
 
             def unlockCar():
         
-                id = "_rentCar" + car_id + "_user_" + username + "_pass_" + password
+                id = "_rentCar" + car_id + "_user_" + username
                 #send message to server    
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
@@ -76,7 +76,7 @@ def interface():
                     
             def returnCar():
         
-                id = "_returnCar" + car_id + "_user_" + username + "_pass_" + password
+                id = "_returnCar" + car_id + "_user_" + username
                 #send message to server
                 carRequestBytes = str.encode(id)
                 UDPClientSocket.sendto(carRequestBytes, serverAddressPort)

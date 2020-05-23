@@ -29,9 +29,8 @@ def incomingFeed():
     def unlockCar(input):
         #Get all required variables
         userIndex = input.find('_user_')
-        passIndex = input.find ('_pass_')
         idCarIndex = input.find('_rentCar')
-        email = input [userIndex + 6:passIndex]
+        email = input [userIndex + 6:-1]
         idCar = input [idCarIndex + 8:userIndex]
         
         #Set car status to unlocked
@@ -52,8 +51,7 @@ def incomingFeed():
     #Sets cars locked status to locked and updates booking table
     def returnCar(input):
         userIndex = input.find('_user_')
-        passIndex = input.find ('_pass_')
-        email = input [userIndex + 6:passIndex]
+        email = input [userIndex + 6:-1]
         idCar = input [32:userIndex]
                                                                                                                                            
         #Query DB endpoint, if successful updates car locked status and updates booking
