@@ -20,7 +20,6 @@ from oauth2client import client
 from googleapiclient import discovery
 from utils import allowed_file, calc_hours
 from werkzeug.utils import secure_filename
-from usernames import is_safe_username
 
 site = Blueprint("site", __name__)
 
@@ -81,8 +80,10 @@ def valid_username(form, field):
     Raises:
         ValidationError: if username is invalid
     """
-    if not is_safe_username(field.data, regex="[a-zA-Z0-9]+", max_length=12):
+    if not re.match("[a-zA-Z0-9]+", field.data):
         raise ValidationError("Invalid username: must contain characters or digits")
+    if not 6 <= len(field.data) <= 12:
+        raise ValidationError("Invalid username: be between 6 and 12 characters long")
 
 
 def validate_date(form, field):
