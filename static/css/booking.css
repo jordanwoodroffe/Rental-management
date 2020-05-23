@@ -8,6 +8,16 @@
   display: inline-block;
 }
 
+#load-index-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+#clearance-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
 .dropdown-content {
   display: none;
   position: absolute;
