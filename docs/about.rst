@@ -6,15 +6,27 @@ CarShare Application is a python based IoT application allowing users to book re
 locate and record Vehicles, along with a central Master Pi to perform updates to the Google Cloud Database and to hose a
 web-based application for users. Additional functionality includes facial recognition for users to unlock vehicles.
 
-*************
 Group Members
-*************
-- Donald U'Ren : Student Number
+-------------
+- Đào Việt Quang : Student Number
 
-- Donald U'Ren : Student Number
+- Donald U'Ren : S3686963
 
-- Donald U'Ren : Student Number
+- Jordy Woodroffe : Student Number
 
-- Donald U'Ren : Student Number
+- Kev Mason : Student Number
 
+Contributions
+-------------
 
+Part A: Web Application/API
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Part B: Socket Programming
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Part C: Facial Recognition
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Part D: Unit Tests
+^^^^^^^^^^^^^^^^^^

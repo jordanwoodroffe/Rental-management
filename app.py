@@ -1,7 +1,8 @@
 """
 MP Flask Web App
 
-Creates Flask app and registers database API and website endpoints
+Creates Flask app and registers database :class:`api` and :class:`website` endpoints.
+Contains endpoints for encoding and accessing :class:`FacialRecognition` functionality.
 
 """
 import pickle
@@ -40,13 +41,13 @@ def encode_user():
     if None not in (user_id, directory):
         detector = FaceDetector()
         images = []
-        for filename in os.listdir(directory):
+        for filename in os.listdir(directory):  # append images from registration upload
             images.append("{}/{}".format(directory, filename))
         print("images: {}".format(images))
         encoding = detector.capture_user(images)
         if encoding is not None:
             pickle.dump(encoding, open("user_data/pickles/{}".format(user_id), "wb"))
-            response = Response("Success", status=200)
+            response = Response("Success", status=200)  # success: encoded user and saved binary file
         else:
             response = Response("Error - unable to capture/encode faces", status=404)
     else:

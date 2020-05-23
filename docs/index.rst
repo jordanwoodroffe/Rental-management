@@ -12,7 +12,7 @@ Welcome to Car Share Application's documentation!
 
    about
    code
-   unittests
+   unit-tests
 
 Indices and tables
 ==================
