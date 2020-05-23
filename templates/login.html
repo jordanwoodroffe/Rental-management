@@ -18,9 +18,9 @@
         <div class="form-row" style="min-height: 120px;">
           {{ form.hidden_tag() }}
           <div class="form-group col-md-6">
-            {{ wtf.form_field(form.email)}}
-            <small id="emailHelpBlock" class="form-text text-muted">
-              {% for error in form.email.errors %}
+            {{ wtf.form_field(form.username)}}
+            <small id="usernameHelpBlock" class="form-text text-muted">
+              {% for error in form.username.errors %}
               {{error}}<br/>
               {% endfor %}
             </small>

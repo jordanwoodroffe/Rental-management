@@ -20,6 +20,7 @@ from oauth2client import client
 from googleapiclient import discovery
 from utils import allowed_file, calc_hours
 from werkzeug.utils import secure_filename
+from usernames import is_safe_username
 
 site = Blueprint("site", __name__)
 
@@ -27,8 +28,7 @@ URL = "http://127.0.0.1:5000/"
 
 
 def valid_name(form, field):
-    """
-    Form validation method for name fields - checks to ensure all chars are ascii and are not digits
+    """Form validation method for name fields - checks to ensure all chars are ascii and are not digits
 
     Args:
         form: FlaskForm to check
@@ -46,8 +46,7 @@ def valid_name(form, field):
 
 
 def valid_password(form, field):
-    """
-    Form validation method to ensure password is correct format
+    """Form validation method to ensure password is correct format
 
     Args:
         form: FlaskForm to validate
@@ -72,9 +71,22 @@ def valid_password(form, field):
         raise ValidationError('Password must contain at least one special character')
 
 
-def validate_date(form, field):
+def valid_username(form, field):
+    """Form Validation method to ensure username is in correct format
+
+    Args:
+        form: form to validate
+        field: field to check
+
+    Raises:
+        ValidationError: if username is invalid
     """
-    Form validation method for date fields
+    if not is_safe_username(field.data, regex="[a-zA-Z0-9]+", max_length=12):
+        raise ValidationError("Invalid username: must contain characters or digits")
+
+
+def validate_date(form, field):
+    """Form validation method for date fields
 
     Args:
         form: FlaskForm to validate
@@ -94,37 +106,32 @@ def validate_date(form, field):
 
 
 class LoginForm(FlaskForm):
-    """
-    Login form to capture existing user details - rendered on login.html
-    """
-    email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    password = PasswordField('Password', validators=[InputRequired()])
+    """Login form to capture existing user details - rendered on login.html"""
+    # email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
+    username = StringField('Username', validators=[InputRequired(), Length(6, 12), valid_username])
+    password = PasswordField('Password', validators=[InputRequired(), valid_password])
 
 
 class RegistrationForm(FlaskForm):
-    """
-    Registration form to capture new user details - rendered on register.html
-    """
+    """Registration form to capture new user details - rendered on register.html"""
     first_name = StringField('First Name', validators=[InputRequired(), valid_name])
     last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
+    username = StringField('Username', validators=[InputRequired(), Length(6, 12), valid_username])
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
     password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
 
 
 class BookingQueryForm(FlaskForm):
-    """
-    Booking form to capture new booking date range information - rendered on booking.html
-    """
+    """Booking form to capture new booking date range information - rendered on booking.html"""
     start = DateTimeField('Start', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
                           default=datetime.now)
     end = DateTimeField('End', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
-                        default=datetime.now)
+default=datetime.now)
 
 
 @site.route("/")
 def home():
-    """
-    Index page for site - user can choose to login or register
+    """Index page for site - user can choose to login or register
 
     Returns:
         renders main.html if user has logged in
@@ -140,8 +147,7 @@ def home():
 
 @site.route("/login", methods=['POST', 'GET'])
 def login():
-    """
-    Authenticates a user when they log in to the MP web app
+    """Authenticates a user when they log in to the MP web app
 
     Returns:
         redirect site.main or if user successfully authenticated
@@ -151,14 +157,14 @@ def login():
     if request.method == 'POST' and form.validate_on_submit():
         result = requests.get(
             "{}{}".format(URL, "users/authenticate"),
-            params={"user_id": form.email.data, "password": form.password.data},
+            params={"user_id": form.username.data, "password": form.password.data},
         )
         data = result.json()
         if result.status_code == 200:
             session['user'] = result.json()
         elif result.status_code == 404:
-            if data['error'] == 'EMAIL':
-                form.email.errors.append('This email has not been registered')
+            if data['error'] == 'USER':
+                form.username.errors.append('This username has not been registered')
             elif data['error'] == 'PASSWORD':
                 form.password.errors.append('Incorrect password')
     if 'user' in session:
@@ -168,8 +174,7 @@ def login():
 
 @site.route("/register", methods=['POST', 'GET'])
 def register():
-    """
-    Registers a user: captures details from form and attempts to append to User table
+    """Registers a user: captures details from form and attempts to append to User table
 
     Returns:
         redirect site.login if successful or renders register.html on load, with errors if incorrect register attempt
@@ -177,11 +182,13 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         #  should be using response = requests.get(<DB_API_URL>)
-        user = {'email': form.email.data,
-                'l_name': form.last_name.data,
-                'f_name': form.first_name.data,
-                'password': form.password.data,
-                }
+        user = {
+            'username': form.username.data,
+            'email': form.email.data,
+            'l_name': form.last_name.data,
+            'f_name': form.first_name.data,
+            'password': form.password.data,
+        }
         result = requests.post(
             "{}{}".format(URL, "user"),
             json=json.dumps(user),
@@ -189,7 +196,7 @@ def register():
         if result.status_code == 200:
             return redirect(url_for("site.login"))
         elif result.status_code == 404:
-            form.email.errors.append('This email has been used for register before')
+            form.username.errors.append('This username has been used for register before')
     elif 'user' in session:
         return redirect(url_for("site.main"))
     return render_template("register.html", form=form)
@@ -197,8 +204,7 @@ def register():
 
 @site.route("/main")
 def main():
-    """
-    Renders the home page for MP web app
+    """Renders the home page for MP web app
 
     Returns:
         renders main.html if user logged in or site.home if user not logged in
@@ -212,8 +218,7 @@ def main():
 
 @site.route("/capture_user", methods=['POST', 'GET'])
 def capture_user():
-    """
-    Captures/encodes a user for face recognition login
+    """Captures/encodes a user for face recognition login
 
     Returns:
         redirect site.main if successful or site.home if user not logged in
@@ -233,7 +238,7 @@ def capture_user():
                     flash('Only images of extensions: txt, pdf, png, jpg, jpeg, gif are allowed')
                     return redirect(url_for("site.main"))
             directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'user_data/face_pics',
-                                     session['user']['email'])
+                                     session['user']['username'])
             if not os.path.exists(directory):
                 os.makedirs(directory)
             for file in files:
@@ -241,12 +246,12 @@ def capture_user():
                 file.save(os.path.join(directory, filename))
             result = requests.post(
                 "{}{}".format(URL, "/encode_user"),
-                params={"user_id": session['user']['email'], "directory": directory}
+                params={"user_id": session['user']['username'], "directory": directory}
             )
             if result.status_code == 200:
                 result = requests.put(
                     "{}{}".format(URL, "/user"),
-                    params={"user_id": session['user']['email'], "face_id": 1}
+                    params={"user_id": session['user']['username'], "face_id": 1}
                 )
                 if result.status_code == 200:
                     try:
@@ -262,8 +267,8 @@ def capture_user():
 
 @site.route("/logout")
 def logout():
-    """
-    Logs the user out of MP web app
+    """Logs the user out of MP web app
+
     Returns:
         redirects to site.login
     """
@@ -273,8 +278,7 @@ def logout():
 
 @site.route("/book", methods=['GET'])
 def render_booking_page():
-    """
-    Renders the booking page - loads cars if start/end dates are valid
+    """Renders the booking page - loads cars if start/end dates are valid
 
     Returns:
         renders booking.html with cars if applicable or site.home if user not logged in
@@ -321,8 +325,7 @@ def render_booking_page():
 
 @site.route("/book", methods=['POST'])
 def process_booking():
-    """
-    Sends new booking request to database api
+    """Sends new booking request to database api
 
     Returns:
         renders booking.html with confirmation/error messages
@@ -341,7 +344,7 @@ def process_booking():
             data = {
                 'start': start,
                 'end': end,
-                'user_id': session['user']['email'],
+                'user_id': session['user']['username'],
                 'car_id': car_id,
                 'event_id': None,
                 'cph': amount
@@ -384,15 +387,14 @@ def process_booking():
 
 @site.route("/cancel", methods=['GET'])
 def render_cancel_page():
-    """
-    Renders the booking cancellation page, with booked bookings for a user
+    """Renders the booking cancellation page, with booked bookings for a user
 
     Returns:
         renders cancel.html if logged in, otherwise redirects to site.login
     """
     if 'user' in session:
         bookings = requests.get(
-            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']["email"], "status": 0}
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['username'], "status": 0}
         )
         try:
             bookings_data = bookings.json()
@@ -412,8 +414,7 @@ def render_cancel_page():
 
 @site.route("/cancel", methods=['POST'])
 def cancel_booking():
-    """
-    Attempts to cancel a booking for a user
+    """Attempts to cancel a booking for a user
 
     Returns:
         redirects to site.render_cancel_page with confirmation/error messages
@@ -480,15 +481,14 @@ def cancel_booking():
 
 @site.route("/history")
 def view_history():
-    """
-    Renders booking history for a user - view cars previously/currently booked, and filter by status or car rego
+    """Renders booking history for a user - view cars previously/currently booked, and filter by status or car rego
 
     Returns:
         renders history.html with booking data
     """
     if 'user' in session:
         bookings = requests.get(
-            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['email']}
+            "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['username']}
         )
         try:
             bookings_data = bookings.json()
@@ -500,8 +500,7 @@ def view_history():
 
 @site.route("/list")
 def available_cars():
-    """
-    Lists available cars
+    """Lists available cars
     NOTE - currently removed from nav as this functionality is covered by site.render_booking_page
 
     Returns:
@@ -527,8 +526,7 @@ def available_cars():
 
 @site.route("/map", methods=['POST', 'GET'])
 def render_map():
-    """
-    Map page - displays car locations
+    """Map page - displays car locations
 
     Returns:
         renders map.html if user logged in, otherwise redirects to index.html
@@ -542,8 +540,8 @@ def render_map():
 
 @site.route("/search")
 def search_cars():
-    """
-    Search cars by attributes
+    """Search cars by attributes
+
     NOTE - functionality also available on booking.html
 
     Returns:
@@ -566,8 +564,7 @@ def search_cars():
 
 
 def make_attributes(car_data: []) -> {set}:
-    """
-    Creates a list of attributes for displaying on search & booking page
+    """Creates a list of attributes for displaying on search & booking page
 
     Args:
         car_data:
@@ -593,8 +590,7 @@ def make_attributes(car_data: []) -> {set}:
 
 @site.route("/addevent")
 def add_event():
-    """
-    Adds an event for a booking to the users Google Calendar
+    """Adds an event for a booking to the users Google Calendar
 
     Returns:
         redirects to the booking page after attempting to add/authenticate
@@ -666,8 +662,7 @@ def add_event():
 
 @site.route('/oauth2callback')
 def oauth2callback():
-    """
-    Callback function for Google Calendar Integration
+    """Callback function for Google Calendar Integration
 
     Returns:
         redirects to add_event if successful
@@ -687,7 +682,5 @@ def oauth2callback():
 
 
 class DateException(ValueError):
-    """
-    Used to raise incorrect date exceptions when validating a FlaskForm
-    """
+    """Used to raise incorrect date exceptions when validating a FlaskForm"""
     pass

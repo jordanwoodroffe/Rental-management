@@ -1,3 +1,22 @@
+"""
+Database Utilities & Database API
+
+Creates tables and establishes relationships in Google Cloud SQL Database
+Provides endpoints for accessing, inserting, and updating data from Google Cloud SQL Database
+
+Instructions (Google MySQL Documentation): https://cloud.google.com/sql/docs/mysql/connect-external-app
+
+Short instructions:
+- Enable Cloud SQL Admin API for the project.
+- Create a new Google Cloud SQL Instance, then create a database.
+    - Copy the INSTANCE_CONNECTION_NAME from overview screen
+- Install the proxy client (as per google doc instructions), make it executable
+- Invoke proxy via one of the following:
+    - ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<PORT> &
+    - ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<LOCAL_IP>:<PORT> &
+- And update the below/db code to use the right port number, database name, etc.
+"""
+
 import json
 import csv
 from datetime import datetime
@@ -12,24 +31,6 @@ from utils import get_random_alphaNumeric_string, hash_password, verify_password
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
 from environs import Env
 
-"""
-Instructions:
-https://cloud.google.com/sql/docs/mysql/connect-external-app
-
-Enable Cloud SQL Admin API for the project.
-
-Create a new Google Cloud SQL Instance, then create a database.
-
-    Copy the INSTANCE_CONNECTION_NAME from overview screen
-
-Install the proxy client (as per google doc instructions), make it executable 
-
-Invoke proxy:
-    ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<PORT> &
-    ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<LOCAL_IP>:<PORT> &
-    
-And update the below/db code to use the right port number, database name, etc.
-"""
 env = Env()
 env.read_env()
 
@@ -53,11 +54,10 @@ ma = Marshmallow()
 
 
 class User(db.Model):
-    """
-    User Table - contains basic customer information
-    """
+    """User Table - contains basic customer information"""
     __tablename__ = "user"
-    email = db.Column('email', VARCHAR(45), primary_key=True, nullable=False)
+    username = db.Column('username', VARCHAR(12), primary_key=True, nullable=False)
+    email = db.Column('email', VARCHAR(45), nullable=False)
     f_name = db.Column('first_name', VARCHAR(45), nullable=False)
     l_name = db.Column('last_name', VARCHAR(45), nullable=False)
     password = db.Column('password', TEXT(75), nullable=False)
@@ -65,9 +65,7 @@ class User(db.Model):
 
 
 class Car(db.Model):
-    """
-    Car Table - contains basic car information
-    """
+    """Car Table - contains basic car information"""
     __tablename__ = "car"
     car_id = db.Column('car_id', VARCHAR(6), primary_key=True, nullable=False)
     model_id = db.Column('model_id', Integer(), ForeignKey('car_model.model_id'), nullable=False)
@@ -80,9 +78,7 @@ class Car(db.Model):
 
 
 class CarModel(db.Model):
-    """
-    CarModel Table - contains basic model/make information
-    """
+    """CarModel Table - contains basic model/make information"""
     __tablename__ = "car_model"
     model_id = db.Column('model_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
     make = db.Column('make', VARCHAR(45), nullable=False)
@@ -99,12 +95,10 @@ class CarModel(db.Model):
 
 
 class Booking(db.Model):
-    """
-    Booking Table - contains booking information
-    """
+    """Booking Table - contains booking information"""
     __tablename__ = "booking"
     booking_id = db.Column('booking_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
-    user_id = db.Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False)
+    user_id = db.Column('user_id', VARCHAR(45), ForeignKey('user.username'), nullable=False)
     user = db.relationship('User')
     car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
     car = db.relationship('Car')
@@ -116,12 +110,10 @@ class Booking(db.Model):
 
 
 class Encoding(db.Model):
-    """
-    Encoding Table - contains image encoding information (NOTE: not used currently, as per discussion forum advice)
-    """
+    """Encoding Table: contains image encoding information (NOTE: not used currently, as per discussion forum advice)"""
     __tablename__ = "encoding"
     enc_id = db.Column('image_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
-    user_id = db.Column('user_email', VARCHAR(45), ForeignKey('user.email'), nullable=False)
+    user_id = db.Column('user_id', VARCHAR(45), ForeignKey('user.username'), nullable=False)
     user = db.relationship('User')
     data = db.Column('data', LargeBinary(length=(2 ** 32) - 1), nullable=False)
     name = db.Column('name', VARCHAR(45))
@@ -131,18 +123,14 @@ class Encoding(db.Model):
 
 
 class UserSchema(ma.Schema):
-    """
-    Schema to expose User record information
-    """
+    """Schema to expose User record information"""
     class Meta:
         model = User
-        fields = ("email", "f_name", "l_name", "face_id")
+        fields = ("username", "email", "f_name", "l_name", "face_id")
 
 
 class CarModelSchema(ma.Schema):
-    """
-    Schema to expose CarModel record information
-    """
+    """Schema to expose CarModel record information"""
     class Meta:
         model = CarModel
         fields = ("model_id", "make", "model", "year", "capacity", "colour", "transmission", "weight", "length",
@@ -150,9 +138,7 @@ class CarModelSchema(ma.Schema):
 
 
 class CarSchema(ma.Schema):
-    """
-    Schema to expose Car record information, including nested/foreign key records
-    """
+    """Schema to expose Car record information, including nested/foreign key records"""
     class Meta:
         model = Car
         fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
@@ -161,9 +147,7 @@ class CarSchema(ma.Schema):
 
 
 class BookingSchema(ma.Schema):
-    """
-    Schema to expose Booking record information, including nested/foreign key records
-    """
+    """Schema to expose Booking record information, including nested/foreign key records"""
     class Meta:
         model = Booking
         fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id")
@@ -178,17 +162,9 @@ def create_app():
     return app
 
 
-"""
-Database API:
-    provides endpoints for accessing, inserting, and updating data from Google Cloud SQL Database
-"""
-
-
 @api.route("/users", methods=['GET'])
 def get_users():
-    """
-    Endpoint to return ALL users from database (used in testing)
-    """
+    """Endpoint to return ALL users from database (used in testing)"""
     users = User.query.all()
     if users is not None:
         return Response(
@@ -199,8 +175,7 @@ def get_users():
 
 @api.route("/user", methods=['GET'])
 def get_user():
-    """
-    Returns a specific user from the database: acces via user_id (email)
+    """Returns a specific user from the database: acces via user_id (email)
 
     Params:
         user_id: id of user to fetch from db
@@ -221,8 +196,7 @@ def get_user():
 
 @api.route("/user", methods=['POST'])
 def add_user():
-    """
-    Adds a user to the database
+    """Adds a user to the database
 
     Params:
         user_data: data to be added (name, email, password) in the form of a json object
@@ -239,10 +213,11 @@ def add_user():
             response = Response(status=400)
         else:
             data = json.loads(user_data)
-            user = User.query.get(data['email'])
+            user = User.query.get(data['username'])
             if user is None:
                 salt = get_random_alphaNumeric_string(10)
                 user = User()
+                user.username = data['username']
                 user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
@@ -262,8 +237,7 @@ def add_user():
 
 @api.route("/users/authenticate", methods=['GET', 'POST'])
 def user_authentication():
-    """
-    Endpoint to authenticate a user logging in to MP webapp using email and password
+    """Endpoint to authenticate a user logging in to MP webapp using email and password
 
     Params:
         user_id: email input from user attempting login
@@ -277,7 +251,7 @@ def user_authentication():
     user_id = request.args.get('user_id')
     password = request.args.get('password')
     if user_id is None:
-        response = Response("No email parameter found", status=400)
+        response = Response("No username parameter found", status=400)
     elif password is None:
         response = Response("No password parameter found", status=400)
     else:
@@ -293,14 +267,13 @@ def user_authentication():
             else:
                 response = Response(json.dumps({'error': 'PASSWORD'}), status=404, content_type="application/json")
         else:
-            response = Response(json.dumps({'error': 'EMAIL'}), status=404, content_type="application/json")
+            response = Response(json.dumps({'error': 'USER'}), status=404, content_type="application/json")
     return response
 
 
 @api.route("/user", methods=['PUT'])
 def update_user():
-    """
-    Updates an existing user details: face_id when register on MP
+    """Updates an existing user details: face_id when register on MP
 
     Returns:
         200 if successful, along with user data as json object
@@ -330,8 +303,7 @@ def update_user():
 
 @api.route("/cars", methods=['GET'])
 def get_cars():
-    """
-    Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
+    """Endpoint to return a list of car objects, checks for param available=1 (returns only non-booked cars)
 
     Returns:
         200 if successful, along with all cars as a json object
@@ -345,8 +317,7 @@ def get_cars():
 
 @api.route("/car", methods=['GET'])
 def get_car():
-    """
-    Endpoint to return a car from the database
+    """Endpoint to return a car from the database
 
     Params:
         car_id: id of car to fetch
@@ -367,12 +338,10 @@ def get_car():
 
 @api.route("/car", methods=['PUT'])
 def update_car():
-    """
-    Endpoint to update a car - called from MP after it receives login information from AP. First, bookings matching
+    """Endpoint to update a car called from MP after it receives login information from AP. First, bookings matching
     the user_id and car_id are retrieved, and if they are valid (i.e. have not been completed or are within their
-    start/end dates) then the car is unlocked.
-    If the car is to be locked, then the booking is also marked as completed.
-    If no user_id or locked value are included, this function calls update_location(car_id)
+    start/end dates) then the car is unlocked. If the car is to be locked, then the booking is also marked as
+    completed. If no user_id or locked value are included, this function calls update_location(car_id)
 
     Params:
         car_id: id of car to unlock
@@ -425,8 +394,7 @@ def update_car():
 
 
 def update_location(car_id):
-    """
-    Updates the cars location coords in the db
+    """Updates the cars location coords in the db
 
     Args:
         car_id: id of car in db
@@ -461,8 +429,7 @@ def update_location(car_id):
 
 @api.route("/cars/<start>/<end>", methods=['GET'])
 def get_valid_cars(start, end):
-    """
-    Returns a list of cars that are able to be booked between desired dates
+    """Returns a list of cars that are able to be booked between desired dates
 
     Args:
         start: start datetime of booking
@@ -485,8 +452,7 @@ def get_valid_cars(start, end):
 
 @api.route("/bookings", methods=['GET'])
 def get_bookings():
-    """
-    Returns a list of bookings, optionally with user_id returns bookings for a user
+    """Returns a list of bookings, optionally with user_id returns bookings for a user
 
     Returns:
         JSON object containing user bookings
@@ -497,9 +463,9 @@ def get_bookings():
     else:
         status = request.args.get('status')
         if status is not None:
-            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.email == user_id)
+            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.username == user_id)
         else:
-            bookings = Booking.query.join(User).filter(User.email == user_id)
+            bookings = Booking.query.join(User).filter(User.username == user_id)
     data = json.loads(BookingSchema(many=True).dumps(bookings))
     for booking in data:
         booking['start'] = booking['start'].replace("T", " ")
@@ -509,8 +475,7 @@ def get_bookings():
 
 @api.route("/booking", methods=['GET'])
 def get_booking():
-    """
-    Returns a booking for a corresponding booking id
+    """Returns a booking for a corresponding booking id
 
     Params:
         booking_id: id of booking (int)
@@ -532,8 +497,7 @@ def get_booking():
 
 @api.route("/booking", methods=['POST'])
 def add_booking():
-    """
-    Adds a booking to the database
+    """Adds a booking to the database
 
     Params:
         booking data as a json object
@@ -568,8 +532,7 @@ def add_booking():
 
 
 def calc_cost(amount: float, start: datetime, end: datetime) -> float:
-    """
-    Calculates the cost for a booking
+    """Calculates the cost for a booking
 
     Args:
         amount: cph value for the car
@@ -583,8 +546,7 @@ def calc_cost(amount: float, start: datetime, end: datetime) -> float:
 
 
 def valid_booking(proposed: Booking) -> bool:
-    """
-    Validates on server whether proposed booking overlaps any existing bookings for the vehicle
+    """Validates on server whether proposed booking overlaps any existing bookings for the vehicle
 
     Args:
         proposed: a proposed booking record (new booking)
@@ -601,8 +563,10 @@ def valid_booking(proposed: Booking) -> bool:
 
 @api.route("/booking", methods=['PUT'])
 def update_booking():
-    """
-    Update a booked booking status: cancelled
+    """Update a booked booking status: cancelled
+
+    Attributes:
+
 
     Returns:
         200 if successful, and booking data as a json object
@@ -638,8 +602,7 @@ def update_booking():
 
 @api.route("/eventId", methods=['PUT'])
 def update_eventId():
-    """
-    Update eventid (used to identify google calendar event) for booking
+    """Update eventid (used to identify google calendar event) for booking
 
     Returns:
         Success if processed correctly, otherwise error corresponding to the problem
@@ -673,8 +636,7 @@ def update_eventId():
 
 @api.route("/populate", methods=['GET'])
 def populate():
-    """
-    populates database with dummy data using csv files (see test_data directory).
+    """populates database with dummy data using csv files (see test_data directory).
     Populates users if none found in database, and populates cars/models if models are not found in database
     """
     response = {}
@@ -685,10 +647,11 @@ def populate():
             for row in reader:
                 print(row)
                 user = User()
-                user.email = row[0]
-                user.f_name = row[1]
-                user.l_name = row[2]
-                user.password = row[3]
+                user.username = row[0]
+                user.email = row[1]
+                user.f_name = row[2]
+                user.l_name = row[3]
+                user.password = row[4]
                 user.face_id = False
                 db.session.add(user)
             response['users'] = True
