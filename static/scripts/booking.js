@@ -124,14 +124,14 @@ function update_length_range() {
   minSelect = document.getElementById("length-filter-min");
   maxSelect = document.getElementById("length-filter-max");
   for (var i = 0; i < minSelect.options.length; i++) {
-    if (parseInt(minSelect[i].value) > parseInt(maxSelect.value)) {
+    if (parseFloat(minSelect[i].value) > parseFloat(maxSelect.value)) {
       minSelect[i].disabled = true;
     } else {
       minSelect[i].disabled = false;
     }
   }
   for (var i = 0; i < maxSelect.options.length; i++) {
-    if (parseInt(maxSelect[i].value) < parseInt(minSelect.value)) {
+    if (parseFloat(maxSelect[i].value) < parseFloat(minSelect.value)) {
       maxSelect[i].disabled = true;
     } else {
       maxSelect[i].disabled = false;
@@ -238,8 +238,8 @@ var filter = function () {
         parseInt(weight) >= parseInt(weightMin)
       ) ||
       !(
-        parseInt(length) <= parseInt(lengthMax) &&
-        parseInt(length) >= parseInt(lengthMin)
+        parseFloat(length) <= parseFloat(lengthMax) &&
+        parseFloat(length) >= parseFloat(lengthMin)
       ) ||
       !(
         parseInt(engine) <= parseInt(engineMax) &&
