@@ -421,11 +421,21 @@ def available_cars():
         cars = requests.get(
             "{}{}".format(URL, "/cars"), params={"available": 1}
         )
-        try:
-            cars_data = cars.json()
-        except JSONDecodeError as je:
-            cars_data = None
-        return render_template("list.html", cars=cars_data)
+        attributes = defaultdict(set)
+        if cars.status_code == 200:
+            try:
+                car_data = cars.json()
+            except JSONDecodeError as je:
+                attributes = None
+                car_data = None
+            else:
+                for car in car_data:
+                    attributes['make'].add(car['model']['make'])
+                    attributes['colour'].add(car['model']['colour'])
+                    attributes['year'].add(car['model']['year'])
+                    attributes['capacity'].add(car['model']['capacity'])
+                    attributes['cost'].add(car['cph'])
+        return render_template("list.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
