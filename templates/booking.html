@@ -409,10 +409,8 @@ block content %}
                 id="clearance-filter-max"
                 onchange="update_clearance_range()"
               >
-                {% for clearance in range(62,127) %} {% if clearance == 126ß %}
-                <option value="{{ clearance }}" selected
-                  >{{ clearance }}</option
-                >
+                {% for clearance in range(62,127) %} {% if clearance == 126 %}
+                <option value="{{ clearance }}" selected>{{ clearance }}</option>
                 {% else %}
                 <option value="{{ clearance }}">{{ clearance }}</option>
                 {% endif %} {% endfor %}
