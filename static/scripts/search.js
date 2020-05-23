@@ -162,14 +162,14 @@ function update_engine_capacity_range() {
   minSelect = document.getElementById("engine-capacity-filter-min");
   maxSelect = document.getElementById("engine-capacity-filter-max");
   for (var i = 0; i < minSelect.options.length; i++) {
-    if (parseInt(minSelect[i].value) > parseInt(maxSelect.value)) {
+    if (parseFloat(minSelect[i].value) > parseFloat(maxSelect.value)) {
       minSelect[i].disabled = true;
     } else {
       minSelect[i].disabled = false;
     }
   }
   for (var i = 0; i < maxSelect.options.length; i++) {
-    if (parseInt(maxSelect[i].value) < parseInt(minSelect.value)) {
+    if (parseFloat(maxSelect[i].value) < parseFloat(minSelect.value)) {
       maxSelect[i].disabled = true;
     } else {
       maxSelect[i].disabled = false;
@@ -257,8 +257,8 @@ var filter = function () {
         parseFloat(length) >= parseFloat(lengthMin)
       ) ||
       !(
-        parseInt(engine) <= parseInt(engineMax) &&
-        parseInt(engine) >= parseInt(engineMin)
+        parseFloat(engine) <= parseFloat(engineMax) &&
+        parseFloat(engine) >= parseFloat(engineMin)
       )
     ) {
       x[i].style.display = "none";
