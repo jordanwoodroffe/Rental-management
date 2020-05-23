@@ -1,41 +1,50 @@
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{% block content %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/booking.css') }}">
+{% extends "bootstrap/base.html" %} {% import "bootstrap/wtf.html" as wtf %} {%
+block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/booking.css') }}"
+/>
 {% block javascript %}
-  <script src="{{ url_for('static', filename='scripts/booking.js')}}"></script>
-{% endblock %}
+<script src="{{ url_for('static', filename='scripts/booking.js')}}"></script>
+{% endblock %} {% with page="book"%} {% include "nav.html" %} {% endwith %}
 
-{% with page="book"%}
-{% include "nav.html" %}
-{% endwith %}
-
-<body style="padding-top: 4.5rem">
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0; z-index: 20;">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
+<body style="padding-top: 4.5rem;">
+  {% if messages %} {% for category, message in messages %}
+  <div
+    class="alert alert-{{ category }} alert-dismissible"
+    role="alert"
+    style="position: absolute; top: 4.5rem; right: 0; z-index: 20;"
+  >
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <strong>{{message.message}}</strong>
+    <div>
+      <small class="text-muted">{{message.data}}</small>
+      {% if message.error %}
+      <br /><small class="text-muted"><i>{{message.error}}</i></small>
+      {% endif %}
+    </div>
+    {% if category == "success" %}
+    <div class="mt-2">
+      <a
+        href="/addevent?booking_id={{message.booking_id}}&car_id={{message.car_id}}&time_start={{message.start}}&time_end={{message.end}}"
+        class="btn btn-primary"
+        >Add to calendar</a
+      >
+      <form
+        style="display: inline-block;"
+        action="/cancel?booking_id={{message.booking_id}}&status=2"
+        method="POST"
+      >
+        <button type="submit" class="btn btn-secondary" name="submit">
+          Cancel booking
         </button>
-        <strong>{{message.message}}</strong>
-        <div>
-          <small class="text-muted">{{message.data}}</small>
-          {% if message.error %}
-          <br><small class="text-muted"><i>{{message.error}}</i></small>
-          {% endif %}
-        </div>
-        {% if category == "success" %}
-        <div class="mt-2">
-          <a href="/addevent?booking_id={{message.booking_id}}&car_id={{message.car_id}}&time_start={{message.start}}&time_end={{message.end}}" class="btn btn-primary">Add to calendar</a>
-          <form style="display: inline-block" action="/cancel?booking_id={{message.booking_id}}&status=2" method="POST">
-            <button type="submit" class="btn btn-secondary" name="submit">Cancel booking</button>
-          </form>
-        </div>
-        {% endif %}
-      </div>
-    {% endfor %}
-  {% endif %}
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %} {% endif %}
   <div class="container bg-light rounded">
     <div class="row justify-content-center pt-3">
       <h5>Create Booking</h5>
@@ -56,9 +65,8 @@
           <div class="form-row">
             <div class="form-group col">
               <small id="dateHelpBlock" class="form-text text-danger">
-              {% for error in form.start.errors %}
-              {{error}}<br/>
-              {% endfor %}
+                {% for error in form.start.errors %} {{error}}<br />
+                {% endfor %}
               </small>
             </div>
           </div>
@@ -75,311 +83,508 @@
       </div>
     </div>
     <div class="container pb-3">
-    {% if cars %}
-      {% if cars|length > 0 %}
-        {% if attributes != None %}
-          <div>
-            <h5>Filter cars</h5>
-            <label>
-              <div>Make</div>
-              <select class="custom-select" name="make" id="make-filter" onchange="filter()">
-                <option value="All" selected>All</option>
-                {% for make in attributes['make'] %}
-                    <option value="{{ make }}">{{ make }}</option>
-                {% endfor %}
+      {% if cars %} {% if cars|length > 0 %} {% if attributes != None %}
+      <div>
+        <h5>Filter cars</h5>
+        <label>
+          <div>Make</div>
+          <select
+            class="custom-select"
+            name="make"
+            id="make-filter"
+            onchange="filter()"
+          >
+            <option value="All" selected>All</option>
+            {% for make in attributes['make'] %}
+            <option value="{{ make }}">{{ make }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <div>Year</div>
+          <select
+            class="custom-select"
+            name="year"
+            id="year-filter"
+            onchange="filter()"
+          >
+            <option value="All" selected>All</option>
+            {% for year in attributes['year'] %}
+            <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <div>Colour</div>
+          <select
+            class="custom-select"
+            name="colour"
+            id="colour-filter"
+            onchange="filter()"
+          >
+            <option value="All" selected>All</option>
+            {% for colour in attributes['colour'] %}
+            <option value="{{ colour }}">{{ colour }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <div>Transmission</div>
+          <select
+            class="custom-select"
+            name="transmission"
+            id="transmission-filter"
+            onchange="filter()"
+          >
+            <option value="All" selected>All</option>
+            {% for transmission in attributes['transmission'] %}
+            <option value="{{ transmission }}">{{ transmission }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <div>Capacity</div>
+          <div class="slidecontainer">
+            <button
+              id="capacity-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="capacityDropdown()"
+            >
+              <span id="min-capacity">{{ attributes['capacity'] | min }}</span>
+              to
+              <span id="max-capacity">{{ attributes['capacity'] | max}}</span>
+              People
+            </button>
+            <div id="select-capacity-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="capacity-min-select"
+                id="capacity-filter-min"
+                onchange="update_capacity_range()"
+              >
+                {% for capacity in attributes['capacity'] %} {% if capacity ==
+                attributes['capacity'] | min %}
+                <option value="{{ capacity }}" selected>{{ capacity }}</option>
+                {% else %}
+                <option value="{{ capacity }}">{{ capacity }}</option>
+                {% endif %} {% endfor %}
               </select>
-            </label>
-            <label>
-              <div>Year</div>
-              <select class="custom-select" name="year" id="year-filter" onchange="filter()">
-                <option value="All" selected>All</option>
-                {% for year in attributes['year'] %}
-                    <option value="{{ year }}">{{ year }}</option>
-                {% endfor %}
+              <select
+                class="custom-select"
+                name="capacity-max-select"
+                id="capacity-filter-max"
+                onchange="update_capacity_range()"
+              >
+                {% for capacity in attributes['capacity'] %} {% if capacity ==
+                attributes['capacity'] | max %}
+                <option value="{{ capacity }}" selected>{{ capacity }}</option>
+                {% else %}
+                <option value="{{ capacity }}">{{ capacity }}</option>
+                {% endif %} {% endfor %}
               </select>
-            </label>
-            <label>
-              <div>Colour</div>
-              <select class="custom-select" name="colour" id="colour-filter" onchange="filter()">
-                <option value="All" selected>All</option>
-                {% for colour in attributes['colour'] %}
-                    <option value="{{ colour }}">{{ colour }}</option>
-                {% endfor %}
-              </select>
-            </label>
-            <label>
-              <div>Transmission</div>
-              <select class="custom-select" name="transmission" id="transmission-filter" onchange="filter()">
-                <option value="All" selected>All</option>
-                {% for transmission in attributes['transmission'] %}
-                    <option value="{{ transmission }}">{{ transmission }}</option>
-                {% endfor %}
-              </select>
-            </label>
-            <label>
-              <div>Capacity</div>
-                <div class="slidecontainer">
-                  <button id="capacity-dropdown" class="dropbtn btn btn-default" onclick="capacityDropdown()"><span id="min-capacity">{{ attributes['capacity'] | min }}</span> to <span id="max-capacity">{{ attributes['capacity'] | max}}</span> People</button>
-                  <div id="select-capacity-container" class="dropdown-content">
-                    <select class="custom-select" name="capacity-min-select" id="capacity-filter-min" onchange="update_capacity_range()">
-                      {% for capacity in attributes['capacity'] %}
-                        {% if capacity == attributes['capacity'] | min %}
-                          <option value="{{ capacity }}" selected>{{ capacity }}</option>
-                        {% else %}
-                          <option value="{{ capacity }}">{{ capacity }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                    <select class="custom-select" name="capacity-max-select" id="capacity-filter-max" onchange="update_capacity_range()">
-                      {% for capacity in attributes['capacity'] %}
-                        {% if capacity == attributes['capacity'] | max %}
-                          <option value="{{ capacity }}" selected>{{ capacity }}</option>
-                        {% else %}
-                          <option value="{{ capacity }}">{{ capacity }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Cost Per Hour</div>
-                <div class="slidecontainer">
-                  <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
-                  <div id="select-cost-container" class="dropdown-content">
-                    <select class="custom-select" name="cost-min-select" id="cost-filter-min" onchange="update_cost_range()">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                        <option value="40">40</option>
-                        <option value="50">50</option>
-                        <option value="60">60</option>
-                        <option value="70">70</option>
-                        <option value="80">80</option>
-                        <option value="90">90</option>
-                        <option value="100">100</option>
-                    </select>
-                    <select class="custom-select" name="cost-max-select" id="cost-filter-max" onchange="update_cost_range()">
-                      <option value="10">10</option>
-                      <option value="20">20</option>
-                      <option value="30">30</option>
-                      <option value="40">40</option>
-                      <option value="50">50</option>
-                      <option value="60">60</option>
-                      <option value="70">70</option>
-                      <option value="80">80</option>
-                      <option value="90">90</option>
-                      <option value="100" selected>100</option>
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Engine Capacity</div>
-                <div class="slidecontainer">
-                  <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
-                  <div id="select-cost-container" class="dropdown-content">
-                    <select class="custom-select" name="cost-min-select" id="cost-filter-min" onchange="update_cost_range()">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                        <option value="40">40</option>
-                        <option value="50">50</option>
-                        <option value="60">60</option>
-                        <option value="70">70</option>
-                        <option value="80">80</option>
-                        <option value="90">90</option>
-                        <option value="100">100</option>
-                    </select>
-                    <select class="custom-select" name="cost-max-select" id="cost-filter-max" onchange="update_cost_range()">
-                      <option value="10">10</option>
-                      <option value="20">20</option>
-                      <option value="30">30</option>
-                      <option value="40">40</option>
-                      <option value="50">50</option>
-                      <option value="60">60</option>
-                      <option value="70">70</option>
-                      <option value="80">80</option>
-                      <option value="90">90</option>
-                      <option value="100" selected>100</option>
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Length</div>
-                <div class="slidecontainer">
-                  <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
-                  <div id="select-cost-container" class="dropdown-content">
-                    <select class="custom-select" name="cost-min-select" id="cost-filter-min" onchange="update_cost_range()">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                        <option value="40">40</option>
-                        <option value="50">50</option>
-                        <option value="60">60</option>
-                        <option value="70">70</option>
-                        <option value="80">80</option>
-                        <option value="90">90</option>
-                        <option value="100">100</option>
-                    </select>
-                    <select class="custom-select" name="cost-max-select" id="cost-filter-max" onchange="update_cost_range()">
-                      <option value="10">10</option>
-                      <option value="20">20</option>
-                      <option value="30">30</option>
-                      <option value="40">40</option>
-                      <option value="50">50</option>
-                      <option value="60">60</option>
-                      <option value="70">70</option>
-                      <option value="80">80</option>
-                      <option value="90">90</option>
-                      <option value="100" selected>100</option>
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Weight</div>
-                <div class="slidecontainer">
-                  <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
-                  <div id="select-cost-container" class="dropdown-content">
-                    <select class="custom-select" name="cost-min-select" id="cost-filter-min" onchange="update_cost_range()">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                        <option value="40">40</option>
-                        <option value="50">50</option>
-                        <option value="60">60</option>
-                        <option value="70">70</option>
-                        <option value="80">80</option>
-                        <option value="90">90</option>
-                        <option value="100">100</option>
-                    </select>
-                    <select class="custom-select" name="cost-max-select" id="cost-filter-max" onchange="update_cost_range()">
-                      <option value="10">10</option>
-                      <option value="20">20</option>
-                      <option value="30">30</option>
-                      <option value="40">40</option>
-                      <option value="50">50</option>
-                      <option value="60">60</option>
-                      <option value="70">70</option>
-                      <option value="80">80</option>
-                      <option value="90">90</option>
-                      <option value="100" selected>100</option>
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Clearance</div>
-                <div class="slidecontainer">
-                  <button id="clearance-dropdown" class="dropbtn btn btn-default" onclick="clearanceDropdown()"><span id="min-clearance">62</span> - <span id="max-clearance">126</span></button>
-                  <div id="select-clearance-container" class="dropdown-content">
-                    <select class="custom-select" name="clearance-min-select" id="clearance-filter-min" onchange="update_clearance_range()">
-                      {% for clearance in range(62,127) %}
-                        {% if clearance == 62 %}
-                          <option value="{{ clearance }}" selected>{{ clearance }}</option>
-                        {% else %}
-                          <option value="{{ clearance }}">{{ clearance }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                    <select class="custom-select" name="clearance-max-select" id="clearance-filter-max" onchange="update_clearance_range()">
-                      {% for clearance in range(62,127) %}
-                        {% if clearance == 126 %}
-                          <option value="{{ clearance }}" selected>{{ clearance }}</option>
-                        {% else %}
-                          <option value="{{ clearance }}">{{ clearance }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Load Index</div>
-                <div class="slidecontainer">
-                  <button id="load-index-dropdown" class="dropbtn btn btn-default" onclick="loadIndexDropdown()"><span id="min-load-index">62</span> - <span id="max-load-index">126</span></button>
-                  <div id="select-load-index-container" class="dropdown-content">
-                    <select class="custom-select" name="load-index-min-select" id="load-index-filter-min" onchange="update_load_index_range()">
-                      {% for load_index in range(62,127) %}
-                        {% if load_index == 62 %}
-                          <option value="{{ load_index }}" selected>{{ load_index }}</option>
-                        {% else %}
-                          <option value="{{ load_index }}">{{ load_index }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                    <select class="custom-select" name="load-index-max-select" id="load-index-filter-max" onchange="update_load_index_range()">
-                      {% for load_index in range(62,127) %}
-                        {% if load_index == 126 %}
-                          <option value="{{ load_index }}" selected>{{ load_index }}</option>
-                        {% else %}
-                          <option value="{{ load_index }}">{{ load_index }}</option>
-                        {% endif %}                      
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-            </label>
-            <label>
-              <div>Search</div>
-                <div class="">
-                  <input class="form-control" type="search" placeholder="Search.." id="search-box" oninput="filter()">
-                </div>
-            </label>
+            </div>
           </div>
-        {% endif %}
+        </label>
+        <label>
+          <div>Cost Per Hour</div>
+          <div class="slidecontainer">
+            <button
+              id="cost-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="costDropdown()"
+            >
+              $<span id="min-cost">10</span> - $<span id="max-cost">100</span>
+            </button>
+            <div id="select-cost-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="cost-min-select"
+                id="cost-filter-min"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100">100</option>
+              </select>
+              <select
+                class="custom-select"
+                name="cost-max-select"
+                id="cost-filter-max"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100" selected>100</option>
+              </select>
+            </div>
+          </div>
+        </label>
+        <label>
+          <div>Engine Capacity</div>
+          <div class="slidecontainer">
+            <button
+              id="cost-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="costDropdown()"
+            >
+              $<span id="min-cost">10</span> - $<span id="max-cost">100</span>
+            </button>
+            <div id="select-cost-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="cost-min-select"
+                id="cost-filter-min"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100">100</option>
+              </select>
+              <select
+                class="custom-select"
+                name="cost-max-select"
+                id="cost-filter-max"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100" selected>100</option>
+              </select>
+            </div>
+          </div>
+        </label>
+        <label>
+          <div>Length</div>
+          <div class="slidecontainer">
+            <button
+              id="cost-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="costDropdown()"
+            >
+              $<span id="min-cost">10</span> - $<span id="max-cost">100</span>
+            </button>
+            <div id="select-cost-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="cost-min-select"
+                id="cost-filter-min"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100">100</option>
+              </select>
+              <select
+                class="custom-select"
+                name="cost-max-select"
+                id="cost-filter-max"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100" selected>100</option>
+              </select>
+            </div>
+          </div>
+        </label>
+        <label>
+          <div>Weight</div>
+          <div class="slidecontainer">
+            <button
+              id="cost-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="costDropdown()"
+            >
+              $<span id="min-cost">10</span> - $<span id="max-cost">100</span>
+            </button>
+            <div id="select-cost-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="cost-min-select"
+                id="cost-filter-min"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100">100</option>
+              </select>
+              <select
+                class="custom-select"
+                name="cost-max-select"
+                id="cost-filter-max"
+                onchange="update_cost_range()"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+                <option value="80">80</option>
+                <option value="90">90</option>
+                <option value="100" selected>100</option>
+              </select>
+            </div>
+          </div>
+        </label>
+        <label>
+          <div>Clearance</div>
+          <div class="slidecontainer">
+            <button
+              id="clearance-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="clearanceDropdown()"
+            >
+              <span id="min-clearance">62</span> -
+              <span id="max-clearance">126</span>
+            </button>
+            <div id="select-clearance-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="clearance-min-select"
+                id="clearance-filter-min"
+                onchange="update_clearance_range()"
+              >
+                {% for clearance in range(62,127) %} {% if clearance == 62 %}
+                <option value="{{ clearance }}" selected
+                  >{{ clearance }}</option
+                >
+                {% else %}
+                <option value="{{ clearance }}">{{ clearance }}</option>
+                {% endif %} {% endfor %}
+              </select>
+              <select
+                class="custom-select"
+                name="clearance-max-select"
+                id="clearance-filter-max"
+                onchange="update_clearance_range()"
+              >
+                {% for clearance in range(62,127) %} {% if clearance == 126ß %}
+                <option value="{{ clearance }}" selected
+                  >{{ clearance }}</option
+                >
+                {% else %}
+                <option value="{{ clearance }}">{{ clearance }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </div>
+          </div>
+        </label>
+        <label>
+          <div>Load Index</div>
+          <div class="slidecontainer">
+            <button
+              id="load-index-dropdown"
+              class="dropbtn btn btn-default"
+              onclick="loadIndexDropdown()"
+            >
+              <span id="min-load-index">62</span> -
+              <span id="max-load-index">126</span>
+            </button>
+            <div id="select-load-index-container" class="dropdown-content">
+              <select
+                class="custom-select"
+                name="load-index-min-select"
+                id="load-index-filter-min"
+                onchange="update_load_index_range()"
+              >
+                {% for load_index in range(62,127) %} {% if load_index == 62 %}
+                <option value="{{ load_index }}" selected
+                  >{{ load_index }}</option
+                >
+                {% else %}
+                <option value="{{ load_index }}">{{ load_index }}</option>
+                {% endif %} {% endfor %}
+              </select>
+              <select
+                class="custom-select"
+                name="load-index-max-select"
+                id="load-index-filter-max"
+                onchange="update_load_index_range()"
+              >
+                {% for load_index in range(62,127) %} {% if load_index == 126 %}
+                <option value="{{ load_index }}" selected
+                  >{{ load_index }}</option
+                >
+                {% else %}
+                <option value="{{ load_index }}">{{ load_index }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </div>
+          </div>
+        </label>
+        <label>
+          <div>Search</div>
+          <div class="">
+            <input
+              class="form-control"
+              type="search"
+              placeholder="Search.."
+              id="search-box"
+              oninput="filter()"
+            />
+          </div>
+        </label>
+      </div>
+      {% endif %}
       <div class="row justify-content-center mb-3">
         <h5>Select Vehicle</h5>
       </div>
       {% endif %}
       <div class="card-columns">
         {% for car in cars %}
-          <div class="card bg-light mb-4 car">
-            <div class="card-body">
-              <h5 class="card-title make-value">{{car.model.make}} {{car.model.model}},<br/>{{car.model.year}}</h5>
-              <p class="card-text rego-value">Rego: {{car.car_id}}</p>
-              <p class="card-text capacity-value">Capcity: {{car.model.capacity}}</p>
-              <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
-              <p class="card-text cost-value">Cost: ${{car.cph}} per hour
-              {% if car.total_cost %}
-              <br/><small class="text-muted">Total cost: ${{car.total_cost}}</small>
-              {% endif %}
-              </p>
-              <!-- <a href="/book?id={{car.id}}" class="btn btn-primary">Book now</a> -->
-              <form action="/book?car_id={{car.car_id}}&start={{start}}&end={{end}}" class="form-signup" method="POST">
-                <button type="submit" class="btn btn-primary" name="submit">Book now</button>
-                <a class="btn btn-secondary" data-toggle="collapse" href="#additionalDetails-{{car.car_id}}" role="button" aria-expanded="false" aria-controls="additionalDetails">Additional details</a>
-                <div class="collapse" id="additionalDetails-{{car.car_id}}" style="position: absolute; z-index: 100;">
-                  <div class="card card-body">
-                    <p class="card-text">Transmission: <span class="transmission-value">{{car.model.transmission}}</span></p>
-                    <p class="card-text">Engine capcity: <span class="engine-value">{{car.model.engine_capacity}}</span> litres</p>
-                    <p class="card-text">Length: <span class="length-value">{{car.model.length}}</span> m</p>
-                    <p class="card-text">Weight: <span class="weight-vale">{{car.model.weight}}</span> kg</p>
-                    <p class="card-text">Clearance: <span class="clearance-value">{{car.model.ground_clearance}}</span> mm</p>
-                    <p class="card-text">Load index: <span class="load-index-value">{{car.model.load_index}}</span></p>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-        <div class="card bg-light">
+        <div class="card bg-light mb-4 car">
           <div class="card-body">
-            {% if cars == None %}
-              <h5 class="card-title text-center font-italic align-middle">No cars found</h5>
-              <p class="card-text text-center"><small>No available cars found in database</small></p>
-            {% else %}
-            <div class="row justify-content-center">
-              <small class="text-muted"><i>Enter booking dates to see available vehicles</i></small>
-            </div>
-            {% endif %}
+            <h5 class="card-title make-value">
+              {{car.model.make}} {{car.model.model}},<br />{{car.model.year}}
+            </h5>
+            <p class="card-text rego-value">Rego: {{car.car_id}}</p>
+            <p class="card-text capacity-value">
+              Capcity: {{car.model.capacity}}
+            </p>
+            <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
+            <p class="card-text cost-value">
+              Cost: ${{car.cph}} per hour {% if car.total_cost %} <br /><small
+                class="text-muted"
+                >Total cost: ${{car.total_cost}}</small
+              >
+              {% endif %}
+            </p>
+            <!-- <a href="/book?id={{car.id}}" class="btn btn-primary">Book now</a> -->
+            <form
+              action="/book?car_id={{car.car_id}}&start={{start}}&end={{end}}"
+              class="form-signup"
+              method="POST"
+            >
+              <button type="submit" class="btn btn-primary" name="submit">
+                Book now
+              </button>
+              <a
+                class="btn btn-secondary"
+                data-toggle="collapse"
+                href="#additionalDetails-{{car.car_id}}"
+                role="button"
+                aria-expanded="false"
+                aria-controls="additionalDetails"
+                >Additional details</a
+              >
+              <div
+                class="collapse"
+                id="additionalDetails-{{car.car_id}}"
+                style="position: absolute; z-index: 100;"
+              >
+                <div class="card card-body">
+                  <p class="card-text">
+                    Transmission:
+                    <span class="transmission-value"
+                      >{{car.model.transmission}}</span
+                    >
+                  </p>
+                  <p class="card-text">
+                    Engine capcity:
+                    <span class="engine-value"
+                      >{{car.model.engine_capacity}}</span
+                    >
+                    litres
+                  </p>
+                  <p class="card-text">
+                    Length:
+                    <span class="length-value">{{car.model.length}}</span> m
+                  </p>
+                  <p class="card-text">
+                    Weight:
+                    <span class="weight-vale">{{car.model.weight}}</span> kg
+                  </p>
+                  <p class="card-text">
+                    Clearance:
+                    <span class="clearance-value"
+                      >{{car.model.ground_clearance}}</span
+                    >
+                    mm
+                  </p>
+                  <p class="card-text">
+                    Load index:
+                    <span class="load-index-value"
+                      >{{car.model.load_index}}</span
+                    >
+                  </p>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-    {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          {% if cars == None %}
+          <h5 class="card-title text-center font-italic align-middle">
+            No cars found
+          </h5>
+          <p class="card-text text-center">
+            <small>No available cars found in database</small>
+          </p>
+          {% else %}
+          <div class="row justify-content-center">
+            <small class="text-muted"
+              ><i>Enter booking dates to see available vehicles</i></small
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </body>
