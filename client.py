@@ -32,28 +32,28 @@ def interface():
         password = input()
         print ("Logging in...")
         loginDetails = "_login" + "_user_" + username + "_pass_" + password
+        loginBytes = str.encode(loginDetails)
 
     elif (option == "2"):
 
         detector = FacialRecognition.FaceDetector()
         login = detector.capture_user(images=["face.jpg"], min_faces=1)
+        # encoded
         temp = pickle.dumps(login)
-        #file = temp.decode("utf-8")
-        #str(file, 'utf-8')
+        # file = temp.decode("utf-8")
+        # str(file, 'utf-8')
 
-        print ("Logging in...")
-        loginDetails = "_logface" + "_user_" + username + "_file_" + str(temp)
-
+        print("Logging in...")
+        loginBytes = temp
 
     # Encode and send login details
-    loginBytes = str.encode(loginDetails)
     UDPClientSocket.sendto(loginBytes, serverAddressPort)
-    #Recieve login response, response either successful or not
+    # Recieve login response, response either successful or not
     msgFromServer = UDPClientSocket.recvfrom(bufferSize)
     response = msgFromServer[0]
 
     if response == b'successful':
-        print ("login success")
+        print("login success")
         
         while (True):
 

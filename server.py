@@ -22,6 +22,9 @@ print("UDP server up and listening")
 #Incoming datagrams
 def incomingFeed():
 
+    # Needs to be able to get and set this in multiple areas.
+    face_username = "kev@gmail.com"
+
     #Sets cars locked status to unlocked and updates booking table
     def unlockCar(input):
         #Get all required variables
@@ -89,21 +92,11 @@ def incomingFeed():
         return
 
         #login into system, checks credentials
-    def face_login(input):
-        print("GOT HERE")
-        userIndex = input.find('_user_')
-        fileIndex = input.find('_file_')
-        username = input[userIndex + 6:passIndex]
-        fileBytes = input[fileIndex + 6:-1]
-        the_pickle = fileBytes.decode()
-        pickle.dump(the_pickle, open("user_data/login/{}".format(username), "wb"))
+    def face_login(input): 
+        the_pickle = input
+        pickle.dump(the_pickle, open("user_data/login/{}".format(face_username), "wb"))
 
-        #image = Image.open(io.BytesIO(fileBytes))
-        #image.save("user_data/login/{}.jpg".format(username))
-
-        result = requests.get("{}{}".format(URL, "/users/authenticate_encoding"),params={"directory": "user_data/login/", "filename": username})
-
-        os.remove("user_data/login/{}.jpg".format(username))
+        result = requests.get("{}{}".format(URL, "/users/authenticate_encoding"), params={"directory": "user_data/login/", "user_id": face_username})
 
         if result.status_code == 200:
             msgFromServer       = "successful"
@@ -114,6 +107,9 @@ def incomingFeed():
             msgFromServer       = "unsuccessful"
             bytesToSend         = str.encode(msgFromServer)
             UDPServerSocket.sendto(bytesToSend, address)
+
+        os.remove("user_data/login/{}".format(face_username))
+
         return
     
     #Updates car longitude and latitude (every 5 seconds)
@@ -140,10 +136,6 @@ def incomingFeed():
             if ("_rentCar" in clientMsg):
                 unlockCar(clientMsg)
                 break
-
-            if ("_logface" in clientMsg):
-                face_login(clientMsg)
-                break
            
             if ("_login" in clientMsg):
                 login(clientMsg)
@@ -155,7 +147,11 @@ def incomingFeed():
             
             if ("_location" in clientMsg):
                 getLocation(clientMsg)
-                break  
+                break 
+
+            elif(clientMsg is not None):
+                face_login(clientMsg)
+                break
 
 def main():
     incomingFeed()
