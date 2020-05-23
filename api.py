@@ -573,9 +573,6 @@ def valid_booking(proposed: Booking) -> bool:
 def update_booking():
     """Update a booked booking status: cancelled
 
-    Attributes:
-
-
     Returns:
         200 if successful, and booking data as a json object
         400 if invalid json data received in request
@@ -586,19 +583,18 @@ def update_booking():
     if data is not None:
         json_data = json.loads(data)
         booking_id = json_data['booking_id']
-        status = json_data['status']
-        if None not in (status, booking_id):  # Check if booking_id and status are provided
+        if booking_id is not None:  # Check if booking_id is provided
             booking = Booking.query.get(booking_id)  # Retrieve booking with booking id
-            if booking is not None:  # If found
-                booking.completed = int(status)  # Update booking status
+            if booking is not None:
+                booking.completed = 2  # Update booking status = cancelled
                 db.session.commit()
                 b_data = json.loads(BookingSchema().dumps(booking))
                 response = Response(
                     json.dumps(
                         {
                             'car_id': b_data["car_id"],
-                            'start': b_data["start"],
-                            'end': b_data["end"]
+                            'start': b_data["start"].replace("T", " "),
+                            'end': b_data["end"].replace("T", " ")
                         }
                     ), status=200, mimetype='application/json')  # Return booking object
             else:
