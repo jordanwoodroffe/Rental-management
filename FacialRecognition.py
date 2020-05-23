@@ -3,7 +3,7 @@ FacialRecognition
 
 Note - can raise a MemoryError when installing packages onto RPI due to limited cache size/memory.
 Solved by using:
-    pip --no-cache-dir install <package_name>
+- pip --no-cache-dir install <package_name>
 """
 from collections import namedtuple
 import numpy as np
@@ -14,15 +14,16 @@ from abc import ABC, abstractmethod
 
 
 class AbstractFaceDetector(ABC):
-    """
-    Match - simple data-structure to house encoding comparison results
+    """Abstract class for Face detection - defines methods for use
+
+    Attributes:
+        Match: simple data-structure to house encoding comparison results
     """
     Match = namedtuple("max_match", "user_id score")
 
     @abstractmethod
     def capture_user(self) -> list:
-        """
-        Captures a user and encodes face: used for storing in database, or for sending to MP for login/authentication
+        """Captures a user and encodes face: used for storing in database, or for sending to MP for login/authentication
 
         Returns:
             a list containing the users login authentication
@@ -30,7 +31,8 @@ class AbstractFaceDetector(ABC):
 
     @abstractmethod
     def compare_encodings(self, login: list, users: {str: list}):
-        """
+        """Compares a list of encodings against a dictionary of encodings (user_id : encodings)
+
         Args:
             login: encoded face of user attempting to login
             users: a dictionary of user_ids to their saved encodings
@@ -42,15 +44,15 @@ class AbstractFaceDetector(ABC):
 
 class FaceDetector(AbstractFaceDetector):
     """
-    TODO: add requirements for install etc. and check imports
-    TODO: add option to check by video upload (no usb camera on rpi) - add some sort of file flag
+    FaceDetector class, implements :class:`AbstractFaceDetector`
+    performs capturing and encoding of user faces
     """
     __haar_model = 'haarcascade_frontalface_default.xml'
     __min_faces = 5  # minimum required faces for a valid detection - set to 5 for efficiency on RPI
 
     def __init__(self):
         self.__classifier = cv2.CascadeClassifier(self.__haar_model)
-        try:
+        try:  # haar_model is required to run: used to recognise features/face objects
             test = self.__classifier.load(self.__haar_model)
             if test is False:
                 raise ImportError("Unable to load classifier xml. Check file path before proceeding.")
@@ -58,6 +60,15 @@ class FaceDetector(AbstractFaceDetector):
             print(ie)
 
     def capture_user(self, images: [str] = None, min_faces: int = None) -> list:
+        """Captures a user - finds face in images, and encodes face locations
+
+        Args:
+            images: path to images to detect faces in
+            min_faces: minimum number of faces needed - default is self.__min_faces
+
+        Returns:
+            a list of encoded faces (empty if unable to encode any)
+        """
         min_faces = self.__min_faces if min_faces is None else min_faces
         faces = self.__capture_face(min_faces=min_faces, images=images)
         if faces is not None and len(faces) > 0:
@@ -65,6 +76,15 @@ class FaceDetector(AbstractFaceDetector):
         return []  # unable to encode/capture faces
 
     def compare_encodings(self, login_encs: list, saved_encs: {str: list}) -> AbstractFaceDetector.Match:
+        """Compares a list of encodings against a dictionary of encodings (user_id to encodings)
+
+        Args:
+            login_encs: login encodings
+            saved_encs: dictionary of existing encodings
+
+        Returns:
+            :class:`AbstractFaceDetector.Match` object containing user_id and score
+        """
         max_match = self.Match(None, 0)
         if len(login_encs) > 0:
             for encoding in login_encs:
@@ -77,8 +97,6 @@ class FaceDetector(AbstractFaceDetector):
     def __capture_face(self, min_faces, images: [str] = None):
         """
         Captures a users face from an image or video stream
-        TODO: replace/add image upload - filepath to directory with images, load/capture faces until self.__min_faces
-        TODO: add validation/exceptions for image upload etc.
 
         Returns:
             a list of faces capture from images or video-stream
@@ -123,10 +141,13 @@ class FaceDetector(AbstractFaceDetector):
     @staticmethod
     def __encode_face(faces) -> list:
         """
-        Encodes captured faces
+        Encodes captured faces - finds face locations and returns these
 
         Args:
             faces: list of faces captured by camera/from video to encode
+
+        Returns:
+            list of encoded faces
         """
         encodings = []
         for face in faces:

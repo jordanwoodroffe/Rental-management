@@ -181,7 +181,7 @@ def get_users():
 def get_user():
     """Returns a specific user from the database: acces via user_id (email)
 
-    Params:
+    Args:
         user_id: id of user to fetch from db
 
     Returns:
@@ -202,7 +202,7 @@ def get_user():
 def add_user():
     """Adds a user to the database
 
-    Params:
+    Args:
         user_data: data to be added (name, email, password, username) in the form of a json object
 
     Returns:
@@ -243,7 +243,7 @@ def add_user():
 def user_authentication():
     """Endpoint to authenticate a user logging in to MP webapp using email and password
 
-    Params:
+    Args:
         user_id: email input from user attempting login
         password: password input from user attempting login
 
@@ -324,7 +324,7 @@ def get_cars():
 def get_car():
     """Endpoint to return a car from the database with a specific car_id
 
-    Params:
+    Args:
         car_id: id of car to fetch
 
     Returns:
@@ -349,7 +349,7 @@ def update_car():
     start/end dates) then the car is unlocked. If the car is to be locked, then the booking is also marked as
     completed. If no user_id or locked value are included, this function calls update_location(car_id)
 
-    Params:
+    Args:
         car_id: id of car to unlock
         locked: locked value to update to (1= locked, 0= unlocked)
         user_id: id of user in db
@@ -485,7 +485,7 @@ def get_bookings():
 def get_booking():
     """Returns a booking for a corresponding booking id
 
-    Params:
+    Args:
         booking_id: id of booking (int)
 
     Returns:
@@ -507,7 +507,7 @@ def get_booking():
 def add_booking():
     """Adds a booking to the database
 
-    Params:
+    Args:
         booking data as a json object
 
     Returns:
