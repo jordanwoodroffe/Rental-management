@@ -37,7 +37,7 @@ def valid_name(form, field):
         ValidationError: if name is invalid (not ascii or contains digit)
     """
     # names must be in ASCII
-    if not field.data.isascii():
+    if not re.match("[A-Za-z]", field.data):
         raise ValidationError('Please enter valid name')
     # names must not contain number
     if any(char.isdigit() for char in field.data):
