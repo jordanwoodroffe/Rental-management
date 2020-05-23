@@ -216,6 +216,7 @@ def render_booking_page():
         start = request.args.get('start')
         end = request.args.get('end')
         form = BookingQueryForm()
+        attributes = defaultdict(set)
         if start is not None and end is not None:
             try:
                 start_dt = datetime.strptime(start, "%Y-%m-%d %H:%M")
@@ -235,10 +236,28 @@ def render_booking_page():
                 response = requests.get(
                     "{}{}/{}/{}".format(URL, "cars", str(start_dt).replace(" ", "T"), str(end_dt).replace(" ", "T"))
                 )
+                # if cars.status_code == 200:
+                #     try:
+                #         car_data = cars.json()
+                #     except JSONDecodeError as je:
+                #         attributes = None
+                #         car_data = None
+                #     else:
+                #         for car in car_data:
+                #             attributes['make'].add(car['model']['make'])
+                #             attributes['colour'].add(car['model']['colour'])
+                #             attributes['year'].add(car['model']['year'])
+                #             attributes['capacity'].add(car['model']['capacity'])
+                #             attributes['cost'].add(car['cph'])
                 try:
                     cars = response.json()
                     for car in cars:
                         cph = car['cph']
+                        attributes['make'].add(car['model']['make'])
+                        attributes['colour'].add(car['model']['colour'])
+                        attributes['year'].add(car['model']['year'])
+                        attributes['capacity'].add(car['model']['capacity'])
+                        attributes['cost'].add(car['cph'])
                         try:
                             amount = float(cph)
                             car['total_cost'] = float("{:.2f}".format(amount * calc_hours(d1=start_dt, d2=end_dt)))
@@ -249,8 +268,8 @@ def render_booking_page():
                     cars = None
                 form.start.data = start_dt
                 form.end.data = end_dt
-                return render_template("booking.html", form=form, cars=cars, start=start_dt, end=end_dt)
-        return render_template("booking.html", form=form)
+                return render_template("booking.html", form=form, cars=cars, start=start_dt, end=end_dt, attributes=attributes)
+        return render_template("booking.html", form=form, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
