@@ -38,13 +38,13 @@ def interface():
 
         detector = FacialRecognition.FaceDetector()
         login = detector.capture_user(images=["face.jpg"], min_faces=1)
-        # encoded
         temp = pickle.dumps(login)
-        # file = temp.decode("utf-8")
-        # str(file, 'utf-8')
 
         print("Logging in...")
         loginBytes = temp
+        usernameBytes = str.encode("_faceusername_" + username)
+        UDPClientSocket.sendto(usernameBytes, serverAddressPort)
+
 
     # Encode and send login details
     UDPClientSocket.sendto(loginBytes, serverAddressPort)

@@ -11,7 +11,7 @@ from datetime import datetime
 app = Flask(__name__)
 localIP     = "localhost"
 localPort   = 20001
-bufferSize  = 1024
+bufferSize  = 4096
 URL = "http://127.0.0.1:5000" 
 
 #Initalize server
@@ -23,7 +23,7 @@ print("UDP server up and listening")
 def incomingFeed():
 
     # Needs to be able to get and set this in multiple areas.
-    face_username = "kev@gmail.com"
+    face_username = None
 
     #Sets cars locked status to unlocked and updates booking table
     def unlockCar(input):
@@ -93,10 +93,10 @@ def incomingFeed():
 
         #login into system, checks credentials
     def face_login(input): 
-        the_pickle = input
+        the_pickle = pickle.loads(input)
         pickle.dump(the_pickle, open("user_data/login/{}".format(face_username), "wb"))
 
-        result = requests.get("{}{}".format(URL, "/users/authenticate_encoding"), params={"directory": "user_data/login/", "user_id": face_username})
+        result = requests.post("{}{}".format(URL, "/authenticate_encodings"), params={"directory": "user_data/login/", "user_id": face_username})
 
         if result.status_code == 200:
             msgFromServer       = "successful"
@@ -111,6 +111,11 @@ def incomingFeed():
         os.remove("user_data/login/{}".format(face_username))
 
         return
+
+    def face_set_username(input):
+        global face_username
+        usernameIndex = input.find('_faceusername_')
+        face_username = input[usernameIndex + 14: -1]
     
     #Updates car longitude and latitude (every 5 seconds)
     def getLocation(input):
@@ -147,10 +152,14 @@ def incomingFeed():
             
             if ("_location" in clientMsg):
                 getLocation(clientMsg)
-                break 
+                break
+
+            if ("_faceusername" in clientMsg):
+                face_set_username(clientMsg)
+                break
 
             elif(clientMsg is not None):
-                face_login(clientMsg)
+                face_login(message)
                 break
 
 def main():

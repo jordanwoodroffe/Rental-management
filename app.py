@@ -76,13 +76,15 @@ def auth_by_face():
 
 
     """
+    print("HERE!")
     directory = request.args.get('directory')
+    print(directory)
     user_id = request.args.get('user_id')
+    print(user_id)
     if directory is not None:
         detector = FaceDetector()
-
-        login = pickle.load(open("{}/{}".format(directory, user_id), 'rb'))
-
+        with open("{}/{}".format(directory, user_id), 'rb') as log_pickle:
+            login = pickle.load(log_pickle)
         pickles_dir = "user_data/pickles"
         pickles = {
             filename: pickle.load(open("{}/{}".format(pickles_dir, filename), "rb"))
