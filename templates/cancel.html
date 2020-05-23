@@ -13,38 +13,58 @@
           <span aria-hidden="true">&times;</span>
         </button>
         <strong>{{message.message}}</strong>
+        {% if message.data %}
         <div>
           <small class="text-muted">{{message.data}}</small>
         </div>
+        {% endif %}
       </div>
     {% endfor %}
   {% endif %}
   <div class="container">
-    {% if user_bookings != None %}
-      <div class="card-columns">
-        {% for booking in user_bookings %}
-        {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("") -%}
-          <div class="card bg-light mb-4">
-            <div class="card-body">
-              <h5 class="card-title">{{booking.car.model.make}} {{booking.car.model.model}},
-                <br/>{{booking.car.model.year}}</h5>
-              <p class="card-text">Rego: {{booking.car.car_id}}</p>
-              <p class="card-text">Start date: {{booking.start}}</p>
-              <p class="card-text">End date: {{booking.end}}</p>
-              <p class="card-text">Cost: ${{booking.car.cph}} per hour
-              <br/><small class="text-muted">Total cost: ${{booking.cost}}</small>
-              </p>
-              {% if booking.completed == 0 %}
-              <form class="form-signup" action="/cancel?booking_id={{booking.booking_id}}&status=2" method="POST">
-                <button type="submit" class="btn btn-primary" name="submit">Cancel</button>
-              </form>
-              {% else %}
-              <p class="card-text">Status: {{status}}</p>
-              {% endif %}
-            </div>
-          </div>
-        {% endfor %}
+    {% if user_bookings != None and user_bookings|length > 0 %}
+    <form class="pb-3" action="/cancel" method="post" onsubmit="displayvalues()">
+      <div class="form-row">
+        <h5 class="col-md-3">Select bookings</h5>
       </div>
+      <div class="form-row" style="display: none;">
+        <div class="form-group col-md-3">
+          {% for booking in user_bookings %}
+            <label for="cancel-{{booking.booking_id}}"></label>
+            <input name="cancel" type="checkbox" value="{{booking.booking_id}}" id="cancel-{{booking.booking_id}}">{{booking.booking_id}}</input>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group form-row col-md-3">
+          <button type="submit" class="btn btn-primary" name="submit">Cancel selected bookings</button>
+        </div>
+      </div>
+    </form>
+    <div class="card-columns">
+      {% for booking in user_bookings %}
+      {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("") -%}
+        <div class="card bg-light mb-4">
+          <div class="card-body">
+            <h5 class="card-title">{{booking.car.model.make}} {{booking.car.model.model}},
+              <br/>{{booking.car.model.year}}</h5>
+            <p class="card-text">Rego: {{booking.car.car_id}}</p>
+            <p class="card-text">Start date: {{booking.start}}</p>
+            <p class="card-text">End date: {{booking.end}}</p>
+            <p class="card-text">Cost: ${{booking.car.cph}} per hour
+            <br/><small class="text-muted">Total cost: ${{booking.cost}}</small>
+            </p>
+            {% if booking.completed == 0 %}
+<!--              <form class="form-signup" action="/cancel?booking_id={{booking.booking_id}}&status=2" method="POST">-->
+            <button id="button-{{booking.booking_id}}" onclick="updateSelect({{booking.booking_id}})" class="btn btn-secondary">Cancel</button>
+<!--              </form>-->
+            {% else %}
+            <p class="card-text">Status: {{status}}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
     {% else %}
       <div class="card bg-light">
         <div class="card-body">
@@ -54,6 +74,24 @@
       </div>
     {% endif %}
   </div>
-</body>
+<script type="text/javascript">
+  function updateSelect(value) {
+    let checkbox = document.getElementById("cancel-" + value);
+    checkbox.checked = !checkbox.checked;
+    let button = document.getElementById("button-" + value);
+    if (checkbox.checked) {
+      button.classList.remove("btn-secondary");
+      button.classList.add("btn-danger");
+    } else {
+      button.classList.remove("btn-danger");
+      button.classList.add("btn-secondary");
+    }
+  }
 
+  function displayvalues(){
+    let select = document.getElementById("booking-select");
+    alert(select.value)
+  }
+</script>
+</body>
 {% endblock %}

@@ -415,16 +415,25 @@ def render_cancel_page():
 
 @site.route("/cancel", methods=['POST'])
 def cancel_booking():
-    """Attempts to cancel a booking for a user
+    """Attempts to cancel a booking/bookings for a user
 
     Returns:
         redirects to site.render_cancel_page with confirmation/error messages
     """
     if 'user' in session:
+        bookings = request.form.getlist('cancel')
         messages = []
-        booking_id = request.args.get('booking_id')
-        status = request.args.get('status')
-        if None not in (booking_id, status):
+        for booking in bookings:
+            booking_id = int(booking)
+            status = 2
+            result = requests.get(
+                "{}{}".format(URL, "booking"), params={"booking_id": booking_id}
+            )
+            if result.status_code == 200:
+                data = result.json()
+                if data['user_id'] != session['user']['username']:
+                    messages.append(("warning", {"message": "Booking is not for current user"}))
+                    return redirect(url_for('site.render_cancel_page', messages=json.dumps(messages)))
             data = {
                 "booking_id": booking_id,
                 "status": status
