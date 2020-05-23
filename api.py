@@ -90,6 +90,12 @@ class CarModel(db.Model):
     year = db.Column('year', Integer(), nullable=False)
     capacity = db.Column('capacity', Integer(), nullable=False)
     colour = db.Column('colour', VARCHAR(45), nullable=False)
+    transmission = db.Column('transmission', VARCHAR(6))
+    weight = db.Column('weight', Integer())
+    length = db.Column('length', Float())
+    load_index = db.Column('load_index', Integer())
+    engine_capacity = db.Column('engine_capacity', Float())
+    ground_clearance = db.Column('ground_clearance', Integer())
 
 
 class Booking(db.Model):
@@ -139,7 +145,8 @@ class CarModelSchema(ma.Schema):
     """
     class Meta:
         model = CarModel
-        fields = ("model_id", "make", "model", "year", "capacity", "colour")
+        fields = ("model_id", "make", "model", "year", "capacity", "colour", "transmission", "weight", "length",
+                  "load_index", "engine_capacity", "ground_clearance")
 
 
 class CarSchema(ma.Schema):
@@ -563,6 +570,7 @@ def add_booking():
 def calc_cost(amount: float, start: datetime, end: datetime) -> float:
     """
     Calculates the cost for a booking
+
     Args:
         amount: cph value for the car
         start: booking start date
@@ -577,6 +585,7 @@ def calc_cost(amount: float, start: datetime, end: datetime) -> float:
 def valid_booking(proposed: Booking) -> bool:
     """
     Validates on server whether proposed booking overlaps any existing bookings for the vehicle
+
     Args:
         proposed: a proposed booking record (new booking)
 
@@ -684,7 +693,8 @@ def populate():
                 db.session.add(user)
             response['users'] = True
     if CarModel.query.first() is None:
-        # cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour']
+        # cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour', 'transmission', 'weight (kg)',
+        # 'length (m)', 'load_index', 'engine_capacity', 'ground_clearance (mm)']
         model_ids = []
         with open('./test_data/car_model.csv') as models:
             reader = csv.reader(models, delimiter=',')
@@ -698,6 +708,12 @@ def populate():
                 model.year = row[3]
                 model.capacity = row[4]
                 model.colour = row[5]
+                model.transmission = row[6]
+                model.weight = row[7]
+                model.length = row[8]
+                model.load_index = row[9]
+                model.engine_capacity = row[10]
+                model.ground_clearance = row[11]
                 db.session.add(model)
             response['models'] = True
         # car_cols = ['car_id', 'name', 'cph', 'lat', 'lng']

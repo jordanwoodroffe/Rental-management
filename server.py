@@ -11,7 +11,7 @@ from datetime import datetime
 app = Flask(__name__)
 localIP     = "localhost"
 localPort   = 20001
-bufferSize  = 1024
+bufferSize  = 4096
 URL = "http://127.0.0.1:5000" 
 
 #Initalize server
@@ -21,6 +21,9 @@ print("UDP server up and listening")
     
 #Incoming datagrams
 def incomingFeed():
+
+    # Needs to be able to get and set this in multiple areas.
+    face_username = None
 
     #Sets cars locked status to unlocked and updates booking table
     def unlockCar(input):
@@ -89,21 +92,11 @@ def incomingFeed():
         return
 
         #login into system, checks credentials
-    def face_login(input):
-        print("GOT HERE")
-        userIndex = input.find('_user_')
-        fileIndex = input.find('_file_')
-        username = input[userIndex + 6:passIndex]
-        fileBytes = input[fileIndex + 6:-1]
-        the_pickle = fileBytes.decode()
-        pickle.dump(the_pickle, open("user_data/login/{}".format(username), "wb"))
+    def face_login(input): 
+        the_pickle = pickle.loads(input)
+        pickle.dump(the_pickle, open("user_data/login/{}".format(face_username), "wb"))
 
-        #image = Image.open(io.BytesIO(fileBytes))
-        #image.save("user_data/login/{}.jpg".format(username))
-
-        result = requests.get("{}{}".format(URL, "/users/authenticate_encoding"),params={"directory": "user_data/login/", "filename": username})
-
-        os.remove("user_data/login/{}.jpg".format(username))
+        result = requests.post("{}{}".format(URL, "/authenticate_encodings"), params={"directory": "user_data/login/", "user_id": face_username})
 
         if result.status_code == 200:
             msgFromServer       = "successful"
@@ -114,7 +107,15 @@ def incomingFeed():
             msgFromServer       = "unsuccessful"
             bytesToSend         = str.encode(msgFromServer)
             UDPServerSocket.sendto(bytesToSend, address)
+
+        os.remove("user_data/login/{}".format(face_username))
+
         return
+
+    def face_set_username(input):
+        global face_username
+        usernameIndex = input.find('_faceusername_')
+        face_username = input[usernameIndex + 14: -1]
     
     #Updates car longitude and latitude (every 5 seconds)
     def getLocation(input):
@@ -140,10 +141,6 @@ def incomingFeed():
             if ("_rentCar" in clientMsg):
                 unlockCar(clientMsg)
                 break
-
-            if ("_logface" in clientMsg):
-                face_login(clientMsg)
-                break
            
             if ("_login" in clientMsg):
                 login(clientMsg)
@@ -155,7 +152,15 @@ def incomingFeed():
             
             if ("_location" in clientMsg):
                 getLocation(clientMsg)
-                break  
+                break
+
+            if ("_faceusername" in clientMsg):
+                face_set_username(clientMsg)
+                break
+
+            elif(clientMsg is not None):
+                face_login(message)
+                break
 
 def main():
     incomingFeed()
