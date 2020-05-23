@@ -12,8 +12,10 @@
       <div class="container">
         {% if attributes != None %}
           <div>
-            <h3>Filter cars</h3>
-            <label>
+            <div class="row justify-content-center mb-3">
+              <h5>Filter Vehicle</h5>
+            </div>
+            <label class="mr-1">
               <div>Make</div>
               <select class="custom-select" name="make" id="make-filter" onchange="filter()">
                 <option value="All" selected>All</option>
@@ -22,7 +24,7 @@
                 {% endfor %}
               </select>
             </label>
-            <label>
+            <label class="mr-1">
               <div>Year</div>
               <select class="custom-select" name="year" id="year-filter" onchange="filter()">
                 <option value="All" selected>All</option>
@@ -31,7 +33,7 @@
                 {% endfor %}
               </select>
             </label>
-            <label>
+            <label class="mr-1">
               <div>Colour</div>
               <select class="custom-select" name="colour" id="colour-filter" onchange="filter()">
                 <option value="All" selected>All</option>
@@ -40,13 +42,16 @@
                 {% endfor %}
               </select>
             </label>
-            <label>
-              <div>Search</div>
-                <div class="">
-                  <input class="form-control" type="search" placeholder="Search.." id="search-box" oninput="filter()">
-                </div>
+            <label class="mr-1">
+              <div>Transmission</div>
+              <select class="custom-select" name="transmission" id="transmission-filter" onchange="filter()">
+                <option value="All" selected>All</option>
+                {% for transmission in attributes['transmission'] %}
+                    <option value="{{ transmission }}">{{ transmission }}</option>
+                {% endfor %}
+              </select>
             </label>
-            <label>
+            <label class="mr-1">
               <div>Capacity</div>
                 <div class="slidecontainer">
                   <button id="capacity-dropdown" class="dropbtn btn btn-default" onclick="capacityDropdown()"><span id="min-capacity">{{ attributes['capacity'] | min }}</span> to <span id="max-capacity">{{ attributes['capacity'] | max}}</span> People</button>
@@ -72,7 +77,7 @@
                   </div>
                 </div>
             </label>
-            <label>
+            <label class="mr-1">
               <div>Cost Per Hour</div>
                 <div class="slidecontainer">
                   <button id="cost-dropdown" class="dropbtn btn btn-default" onclick="costDropdown()">$<span id="min-cost">10</span> - $<span id="max-cost">100</span></button>
@@ -102,6 +107,132 @@
                       <option value="100" selected>100</option>
                     </select>
                   </div>
+                </div>
+            </label>
+            <label class="mr-1">
+              <div>Engine Capacity</div>
+                <div class="slidecontainer">
+                  <button id="engine-capacity-dropdown" class="dropbtn btn btn-default" onclick="engineCapacityDropdown()">from <span id="min-engine-capacity">1</span> litres to <span id="max-engine-capacity">4</span> litres</button>
+                  <div id="select-engine-capacity-container" class="dropdown-content">
+                    <select class="custom-select" name="engine-capacity-min-select" id="engine-capacity-filter-min" onchange="update_engine_capacity_range()">
+                      <option value="1" selected>1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </select>
+                    <select class="custom-select" name="engine-capacity-max-select" id="engine-capacity-filter-max" onchange="update_engine_capacity_range()">
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4" selected>4</option>
+                    </select>
+                  </div>
+                </div>
+            </label>
+            <label class="mr-1">
+              <div>Length</div>
+                <div class="slidecontainer">
+                  <button id="length-dropdown" class="dropbtn btn btn-default" onclick="lengthDropdown()">from <span id="min-length">3</span> m to <span id="max-length">5</span> m</button>
+                  <div id="select-length-container" class="dropdown-content">
+                    <select class="custom-select" name="length-min-select" id="length-filter-min" onchange="update_length_range()">
+                      <option value="3" selected>3</option>
+                      <option value="3.5">3.5</option>
+                      <option value="4">4</option>
+                      <option value="4.5">4.5</option>
+                      <option value="5">5</option>
+                    </select>
+                    <select class="custom-select" name="length-max-select" id="length-filter-max" onchange="update_length_range()">
+                      <option value="3">3</option>
+                      <option value="3.5">3.5</option>
+                      <option value="4">4</option>
+                      <option value="4.5">4.5</option>
+                      <option value="5" selected>5</option>
+                    </select>
+                  </div>
+                </div>
+            </label>
+            <label class="mr-1">
+              <div>Weight</div>
+                <div class="slidecontainer">
+                  <button id="weight-dropdown" class="dropbtn btn btn-default" onclick="weightDropdown()">from <span id="min-weight">950</span> kg to <span id="max-weight">2300</span> kg</button>
+                  <div id="select-weight-container" class="dropdown-content">
+                    <select class="custom-select" name="weight-min-select" id="weight-filter-min" onchange="update_weight_range()">
+                      {% for i in range(1,29) %}
+                        {% if i == 1 %}
+                          <option value="{{ i * 50 + 900 }}" selected>{{ i * 50 + 900 }}</option>
+                        {% else %}
+                        <option value="{{ i * 50 + 900 }}">{{ i * 50 + 900 }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <select class="custom-select" name="weight-max-select" id="weight-filter-max" onchange="update_weight_range()">
+                      {% for i in range(1,29) %}
+                        {% if i == 28 %}
+                          <option value="{{ i * 50 + 900 }}" selected>{{ i * 50 + 900 }}</option>
+                        {% else %}
+                        <option value="{{ i * 50 + 900 }}">{{ i * 50 + 900 }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+            </label>
+            <label class="mr-1">
+              <div>Clearance</div>
+                <div class="slidecontainer">
+                  <button id="clearance-dropdown" class="dropbtn btn btn-default" onclick="clearanceDropdown()"><span id="min-clearance">100</span> - <span id="max-clearance">250</span></button>
+                  <div id="select-clearance-container" class="dropdown-content">
+                    <select class="custom-select" name="clearance-min-select" id="clearance-filter-min" onchange="update_clearance_range()">
+                      {% for clearance in range(100,251) %}
+                        {% if clearance == 100 %}
+                          <option value="{{ clearance }}" selected>{{ clearance }}</option>
+                        {% else %}
+                          <option value="{{ clearance }}">{{ clearance }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <select class="custom-select" name="clearance-max-select" id="clearance-filter-max" onchange="update_clearance_range()">
+                      {% for clearance in range(100,251) %}
+                        {% if clearance == 250 %}
+                          <option value="{{ clearance }}" selected>{{ clearance }}</option>
+                        {% else %}
+                          <option value="{{ clearance }}">{{ clearance }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+            </label>
+            <label class="mr-1">
+              <div>Load Index</div>
+                <div class="slidecontainer">
+                  <button id="load-index-dropdown" class="dropbtn btn btn-default" onclick="loadIndexDropdown()"><span id="min-load-index">75</span> - <span id="max-load-index">100</span></button>
+                  <div id="select-load-index-container" class="dropdown-content">
+                    <select class="custom-select" name="load-index-min-select" id="load-index-filter-min" onchange="update_load_index_range()">
+                      {% for load_index in range(75,101) %}
+                        {% if load_index == 75 %}
+                          <option value="{{ load_index }}" selected>{{ load_index }}</option>
+                        {% else %}
+                          <option value="{{ load_index }}">{{ load_index }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <select class="custom-select" name="load-index-max-select" id="load-index-filter-max" onchange="update_load_index_range()">
+                      {% for load_index in range(75,101) %}
+                        {% if load_index == 100 %}
+                          <option value="{{ load_index }}" selected>{{ load_index }}</option>
+                        {% else %}
+                          <option value="{{ load_index }}">{{ load_index }}</option>
+                        {% endif %}                      
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+            </label>
+            <label class="mr-1">
+              <div>Search</div>
+                <div class="">
+                  <input class="form-control" type="search" placeholder="Search.." id="search-box" oninput="filter()">
                 </div>
             </label>
           </div>
