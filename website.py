@@ -579,6 +579,12 @@ def make_attributes(car_data: []) -> {set}:
         attributes['year'].add(car['model']['year'])
         attributes['capacity'].add(car['model']['capacity'])
         attributes['cost'].add(car['cph'])
+        attributes['transmission'].add(car['model']['transmission'])
+        attributes['weight'].add(car['model']['weight'])
+        attributes['length'].add(car['model']['length'])
+        attributes['load_index'].add(car['model']['load_index'])
+        attributes['engine_capacity'].add(car['model']['engine_capacity'])
+        attributes['ground_clearance'].add(car['model']['ground_clearance'])
     return attributes
 
 
