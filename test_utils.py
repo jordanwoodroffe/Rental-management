@@ -44,7 +44,6 @@ class TestUntils(unittest.TestCase):
 
         start = datetime(2021, 11, 11, 10, 00, 00)
         end = datetime(2021, 11, 11, 12, 00, 00)
-        # THERE SHOULD BE NO OVERLAP THIS IS WRONG
         self.assertFalse(utils.compare_dates(start, end, b_start, b_end))
 
 
