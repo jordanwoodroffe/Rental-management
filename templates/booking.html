@@ -108,10 +108,13 @@
               </select>
             </label>
             <label>
-              <div>Search</div>
-                <div class="">
-                  <input class="form-control" type="search" placeholder="Search.." id="search-box" oninput="filter()">
-                </div>
+              <div>Transmission</div>
+              <select class="custom-select" name="transmission" id="transmission-filter" onchange="filter()">
+                <option value="All" selected>All</option>
+                {% for transmission in attributes['transmission'] %}
+                    <option value="{{ transmission }}">{{ transmission }}</option>
+                {% endfor %}
+              </select>
             </label>
             <label>
               <div>Capacity</div>
@@ -169,6 +172,12 @@
                       <option value="100" selected>100</option>
                     </select>
                   </div>
+                </div>
+            </label>
+            <label>
+              <div>Search</div>
+                <div class="">
+                  <input class="form-control" type="search" placeholder="Search.." id="search-box" oninput="filter()">
                 </div>
             </label>
           </div>
