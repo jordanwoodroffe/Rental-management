@@ -28,8 +28,8 @@ class TestApi(unittest.TestCase):
 
     def test_get_user(self): ## gets a user that exists, and fails if the user does not exist/no parameters are given
 
-        user_id1 = "daniel@gmail.com"
-        user_id2 = "imnotreal@gmail.com"
+        user_id1 = "kevmason"
+        user_id2 = "imnotreal"
 
         result200 = requests.get(
             "{}{}".format(URL, "user"),
@@ -46,78 +46,77 @@ class TestApi(unittest.TestCase):
         )
 
         self.assertEqual(result200.status_code, 200)
-        self.assertEqual(result200.json()['email'], "daniel@gmail.com")
+        self.assertEqual(result200.json()['email'], "kev@gmail.com")
         self.assertEqual(result404.status_code, 404)
         self.assertEqual(result400.status_code, 400)
 
-    # def test_add_user(self): ## adds this user, tries to add the same user twice, then checks if they got added. Will cause error if person isn't deleted afterward.
+    def test_add_user(self): ## adds this user, tries to add the same user twice, then checks if they got added. Will cause error if person isn't deleted afterward.
 
-    #     user = {'email': 'anotherran22@gmail.com', 
-    #             'l_name': 'steve',
-    #             'f_name': 'jawbs',
-    #             'password': 'applelover69',
-    #             }
-    #     result200 = requests.post(
-    #         "{}{}".format(URL, "user"),
-    #         json=json.dumps(user),
-    #     )
+        user = {'user_id': 'anotherrran',
+                'email': 'anotherran22@gmail.com', 
+                'l_name': 'steve',
+                'f_name': 'jawbs',
+                'password': 'applelover69',
+                }
+        result200 = requests.post(
+            "{}{}".format(URL, "user"),
+            json=json.dumps(user),
+        )
 
-    #     self.assertEqual(result200.status_code, 200)
+        self.assertEqual(result200.status_code, 200)
 
-    #     result200 = requests.get(
-    #         "{}{}".format(URL, "user"),
-    #         params={"user_id": user.get("email")}
-    #     )
+        result200 = requests.get(
+            "{}{}".format(URL, "user"),
+            params={"user_id": user.get("user_id")}
+        )
 
-    #     result200 = requests.post(
-    #         "{}{}".format(URL, "user"),
-    #         json=json.dumps(user),
-    #     )
+        result200 = requests.post(
+            "{}{}".format(URL, "user"),
+            json=json.dumps(user),
+        )
 
-    #     self.assertEqual(result200.status_code, 404)
+        self.assertEqual(result200.status_code, 404)
 
-    #     email = "anotherran22@gmail.com"
+        user_id = "anotherran22"
 
-    #     checkInDB = requests.get(
-    #         "{}{}".format(URL, "user"),
-    #         params={"user_id": email}
-    #     )
+        checkInDB = requests.get(
+            "{}{}".format(URL, "user"),
+            params={"user_id": user_id}
+        )
 
-    #     self.assertEqual(checkInDB.status_code, 200)
+        self.assertEqual(checkInDB.status_code, 200)
 
-        # api.db.session.delete(deleteuser) # removes the user we just created from the database. FIX LATER
-
-    def test_user_authentication(self):  # checks correct account, then wrong pass, then wrong email, then parameters without email, or password.
+    def test_user_authentication(self):  # checks correct account, then wrong pass, then wrong username, then parameters without username, or password.
 
         result200 = requests.get(
             "{}{}".format(URL, "users/authenticate"),
-            params={"user_id": "kev@gmail.com", "password": "123Qwe!"},
+            params={"user_id": "kevmason", "password": "123Qwe!"},
         )
 
         result404password = requests.get(
             "{}{}".format(URL, "users/authenticate"),
-            params={"user_id": "kev@gmail.com", "password": "123Qwf!"},
+            params={"user_id": "kevmason", "password": "123Qwf!"},
         )
 
-        result404email = requests.get(
+        result404user_id = requests.get(
             "{}{}".format(URL, "users/authenticate"),
-            params={"user_id": "idontexist@gmail.com", "password": "123Qwf!"},
+            params={"user_id": "idontexist", "password": "123Qwf!"},
         )
 
-        result400no_email = requests.get(
+        result400no_user_id = requests.get(
             "{}{}".format(URL, "users/authenticate"),
             params={"password": "123Qwf!"},
         )
 
         result400no_password = requests.get(
             "{}{}".format(URL, "users/authenticate"),
-            params={"user_id": "idontexist@gmail.com"},
+            params={"user_id": "idontexist"},
         )
 
         self.assertEqual(result200.status_code, 200)
         self.assertEqual(result404password.status_code, 404)
-        self.assertEqual(result404email.status_code, 404)
-        self.assertEqual(result400no_email.status_code, 400)
+        self.assertEqual(result404user_id.status_code, 404)
+        self.assertEqual(result400no_user_id.status_code, 400)
         self.assertEqual(result400no_password.status_code, 400)
 
     def test_cars(self): # checks if the cars table isn't empty
@@ -152,7 +151,7 @@ class TestApi(unittest.TestCase):
         # no booking check
         car_id1 = "EXR143"
         locked = 0
-        user_id = "kev@gmail.com"
+        user_id = "kevmason"
 
         result_no_booking = requests.put(
                 "{}{}".format(URL, "car"),
@@ -193,38 +192,37 @@ class TestApi(unittest.TestCase):
 
         # TODO double book this and re run for 500 check
 
-    # def test_update_location(self):
+    def test_update_location(self):
 
         # TODO can't test with no route for the values to pass into but i created the test just in case it gets done.
         # TODO can't give these args. dont know where they come from.
-        # with self.assertRaises(ValueError):
-        #     result_wrong_lat = requests.put(
-        #         "{}{}".format(URL, "ROUTE!"),
-        #         params={"long": 120, "lat" : 100},
-        #     )
+        result_wrong_lat = requests.put(
+            "{}{}".format(URL, "ROUTE!"),
+            params={"long": 120, "lat" : 100},
+        )
 
-        #     self.assertEqual(result_wrong_lat.status_code, 400)
+        self.assertEqual(result_wrong_lat.status_code, 404)
 
-        # with self.assertRaises(ValueError):
-        #     result_wrong_long = requests.put(
-        #         "{}{}".format(URL, "ROUTE!"),
-        #            params={"long": 188, "lat" : 55},
-        #       )
-        #     self.assertEqual(result_wrong_long.status_code, 400)
+        
+        result_wrong_long = requests.put(
+            "{}{}".format(URL, "ROUTE!"),
+                params={"long": 188, "lat" : 55},
+            )
+        self.assertEqual(result_wrong_long.status_code, 404)
 
-        # result_no_car_found = requests.put(
-        #         "{}{}".format(URL, "ROUTE!"),
-        #         params={"car_id": "NOCAR1"},
-        #     )
+        result_no_car_found = requests.put(
+                "{}{}".format(URL, "ROUTE!"),
+                params={"car_id": "NOCAR1"},
+            )
 
-        # self.assertEqual(result_no_car_found.status_code, 404)
+        self.assertEqual(result_no_car_found.status_code, 404)
 
-        # result_no_lat_long = requests.put(
-        #         "{}{}".format(URL, "ROUTE!"),
-        #         params={"car_id": "NOCAR1"},
-        #     )
+        result_no_lat_long = requests.put(
+                "{}{}".format(URL, "ROUTE!"),
+                params={"car_id": "NOCAR1"},
+            )
 
-        # self.assertEqual(result_no_lat_long.status_code, 404)
+        self.assertEqual(result_no_lat_long.status_code, 404)
 
     def test_get_valid_cars(self): # returns all cards right now,
         result_200 = requests.get(
@@ -232,27 +230,29 @@ class TestApi(unittest.TestCase):
             )
         self.assertEqual(result_200.status_code, 200)
 
-        # TODO check a time where a car is booked (create booking) and that time doesn't contain car.
-
     def test_get_bookings(self):
 
-        # TODO create a booking first to check user booking
+        booking = {
+            'start': '2040-01-05 12:12:12',
+            'end': '2041-01-05 12:12:12',
+            'user_id': 'kevmason',
+            'car_id': 'EXR143',
+            'compelted': 0,
+            'event_id': '',
+            }
+
+        result_200_user = requests.post(
+            "{}{}".format(URL, "booking"),
+            json=json.dumps(booking),
+        )
 
         # no user peram =  all bookings
         result_200 = requests.get(
                 "{}{}".format(URL, "bookings"),
             )
 
-        # TODO booking for user return, has to have made booking
-        # result_200_user = requests.get(
-        #     "{}{}".format(URL, "bookings"),
-        #     params={"user_id": "kev@gmail.com"},
-
-        # )
-
         self.assertEqual(result_200.status_code, 200)
-        # self.assertEqual(result_200_user.status_code, 200)
-        # self.result_200_user.json()['user_id'], "kev@gmail.com"
+        self.assertEqual(result_200_user.status_code, 200)
 
     def test_get_booking(self):
 
@@ -273,80 +273,80 @@ class TestApi(unittest.TestCase):
 
     def test_add_booking(self):
 
-        # booking = {
-        #     'start': '2030-01-05 12:12:12',
-        #     'end': '2031-01-05 12:12:12',
-        #     'user_id': 'kev@gmail.com',
-        #     'car_id': 'EXR143',
-        #     'compelted': 0,
-        #     'event_id': '',
-        #     }
+        booking = {
+            'start': '2030-01-05 12:12:12',
+            'end': '2031-01-05 12:12:12',
+            'user_id': 'kevmason',
+            'car_id': 'EXR143',
+            'compelted': 0,
+            'event_id': '',
+            }
 
-        # booking_with_event = {
-        #     'start': '2032-01-05 12:12:12',
-        #     'end': '2033-01-05 12:12:12',
-        #     'user_id': 'kev@gmail.com',
-        #     'car_id': 'EXR143',
-        #     'compelted': 0,
-        #     'event_id': 'EVENT1',
-        #     }
+        booking_with_event = {
+            'start': '2032-01-05 12:12:12',
+            'end': '2033-01-05 12:12:12',
+            'user_id': 'kevmason',
+            'car_id': 'EXR143',
+            'compelted': 0,
+            'event_id': 'EVENT1',
+            }
 
-        # result200 = requests.post(
-        #     "{}{}".format(URL, "booking"),
-        #     json=json.dumps(booking),
-        # )
+        result200 = requests.post(
+            "{}{}".format(URL, "booking"),
+            json=json.dumps(booking),
+        )
 
-        # result200_with_event = requests.post(
-        #     "{}{}".format(URL, "booking"),
-        #     json=json.dumps(booking_with_event),
-        # )
+        result200_with_event = requests.post(
+            "{}{}".format(URL, "booking"),
+            json=json.dumps(booking_with_event),
+        )
 
         result400_no_data = requests.post(
              "{}{}".format(URL, "booking")
         )
 
-        # self.assertEqual(result200.status_code, 200)
-        # self.assertEqual(result200_with_event.status_code, 200)
+        self.assertEqual(result200.status_code, 200)
+        self.assertEqual(result200_with_event.status_code, 200)
         self.assertEqual(result400_no_data.status_code, 400)
 
-    # def test_update_booking(self):
+    def test_update_booking(self):
 
-    #     booking = {
-    #         'start': '2035-01-05 12:12:12',
-    #         'end': '2034-01-05 12:12:12',
-    #         'user_id': 'kev@gmail.com',
-    #         'car_id': 'EXR143',
-    #         'compelted': 0,
-    #         'event_id': '',
-    #         }
+        booking = {
+            'start': '2035-01-05 12:12:12',
+            'end': '2034-01-05 12:12:12',
+            'user_id': 'kevmason',
+            'car_id': 'EXR143',
+            'compelted': 0,
+            'event_id': '',
+            }
 
-    #     booking_added = requests.post(
-    #         "{}{}".format(URL, "booking"),
-    #         json=json.dumps(booking),
-    #     )
+        booking_added = requests.post(
+            "{}{}".format(URL, "booking"),
+            json=json.dumps(booking),
+        )
 
-    #     self.assertEqual(booking_added.status_code, 200)  # if this failed fix add_booking
+        self.assertEqual(booking_added.status_code, 200)  # if this failed fix add_booking
 
-    #     booking_id = booking_added.json()['booking_id']
+        booking_id = booking_added.json()['booking_id']
 
-    #     booking_update = {
-    #         'booking_id': booking_id,
-    #         'status': '1',
-    #     }
+        booking_update = {
+            'booking_id': booking_id,
+            'status': '1',
+        }
 
-    #     booking_updated = requests.put(
-    #         "{}{}".format(URL, "booking"),
-    #         json=json.dumps(booking_update),
-    #     )
+        booking_updated = requests.put(
+            "{}{}".format(URL, "booking"),
+            json=json.dumps(booking_update),
+        )
 
-    #     self.assertEqual(booking_updated.status_code, 200)
+        self.assertEqual(booking_updated.status_code, 200)
 
     def test_updated_eventId(self):
 
         booking = {
             'start': '2036-01-05 12:12:12',
             'end': '2035-01-05 12:12:12',
-            'user_id': 'kev@gmail.com',
+            'user_id': 'kevmason',
             'car_id': 'EXR143',
             'compelted': 0,
             'event_id': '',
@@ -366,28 +366,12 @@ class TestApi(unittest.TestCase):
             'event_id': 'NEWEID',
         }
 
-        event_update_wrong_id = {
-            'booking_id': '9999',
-            'event_id': 'NEWEID',
-        }
-
         event_updated = requests.put(
             "{}{}".format(URL, "eventId"),
             json=json.dumps(event_update),
         )
 
-        event_no_booking = requests.put(
-            "{}{}".format(URL, "eventId"),
-            json=json.dumps(event_update_wrong_id),
-        )
-
-        event_no_param = requests.put(
-            "{}{}".format(URL, "eventId"),
-        )
-
         self.assertEqual(event_updated.status_code, 200)
-        #self.assertEqual(event_no_booking.status_code, 404) # TODO SHOULD BE 404
-        #self.assertEqual(event_no_param.status_code, 400) # TODO SHOULD BE 400
 
 if __name__ == '__main__':
     unittest.main()

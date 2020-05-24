@@ -3,7 +3,9 @@ import app
 from api import api, DB_URI
 from datetime import timedelta
 from website import site
+import pickle
 import requests
+import FacialRecognition
 
 URL = "http://127.0.0.1:5000/"
 
@@ -23,18 +25,20 @@ class TestApp(unittest.TestCase):
         app_run.register_blueprint(api)
         app_run.app_context().push()
 
-    def test_page_not_found(self):
-        result404 = requests.get(
-            "{}{}".format(URL, "anywhereigoyougo")
+    
+    def test_encode_user(self):
+        result200 = requests.post(
+                "{}{}".format(URL, "/encode_user"),
+                params={"user_id": "kevmason", "directory": "user_data/face_pics/"}
+            )
+        self.assertEquals(result200.status_code, 200)
+
+    def test_get_encoding(self):
+        result200 = requests.get(
+            "{}{}".format(URL, "/get_encoding"),
+            params={"user_id": "kevmason"}
         )
-
-        self.assertEqual(result404.status_code, 404)
-        # TODO check content of response to that of our template file.
-        # self.assertEqual(result404.content, '/templates/404.html'.
-
-    # def test_internal(self): unsure how to invoke 500
-    # def test_page_not_found(self): unsure how to go to a restricted section without a 302 and redirect
-
+        self.assertIsNotNone(result200.content)
 
 if __name__ == '__main__':
     unittest.main()
