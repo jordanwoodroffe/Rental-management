@@ -1,0 +1,50 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% block javascript %}
+  <script>
+    function initMap() {
+    // Map options
+    var options = {
+        zoom:8,
+        center:{lat:-37.3601,lng:144.0589}
+    }
+
+      // New map
+      var map = new google.maps.Map(document.getElementById('map'), options);
+
+      // Get dict from python flask as json
+      var points = {{ points|safe }}
+      var infowindow = new google.maps.InfoWindow();
+      var marker;
+
+    for (let i = 0; i < points.length; i++) {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(points[i].lat, points[i].lng),
+            map: map
+        });
+        let content = '<h5 class="card-title">' + points[i].car_id + ': ' + points[i].name + '</h5>' +
+                '<p class="card-text">' + points[i].model.year  + ' ' + points[i].model.make + ' '
+                + points[i].model.model + '</p>'
+        google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
+        return function() {
+            infowindow.setContent(content);
+            infowindow.open(map, marker);
+            }
+        })(marker, i));
+    }
+  }
+  </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ&callback=initMap">
+  </script>
+{% endblock %}
+{% with page="map"%}
+{% include "nav.html" %}
+{% endwith %}
+<body style="padding-top: 56px;">
+  <div style="height: 100vh;" id="map"></div>
+</body>
+{% endblock %}

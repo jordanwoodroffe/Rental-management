@@ -1,0 +1,46 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="jumbotron">
+        <h1 class="display-4">User Login</h1>
+        <p class="lead">Please login with your existing details, or register now.</p>
+        <hr class="my-4">
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <form class="form-signin" method="POST">
+        <div class="form-row" style="min-height: 120px;">
+          {{ form.hidden_tag() }}
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.username)}}
+            <small id="usernameHelpBlock" class="form-text text-muted">
+              {% for error in form.username.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-6">
+            {{ wtf.form_field(form.password)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              {% for error in form.password.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
