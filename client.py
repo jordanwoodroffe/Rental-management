@@ -1,5 +1,5 @@
 import socket
-import FacialRecognition
+import facial_recognition
 import pickle
 import json, requests
 import time

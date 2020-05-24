@@ -7,9 +7,10 @@ Provides endpoints for accessing, inserting, and updating data from Google Cloud
 Instructions (Google MySQL Documentation): https://cloud.google.com/sql/docs/mysql/connect-external-app
 
 Short instructions:
+
 - Enable Cloud SQL Admin API for the project.
 - Create a new Google Cloud SQL Instance, then create a database.
-    - Copy the INSTANCE_CONNECTION_NAME from overview screen
+- Copy the INSTANCE_CONNECTION_NAME from overview screen
 - Install the proxy client (as per google doc instructions), make it executable
 - Invoke proxy via one of the following:
     - ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:<PORT> &
@@ -188,9 +189,8 @@ def get_user():
         user_id: id of user to fetch from db
 
     Returns:
-        200 if successful, along with user data as a json object
-        404 if user was not found
-        400 if request parameters were missing
+        :class:`flask.Response`: 200 if successful, along with user data as a json object, 404 if user was not
+        found, 400 if request parameters were missing
     """
     user_id = request.args.get('user_id')
     if user_id is not None:  # Check if user_id is provided
@@ -209,9 +209,8 @@ def add_user():
         user_data: data to be added (name, email, password, username) in the form of a json object
 
     Returns:
-        200 if successful
-        404 if user already exists (email associated with another user)
-        400 if invalid json structure/object
+        :class:`flask.Response`: 200 if successful, 404 if user already exists (email associated with another user), 400
+        if invalid json structure/object
     """
     user_data = request.get_json()
     response = None
@@ -228,6 +227,7 @@ def add_user():
                 user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
+                user.face_id = 0
                 user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.add(user)  # Add user to database
                 db.session.commit()
@@ -251,9 +251,8 @@ def user_authentication():
         password: password input from user attempting login
 
     Returns:
-        200 if successful, along with user data as a json object
-        400 if email/password parameter missing
-        404 if password or email were invalid
+        :class:`flask.Response`: 200 if successful, along with user data as a json object, 400 if email/password
+        parameter missing, 404 if password or email were invalid
     """
     user_id = request.args.get('user_id')
     password = request.args.get('password')
@@ -283,10 +282,13 @@ def user_authentication():
 def update_user():
     """Updates an existing user details: face_id when register on MP
 
+    Args:
+        user_id: username of user to fetch from database
+        face_id: value to update (1 if registered, 0 if not)
+
     Returns:
-        200 if successful, along with user data as json object
-        400 if invalid encoding, or if missing parameters
-        404 if user id/email invalid (not registered)
+        :class:`flask.Response`: 200 if successful, along with user data as json object, 400 if invalid encoding, or if
+        missing parameters, 404 if user id/email invalid (not registered)
     """
     user_id = request.args.get("user_id")
     face_id = request.args.get("face_id")
@@ -314,8 +316,7 @@ def get_cars():
     """Endpoint to return all the car objects in the database
 
     Returns:
-        200 if successful, along with all cars as a json object
-        500 if no cars found in database
+        :class:`flask.Response`: 200 if successful, along with all cars as a json object, 500 if no cars found in db
     """
     cars = Car.query.all()  # Get all cars in the Car table
     if cars is not None:
@@ -331,9 +332,8 @@ def get_car():
         car_id: id of car to fetch
 
     Returns:
-        200 if successful, along with Car data as json object
-        400 if request parameters are missing
-        404 if car_id was invalid (not in DB)
+        :class:`flask.Response`: 200 if successful, along with Car data as json object, 400 if request parameters are
+        missing, 404 if car_id was invalid (not in DB)
     """
     car_id = request.args.get('car_id')
     if car_id is not None:  # Check if car_id is provided
@@ -356,11 +356,13 @@ def update_car():
         car_id: id of car to unlock
         locked: locked value to update to (1= locked, 0= unlocked)
         user_id: id of user in db
+        lat: lat to update the car with
+        lng: lng to update the car with
 
     Returns:
-        200 if successful
-        400 if there are client errors (invalid json format, missing parameters)
-        404 if no valid results found: no bookings for car, or no valid bookings (valid start/end dates) for the car
+        :class:`flask.Response`: 200 if successful, 400 if there are client errors (invalid json format, missing
+        parameters), 404 if no valid results found: no bookings for car,or no valid bookings (valid start/end dates) for
+        the car
     """
     car_id = request.args.get('car_id')
     if car_id is not None:  # Check if car_id is is provided
@@ -409,11 +411,12 @@ def update_location(car_id):
 
     Args:
         car_id: id of car in db
+        lat: lat to update the car with (request param)
+        lng: lng to update the car with (request param)
 
     Returns:
-        200 if successful
-        400 if lng/lat invalid format: outside ranges, not float values
-        404 if car_id is invalid: not found in database
+        :class:`flask.Response`: 200 if successful, 400 if lng/lat invalid format: outside ranges, not float values, 404
+         if car_id is invalid: not found in database
     """
     lng = request.args.get('lng')
     lat = request.args.get('lat')
@@ -447,7 +450,7 @@ def get_valid_cars(start, end):
         end: end datetime of booking
 
     Returns:
-        JSON object containing valid options for booking
+        JSON: object containing valid options for booking
     """
     bookings = Booking.query.filter_by(completed=0)
     booked_cars = []
@@ -465,8 +468,12 @@ def get_valid_cars(start, end):
 def get_bookings():
     """Returns a list of bookings, optionally with user_id returns bookings for a user
 
+    Args:
+        user_id: username of user to get bookings for
+        status: filter bookings by their status (0 - booked, 1 - completed, 2 - cancelled)
+
     Returns:
-        JSON object containing user bookings
+        :class:`flask.Response`: 200, along with the booking data (empty if none found)
     """
     user_id = request.args.get('user_id')
     if user_id is None:  # Check if user_id is provided
@@ -494,9 +501,8 @@ def get_booking():
         booking_id: id of booking (int)
 
     Returns:
-        200 if successful, along with booking data as a json object
-        400 if params missing: booking_id
-        404 if booking id is invalid: not in database
+        :class:`flask.Response`: 200 if successful, along with booking data as a json object, 400 if params missing
+        (booking_id), 404 if booking id is invalid: not in database
     """
     booking_id = request.args.get('booking_id')
     if booking_id is not None:  # Check if booking_id is provided
@@ -513,12 +519,11 @@ def add_booking():
     """Adds a booking to the database
 
     Args:
-        booking data as a json object
+        booking data: a json object
 
     Returns:
-        200 if successful, along with booking id
-        400 if invalid: overlapped with existing bookings
-        400 if invalid/missing params, or invalid json structure
+        :class:`flask.Response`: 200 if successful, along with booking id, 400 if invalid: overlapped with existing
+        bookings, 400 if invalid/missing params, or invalid json structure
     """
     request_data = request.get_json()  # Get booking data from parameter
     if request_data is not None:
@@ -526,6 +531,8 @@ def add_booking():
             data = json.loads(request_data)
         except JSONDecodeError:
             return Response("Invalid json data received", status=400)
+        if User.query.get(data['user_id']) is None:
+            return Response("User is not in database", status=404)
         booking = Booking()  # Create booking object and add booking data
         booking.start = datetime.strptime(data['start'], "%Y-%m-%d %H:%M:%S")
         booking.end = datetime.strptime(data['end'], "%Y-%m-%d %H:%M:%S")
@@ -578,10 +585,12 @@ def valid_booking(proposed: Booking) -> bool:
 def update_booking():
     """Update a booked booking status: cancelled
 
+    Args:
+        booking data: in the form of a json object
+
     Returns:
-        200 if successful, and booking data as a json object
-        400 if invalid json data received in request
-        404 if booking id was invalid: not in database
+        :class:`flask.Response`: 200 if successful, and booking data as a json object, 400 if invalid json data received
+         in request, 404 if booking id was invalid: not in database
     """
     data = request.get_json()
     response = None
@@ -612,6 +621,9 @@ def update_booking():
 @api.route("/eventId", methods=['PUT'])
 def update_eventId():
     """Update eventid (used to identify google calendar event) for booking
+
+    Args:
+        booking data: in the form of a json object
 
     Returns:
         Success if processed correctly, otherwise error corresponding to the problem
@@ -646,7 +658,10 @@ def update_eventId():
 @api.route("/populate", methods=['GET'])
 def populate():
     """populates database with dummy data using csv files (see test_data directory).
-    Populates users if none found in database, and populates cars/models if models are not found in database
+    populates users if none found in database, and populates cars/models if models are not found in database
+
+    Returns:
+        json object noting if a table was populated (boolean value)
     """
     response = {}
     if User.query.first() is None:

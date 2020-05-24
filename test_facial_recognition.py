@@ -1,5 +1,5 @@
 import unittest
-from FacialRecognition import AbstractFaceDetector, FaceDetector
+from facial_recognition import AbstractFaceDetector, FaceDetector
 import pickle
 from os import path
 

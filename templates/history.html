@@ -9,7 +9,7 @@
 {% endwith %}
 <body style="padding-top: 4.5rem">
   <div class="container">
-    {% if user_bookings != None %}
+    {% if user_bookings != None and user_bookings|length > 0 %}
     <h5>Filter bookings</h5>
     <div class="row mb-3">
       <div class="col-md-3">

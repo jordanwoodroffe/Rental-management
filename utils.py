@@ -1,5 +1,7 @@
 """
-Houses utility methods used in MasterPI application
+Houses utility methods used in MP application
+
+used in date processing, password encryption, and file formatting
 """
 import hashlib
 import random
@@ -17,7 +19,7 @@ def get_random_alphaNumeric_string(stringLength):
         stringLength: length of random string
 
     Returns:
-        generated string of desired length
+        str: generated string of desired length
     """
     lettersAndDigits = string.ascii_letters + string.digits
     return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
@@ -31,7 +33,7 @@ def hash_password(password, salt):
         salt: salt to hash with password
 
     Returns:
-        hash & salt password
+        hash & salt of input password
     """
     saltedpassword = password + salt
     password = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
@@ -47,7 +49,7 @@ def verify_password(stored_password, test_password, salt):
         salt: salt to encode with
 
     Returns:
-        boolean value indicating successful match
+        boolean: value indicating successful match
     """
     test_password = hashlib.pbkdf2_hmac('sha256', test_password.encode(), salt.encode(), 100000)
     if test_password.hex() == stored_password:
@@ -56,15 +58,18 @@ def verify_password(stored_password, test_password, salt):
 
 
 def compare_dates(d_start: datetime, d_end: datetime, b_start: datetime, b_end: datetime) -> bool:
-    """
-    Compares dates to see if there is an overlap. An overlaps occur if the proposed booking starts before/at the end
+    """Compares dates to see if there is an overlap. An overlaps occur if the proposed booking starts before/at the end
     of an  existing booking, or if the end of the proposed booking occurs after the start of an existing booking,
     or if both the proposed bookings start and end dates are respectively greater than or less than existing bookings
-    Args: d_start: proposed booking start datetime d_end: proposed booking end datetime b_start: an existing bookings
-    start b_end: an existing bookings end
+
+    Args:
+        d_start: proposed booking start datetime
+        d_end: proposed booking end datetime
+        b_start: an existing bookings start
+        b_end: an existing bookings end
 
     Returns:
-        a boolean value indicating whether an overlap occurred: True if there was an overlap
+        boolean: value indicating whether an overlap occurred: True if there was an overlap
     """
     if b_start <= d_end <= b_end:
         return True
@@ -87,7 +92,7 @@ def calc_hours(d1: datetime, d2: datetime) -> int:
         d2: second date to compare
 
     Returns:
-        abs value of hours between the two dates (an int)
+        int: abs value of hours between the two dates (an int)
     """
     diff = d1 - d2
     days, seconds = diff.days, diff.seconds
@@ -103,7 +108,7 @@ def allowed_file(filename):
         filename: filename to check
 
     Returns:
-        boolean value indicating if found in allowed extensions
+        boolean: value indicating if found in allowed extensions
     """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

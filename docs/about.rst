@@ -10,19 +10,27 @@ Group Members
 -------------
 Đào Việt Quang
 ^^^^^^^^^^^^^^
-S3687103
+Student number: S3687103
+
+Github: `dandandao <https://github.com/DanDanDao>`_
 
 Donald U'Ren
 ^^^^^^^^^^^^
-S3686963
+Student number: S3686963
 
-Jordy Woodroffe
-^^^^^^^^^^^^^^^
-SXXXXXXX
+Github: `donald-uren <https://github.com/donald-uren>`_
 
 Evan Mason
 ^^^^^^^^^^
-S3688949
+Student number: S3688949
+
+Github: `Evzy <https://github.com/Evzy>`_
+
+Jordy Woodroffe
+^^^^^^^^^^^^^^^
+Student number: S3751435
+
+Github: `jordanwoodroffe <https://github.com/jordanwoodroffe>`_
 
 Contributions
 -------------
@@ -66,8 +74,8 @@ Registration on MP Web App - :ref:`Đào Việt Quang`
 Part D: Unit Tests (15%)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Part A unit tests - :ref:`Jordy Woodroffe`
+Part A unit tests - :ref:`Evan Mason`
 
-Part B unit tests - :ref:`Jordy Woodroffe`
+Part B unit tests - :ref:`Evan Mason`
 
-Part C unit tests  - :ref:`Jordy Woodroffe`
+Part C unit tests  - :ref:`Evan Mason`

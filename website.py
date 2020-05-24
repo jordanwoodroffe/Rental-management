@@ -1,8 +1,8 @@
 """
 MP Web App
 
-website.py renders html templates and handles page endpoints
-handles input validation for login, register, booking, and cancel
+website.py renders html templates and handles page endpoints.
+Also handles input validation for login, register, booking, and cancel, along with processing forms.
 """
 import json
 import re
@@ -221,7 +221,10 @@ def main():
     """
     if 'user' in session:  # If user is logged in, go to main page and display cars's location
         result = requests.get("{}{}".format(URL, "/cars"), params={})
-        test = result.json()
+        try:
+            test = result.json()
+        except JSONDecodeError:
+            test = []  # error - unable to load cars
         return render_template("main.html", user=session['user'], points=json.dumps(test))
     return redirect(url_for("site.home"))  # Else go to home page
 
@@ -235,8 +238,7 @@ def capture_user():
     """
     if 'user' in session:
         if request.method == 'POST':
-            # check if the post request has the file
-            files = request.files.getlist("image")
+            files = request.files.getlist("image")  # check if the post request has the file
             if len(files) < 5:
                 flash('You need at least 5 photos to register')
                 return redirect(url_for("site.main"))
@@ -253,8 +255,7 @@ def capture_user():
                 os.makedirs(directory)
             for file in files:
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(directory, filename))  # Add user photos to user_data/face_pics/user_name
-            # folder
+                file.save(os.path.join(directory, filename))  # Add user photos to user_data/face_pics/user_name folder
             result = requests.post(
                 "{}{}".format(URL, "/encode_user"),
                 params={"user_id": session['user']['username'], "directory": directory}
@@ -383,7 +384,7 @@ def process_booking():
                         "end": end,
                         "booking_id": booking_id
                     }
-                )]
+                )]  # create success message - displayed as bootstrap alerts
             else:
                 messages = [(
                     "warning",
@@ -392,7 +393,7 @@ def process_booking():
                         "data": "Unable to create booking",
                         "error": response.text
                     }
-                )]
+                )]  # append error message - displayed as bootstrap alerts
         return render_template("booking.html", form=BookingQueryForm(), messages=messages)
     return redirect(url_for('site.home'))
 
@@ -457,7 +458,7 @@ def cancel_booking():
             status = 2
             result = requests.get(
                 "{}{}".format(URL, "booking"), params={"booking_id": booking_id}
-            )
+            )  # get the booking and determine if booking id was valid
             if result.status_code == 200:
                 data = result.json()
                 if data['user_id'] != session['user']['username']:
@@ -484,14 +485,14 @@ def cancel_booking():
                     http_auth = credentials.authorize(Http())
                     service = discovery.build('calendar', 'v3', http=http_auth)
 
-                if 'cancel' in session:
+                if 'cancel' in session:  # reload cancelaation info after google authentication
                     booking_id = session['cancel']
                     session.pop('cancel', None)
                     booking = requests.get(
                         "{}{}".format(URL, "/booking"), params={"booking_id": booking_id}
                     )
                     event_id = booking.json()['event_id']
-                    if event_id is not None:  # Remove event from google calendar
+                    if event_id is not None:  # Remove event from google calendar if possible
                         delete_event = service.events().delete(calendarId="primary", eventId=event_id,
                                                                sendUpdates="all").execute()
                 try:
@@ -505,7 +506,7 @@ def cancel_booking():
                         "message": "Booking successfully cancelled!",
                         "data": data
                     }
-                ))
+                ))  # append success message
             else:
                 messages.append((
                     "warning",
@@ -513,7 +514,7 @@ def cancel_booking():
                         "message": "Unable to cancel booking",
                         "data": response.text
                     }
-                ))
+                ))  # append error message
         return redirect(url_for('site.render_cancel_page', messages=json.dumps(messages)))
     return redirect(url_for('site.home'))
 
@@ -648,7 +649,7 @@ def add_event():
                 "booking_id": booking_id,
                 "time_start": time_start,
                 "time_end": time_end
-            }
+            }  # save booking information in session while redirect to google authentication
 
         if 'credentials' not in session:  # Check for google credential
             return redirect(url_for('site.oauth2callback'))  # If not, get one

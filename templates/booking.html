@@ -324,7 +324,7 @@
               <!-- <a href="/book?id={{car.id}}" class="btn btn-primary">Book now</a> -->
               <form action="/book?car_id={{car.car_id}}&start={{start}}&end={{end}}" class="form-signup" method="POST">
                 <button type="submit" class="btn btn-primary" name="submit">Book now</button>
-                <a class="btn btn-secondary" data-toggle="collapse" href="#additionalDetails-{{car.car_id}}" role="button" aria-expanded="false" aria-controls="additionalDetails">Additional details</a>
+                <a class="btn btn-secondary mt-1 mt-lg-0" data-toggle="collapse" href="#additionalDetails-{{car.car_id}}" role="button" aria-expanded="false" aria-controls="additionalDetails">Additional details</a>
                 <div class="collapse" id="additionalDetails-{{car.car_id}}" style="position: absolute; z-index: 100;">
                   <div class="card card-body">
                     <p class="card-text">Transmission: <span class="transmission-value">{{car.model.transmission}}</span></p>

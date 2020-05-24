@@ -11,7 +11,10 @@ Welcome to Car Share Application's documentation!
    :caption: Contents:
 
    about
-   code
+   mp-code
+   ap-code
+   facial-recognition
+   unit-tests
 
 Indices and tables
 ==================

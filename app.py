@@ -2,7 +2,7 @@
 MP Flask Web App
 
 Creates Flask app and registers database :class:`api` and :class:`website` endpoints.
-Contains endpoints for encoding and accessing :class:`FacialRecognition` functionality.
+Contains endpoints for encoding and accessing :class:`facial_recognition` functionality.
 
 """
 import pickle
@@ -10,7 +10,7 @@ import os
 
 from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
-from FacialRecognition import FaceDetector
+from facial_recognition import FaceDetector
 from api import api, db, DB_URI
 from website import site
 from datetime import timedelta
@@ -29,12 +29,13 @@ app.register_blueprint(api)
 def encode_user():
     """Encodes a user: captures and encodes face from images and stores as a pickle file locally
 
-    Params:
+    Args:
         user_id: id/email of user to encode (i.e. register their face)
         directory: path to directory to take images from
 
     Returns:
-        :class:`flask.Response` object, 200 if successful otherwise returns a corresponding error (400 for missing param)
+        :class:`flask.Response`: 200 if successful otherwise returns a corresponding error, 400 if unable to encode face
+         (none found), or 404 if missing params
     """
     user_id = request.args.get('user_id')
     directory = request.args.get('directory')
@@ -51,13 +52,16 @@ def encode_user():
         else:
             response = Response("Error - unable to capture/encode faces", status=404)
     else:
-        response = Response("Error - incorrect request params", status=400)
+        response = Response("Error - incorrect request Args", status=400)
     return response
 
 
 @app.route("/get_encoding", methods=['GET'])
 def get_encoding():
     """Returns an encoding for a user: stored in user_data/pickles
+
+    Args:
+        user_id: username of use to retrieve pickle for
 
     Returns:
         data for a user, otherwise None if not found
@@ -78,8 +82,8 @@ def auth_by_face():
         user_id: username of user
 
     Returns:
-        :class:`flask.Response` with 200 and :class:`FacialRecognition.AbstractFaceDetector.Match` if successful, or 400
-        if incorrect request params
+        :class:`flask.Response`: 200 and :class:`FacialRecognition.AbstractFaceDetector.Match` if successful, or 400
+        if incorrect request Args
     """
     directory = request.args.get('directory')
     user_id = request.args.get('user_id')
@@ -117,13 +121,11 @@ def internal(error):
     return render_template("500.html"), 500
 
 
-
-
-
 Bootstrap(app)
 db.init_app(app)
 
 if __name__ == '__main__':
+    """Run the flask application"""
     # db.drop_all(app=app)
     db.create_all(app=app)
     app.run(debug=True, host="0.0.0.0")

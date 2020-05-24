@@ -86,8 +86,8 @@
           </div>
           <div class="card-body">
             <h5>{{user.f_name}} {{user.l_name}}</h5>
-            <p style="margin-bottom: 0;">@{{user.username}}</p>
-            <p>{{user.email}}</p>
+            <p class="mb-0">@{{user.username}}</p>
+            <p class="mt-2 mb-0">{{user.email}}</p>
           </div>
         </div>
         <div class="card bg-light mt-3">
@@ -97,8 +97,6 @@
           <div class="card-body">
             {% if user.face_id == False %}
             <p class="card-text">Register for Facial Recognition, used to unlock booked cars.</p>
-            <!-- <a href="#" id="fr_capture" class="btn btn-primary">Register Now</a> -->
-            <!-- Button trigger modal -->
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
               Register Now
             </button>

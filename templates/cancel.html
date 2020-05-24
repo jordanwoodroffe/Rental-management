@@ -23,7 +23,7 @@
   {% endif %}
   <div class="container">
     {% if user_bookings != None and user_bookings|length > 0 %}
-    <form class="pb-3" action="/cancel" method="post" onsubmit="displayvalues()">
+    <form class="pb-3" action="/cancel" method="post">
       <div class="form-row">
         <h5 class="col-md-3">Select bookings</h5>
       </div>
@@ -86,11 +86,6 @@
       button.classList.remove("btn-danger");
       button.classList.add("btn-secondary");
     }
-  }
-
-  function displayvalues(){
-    let select = document.getElementById("booking-select");
-    alert(select.value)
   }
 </script>
 </body>

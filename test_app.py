@@ -5,7 +5,7 @@ from datetime import timedelta
 from website import site
 import pickle
 import requests
-import FacialRecognition
+import facial_recognition
 
 URL = "http://127.0.0.1:5000/"
 
