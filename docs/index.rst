@@ -7,12 +7,11 @@ Welcome to Car Share Application's documentation!
 =================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    about
    code
-   unit-tests
 
 Indices and tables
 ==================

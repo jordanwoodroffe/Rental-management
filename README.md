@@ -34,6 +34,9 @@ $ flask run
 ```
 The website will run at ***LOCAL_IP:5000***
 
+In order to enable Google Calendar for private IP addresses, access site though ***LOCAL_IP.xip.io:5000***
+> xip.io is a magic domain name that provides wildcard DNS for any IP address.
+
 ## How to use
 - populate the database with data if empty:
   - ```/populate``` endpoint provides auto-load function for sample data [```test_data/*.csv```](https://github.com/jordanwoodroffe/IOTA2/test_data)

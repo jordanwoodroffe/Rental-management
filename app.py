@@ -117,6 +117,9 @@ def internal(error):
     return render_template("500.html"), 500
 
 
+
+
+
 Bootstrap(app)
 db.init_app(app)
 
