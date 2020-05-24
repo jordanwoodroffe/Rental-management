@@ -197,32 +197,32 @@ class TestApi(unittest.TestCase):
         # TODO can't test with no route for the values to pass into but i created the test just in case it gets done.
         # TODO can't give these args. dont know where they come from.
         result_wrong_lat = requests.put(
-            "{}{}".format(URL, "ROUTE!"),
+            "{}{}".format(URL, "car"),
             params={"long": 120, "lat" : 100},
         )
 
-        self.assertEqual(result_wrong_lat.status_code, 404)
+        self.assertEqual(result_wrong_lat.status_code, 400)
 
         
         result_wrong_long = requests.put(
-            "{}{}".format(URL, "ROUTE!"),
+            "{}{}".format(URL, "car"),
                 params={"long": 188, "lat" : 55},
             )
-        self.assertEqual(result_wrong_long.status_code, 404)
+        self.assertEqual(result_wrong_long.status_code, 400)
 
         result_no_car_found = requests.put(
-                "{}{}".format(URL, "ROUTE!"),
+                "{}{}".format(URL, "car"),
                 params={"car_id": "NOCAR1"},
             )
 
-        self.assertEqual(result_no_car_found.status_code, 404)
+        self.assertEqual(result_no_car_found.status_code, 400)
 
         result_no_lat_long = requests.put(
-                "{}{}".format(URL, "ROUTE!"),
-                params={"car_id": "NOCAR1"},
+                "{}{}".format(URL, "car"),
+                params={"car_id": "VB"},
             )
 
-        self.assertEqual(result_no_lat_long.status_code, 404)
+        self.assertEqual(result_no_lat_long.status_code, 400)
 
     def test_get_valid_cars(self): # returns all cards right now,
         result_200 = requests.get(
