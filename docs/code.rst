@@ -50,3 +50,32 @@ Facial Recognition Application
 
 .. autoclass:: FaceDetector
     :members:
+
+Unit Tests
+**********
+
+Recognition Tests
+-----------------
+.. automodule:: RecognitionTests
+    :members:
+
+API Tests
+---------
+.. automodule:: test_api
+    :members:
+
+App Tests
+---------
+.. automodule:: test_app
+    :members:
+
+Utility Function Tests
+----------------------
+.. automodule:: test_utils
+    :members:
+
+Website Tests
+-------------
+.. automodule:: test_website
+    :members:
+

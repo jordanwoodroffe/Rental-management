@@ -24,7 +24,10 @@ from json.decoder import JSONDecodeError
 from sqlalchemy import DateTime, Integer, Float, ForeignKey, LargeBinary
 from flask import Flask, Blueprint, request, Response
 from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from flask_marshmallow import Marshmallow
 from marshmallow import fields
 from sqlalchemy.orm import sessionmaker
 from utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates, calc_hours
@@ -378,7 +381,6 @@ def update_car():
             if bookings.count() > 0:  # If any bookings were found
                 valid_bookings = []
                 for booking in bookings:
-                    # TODO: booking.start <= datetime.now() <= booking.end? check overdue return?
                     if booking.start <= datetime.now():  # Booking has started and booking has not ended
                         valid_bookings.append(booking)
                 if len(valid_bookings) == 0:  # No bookings found for user/car
@@ -392,7 +394,10 @@ def update_car():
                 if locked_val == 1:  # If car is to be locked/returned
                     Booking.query.get(valid_bookings[0].booking_id).completed = 1
                     db.session.commit()
-                    message += ", booking has been completed"
+                    if valid_bookings[0].end < datetime.now():  # car was returned after due date: add overdue message
+                        message += ", return of car was overdue"
+                    else:
+                        message += ", booking has been completed"
                 return Response(message, status=200)
             else:
                 return Response("No bookings found - invalid parameters", status=404)
@@ -469,7 +474,7 @@ def get_bookings():
     else:
         status = request.args.get('status')  # Get status from parameter
         if status is not None:  # If status is provided
-            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.username == user_id)  #
+            bookings = Booking.query.filter_by(completed=int(status)).join(User).filter(User.username == user_id)
             # booking of user with user_id and status is status
         else:
             bookings = Booking.query.join(User).filter(User.username == user_id)  # If no status is provided,

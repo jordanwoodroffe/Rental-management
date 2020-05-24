@@ -23,7 +23,9 @@ from werkzeug.utils import secure_filename
 
 site = Blueprint("site", __name__)
 
-URL = "http://127.0.0.1:5000/"
+IP = "http://127.0.0.1"
+PORT = "5000/"
+URL = "{}:{}".format(IP, PORT)
 
 
 def valid_name(form, field):
@@ -407,7 +409,7 @@ def render_cancel_page():
             "{}{}".format(URL, "/bookings"), params={"user_id": session['user']['username'], "status": 0}
         )  # Get all booking of user with username
         try:
-            bookings_data = bookings.json()
+            bookings_data = get_valid_bookings(bookings.json())
         except JSONDecodeError as je:
             bookings_data = None
         messages = request.args.get('messages')
@@ -420,6 +422,24 @@ def render_cancel_page():
             message_data = None
         return render_template("cancel.html", user_bookings=bookings_data, messages=message_data)
     return redirect(url_for('site.home'))
+
+
+def get_valid_bookings(bookings: []) -> []:
+    """Extracts valid bookings to display for cancellation: user can only cancel an upcoming booking
+
+    Args:
+        bookings: list of bookings
+
+    Returns:
+        valid_bookings: list of bookings that end after the current time
+
+    """
+    valid_bookings = []
+    for booking in bookings:
+        if datetime.strptime(booking['end'], "%Y-%m-%d %H:%M:%S") >= datetime.now():
+            valid_bookings.append(booking)
+    return valid_bookings
+
 
 
 @site.route("/cancel", methods=['POST'])
