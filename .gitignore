@@ -101,6 +101,7 @@ ENV/
 # google cloud proxy
 cloud_sql_proxy
 credential.json
+credentials.json
 
 # user data
 user_data
