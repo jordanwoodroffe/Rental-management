@@ -585,7 +585,7 @@ def search_cars():
     NOTE - functionality also available on booking.html
 
     Returns:
-        search.html if user logged in, otherwise index.html
+        vehicles.html if user logged in, otherwise index.html
     """
     if 'user' in session:  # Check if user is logged in
         cars = requests.get(

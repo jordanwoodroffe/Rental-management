@@ -1,0 +1,70 @@
+{% extends "bootstrap/base.html" %}
+
+{% block head %}
+{{ super() }}
+{{map.js}}
+{% endblock %}}
+
+{% block content %}
+
+{% with page="main", type="ENGINEER"%}
+{% include "employee/nav.html" %}
+{% endwith %}
+<script src="{{ url_for('static', filename='scripts/main.js')}}"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://kit.fontawesome.com/6b539ad364.js" crossorigin="anonymous"></script>
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card bg-light mb-4 employee">
+          <div class="card-header">
+            Profile
+          </div>
+          <div class="card-img-top d-flex justify-content-center" style="padding-top: 5px">
+            <i class="fas fa-user fa-7x"></i>
+          </div>
+          <div class="card-body">
+            <h5>{{user.f_name}} {{user.l_name}}</h5>
+            <p class="mb-0">@{{user.username}}</p>
+            <p class="mt-2 mb-0">{{user.email}}</p>
+          </div>
+        </div>
+        {% if reports != None and reports|length > 0 %}
+        <div style="overflow: scroll; max-height: 50vh">
+          {% for report in reports %}
+          <div class="card bg-light mb-4 report">
+              <div class="card-body">
+                <h5 class="card-title car-rego">Vehicle: {{report.car.car_id}}</h5>
+                <p class="card-text">{{report.car.model.make}} {{report.car.model.model}}, {{report.car.model.year}}</p>
+                <p class="card-text">Reported on {{report.report_date}}</p>
+                <hr>
+                <h5 class="card-title">Details</h5>
+                <p class="card-text">{{report.details}}</p>
+              </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card bg-light">
+          <div class="card-body">
+            <h5 class="card-title text-center font-italic align-middle">No reports found</h5>
+            <p class="card-text text-center"><small>No requests for repairs were found in the database</small></p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-8">
+        <div class="card bg-light mt-3 mt-md-0">
+          <div class="card-header">
+            Map
+          </div>
+          <div id="map" class="card-body" style="padding:0;">
+            {{map.html}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock %}

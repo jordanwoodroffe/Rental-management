@@ -1,0 +1,81 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="jumbotron">
+        <h1 class="display-4">Update Employee</h1>
+        <p class="lead">Update details by completing the form below.</p>
+        <hr class="my-4">
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <form class="form-signin" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.first_name)}}
+            <small id="firstnameHelpBlock" class="form-text text-muted">
+              {% for error in form.first_name.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.last_name)}}
+            <small id="lastnameHelpBlock" class="form-text text-muted">
+              {% for error in form.last_name.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.type)}}
+            <small id="typeHelpBlock" class="form-text text-muted">
+              {% for error in form.type.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.username)}}
+            <small id="usernameHelpBlock" class="form-text text-muted">
+              {% for error in form.username.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.email)}}
+            <small id="emailHelpBlock" class="form-text text-muted">
+              {% for error in form.email.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.password)}}
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              {% for error in form.password.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a class="btn btn-secondary text-light" href="/view_employees">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

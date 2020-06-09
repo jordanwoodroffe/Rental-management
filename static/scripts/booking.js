@@ -224,10 +224,12 @@ var filter = function () {
     var weight = x[i].querySelectorAll(".weight-value")[0].innerHTML;
     var length = x[i].querySelectorAll(".length-value")[0].innerHTML;
     var engine = x[i].querySelectorAll(".engine-value")[0].innerHTML;
-
+    var rego = x[i].querySelectorAll(".rego-value")[0].innerHTML;
     if (
       (transmission != transmissionVal && transmissionVal != "All") ||
       (!make.toLowerCase().includes(searchVal.toLowerCase()) &&
+        searchVal != "") ||
+      (!rego.toLowerCase().includes(searchVal.toLowerCase()) &&
         searchVal != "") ||
       (!make.includes(makeVal) && makeVal != "All") ||
       (!make.includes(yearVal) && yearVal != "All") ||

@@ -30,6 +30,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from flask_marshmallow import Marshmallow
 from marshmallow import fields
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm import sessionmaker
 from customer_app.utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates, calc_hours
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
@@ -70,12 +71,14 @@ class User(db.Model):
 
 class Employee(db.Model):
     """Employee table - contains basic employee information"""
+    __tablename__ = "employee"
     username = db.Column('username', VARCHAR(12), primary_key=True, nullable=False)
     email = db.Column('email', VARCHAR(45), nullable=False)
     f_name = db.Column('first_name', VARCHAR(45), nullable=False)
     l_name = db.Column('last_name', VARCHAR(45), nullable=False)
     password = db.Column('password', TEXT(75), nullable=False)
     type = db.Column('type', VARCHAR(45), nullable=False)
+    mac_address = db.Column('mac_address', VARCHAR(80), nullable=True)
 
 
 class Car(db.Model):
@@ -89,9 +92,6 @@ class Car(db.Model):
     locked = db.Column('available', TINYINT(1), nullable=False)
     lng = db.Column('lng', Float())
     lat = db.Column('lat', Float())
-    employee_id = db.Column('employee_id', VARCHAR(12), ForeignKey('employee.username'), nullable=True)
-    employee = db.relationship("Employee")
-    repair_required = db.Column('repair_required', TINYINT(1), nullable=False, default=0)
 
 
 class CarModel(db.Model):
@@ -126,6 +126,20 @@ class Booking(db.Model):
     event_id = db.Column('event_id', VARCHAR(45))
 
 
+class CarReport(db.Model):
+    """CarReport table: used to track repairs on vehicles"""
+    __tablename__ = "car_report"
+    report_id = db.Column('report_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
+    car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
+    car = db.relationship('Car')
+    engineer_id = db.Column('engineer_id', VARCHAR(12), ForeignKey('employee.username'), nullable=True)
+    engineer = db.relationship('Employee')
+    details = db.Column('details', VARCHAR(280), nullable=True)
+    report_date = db.Column('report_date', DateTime(), nullable=False)
+    complete_date = db.Column('complete_date', DateTime(), nullable=True)
+    resolved = db.Column('resolved', TINYINT(1), default=0)
+
+
 class Encoding(db.Model):
     """Encoding Table: contains image encoding information (NOTE: not used currently, as per discussion forum advice)"""
     __tablename__ = "encoding"
@@ -147,12 +161,12 @@ class UserSchema(ma.Schema):
         fields = ("username", "email", "f_name", "l_name", "face_id")
 
 
-class EmployeeScehma(ma.Schema):
+class EmployeeSchema(ma.Schema):
     """Schema to expose Employee record information"""
 
     class Meta:
         model = Employee
-        fields = ("username", "email", "f_name", "l_name", "type")
+        fields = ("username", "email", "f_name", "l_name", "type", "mac_address")
 
 
 class CarModelSchema(ma.Schema):
@@ -169,11 +183,9 @@ class CarSchema(ma.Schema):
 
     class Meta:
         model = Car
-        fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng",
-                  "employee_id", "employee", "repair_required")
+        fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
 
     model = fields.Nested(CarModelSchema)
-    employee = fields.Nested(EmployeeScehma)
 
 
 class BookingSchema(ma.Schema):
@@ -187,10 +199,237 @@ class BookingSchema(ma.Schema):
     car = fields.Nested(CarSchema)
 
 
+class ReportSchema(ma.Schema):
+    """Schema to expose CarReport table, including nested/foreign key records"""
+
+    class Meta:
+        model = CarReport
+        fields = ("report_id", "car_id", "car", "engineer_id", "engineer", "details", "report_date", "complete_date",
+                  "resolved")
+
+    car = fields.Nested(CarSchema)
+    engineer = fields.Nested(EmployeeSchema)
+
+
 def create_app():
     app = Flask(__name__)
     db.init_app(app)
     return app
+
+
+@api.route("/employees", methods=['GET'])
+def get_employees():
+    """Endpoint to return employees from database"""
+    employees = Employee.query.all()
+    if employees is not None:
+        return Response(
+            EmployeeSchema(many=True).dumps(employees), status=200, mimetype="application/json"
+        )
+    return Response("No employees found", status=500)
+
+
+@api.route("/employee", methods=['GET'])
+def get_employee():
+    """Endpoint to return an employee from the database
+
+    Args:
+        employee_id: username of employee to return
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, along with user data as a json object, 404 if user was not found,
+        400 if request parameters were missing
+    """
+    employee_id = request.args.get("employee_id")
+    if employee_id is not None:
+        employee = Employee.query.get(employee_id)
+        if employee is not None:
+            print("GET EMPLOYEE")
+            return Response(EmployeeSchema().dumps(employee), status=200, mimetype="application/json")
+        return Response("Employee {} not found".format(employee_id), status=404)
+    return Response("user_id param not found", status=400)
+
+
+@api.route("/employee", methods=['POST'])
+def create_employee():
+    """Endpoint to create a new employee
+
+    Args:
+        employee_data: data to be added (username, email, password, names, type)
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 404 if employee already exists (email associated with another
+        employee), 400 if invalid json structure/object
+    """
+    employee_data = request.get_json()
+    response = None
+    try:
+        if employee_data is None:  # Check if user_data is provided or not
+            response = Response(status=400)
+        else:
+            data = json.loads(employee_data)
+            employee = Employee.query.get(data['username'])  # Check if username is already used
+            if employee is None:
+                salt = get_random_alphaNumeric_string(10)  # Randomise salt
+                employee = Employee()  # Create user object and add user_data to it
+                employee.username = data['username']
+                employee.email = data['email']
+                employee.f_name = data['f_name']
+                employee.l_name = data['l_name']
+                employee.type = data['type']
+                employee.password = hash_password(data['password'], salt) + ':' + salt
+                db.session.add(employee)  # Add user to database
+                db.session.commit()
+                response = Response(status=200)
+            else:
+                response = Response("Invalid employee_id: already exists", status=404)
+    except JSONDecodeError as de:
+        response = Response("Unable to decode employee object", status=400)
+    except ValueError as ve:
+        response = Response("Unable to access value", status=400)
+    finally:
+        return response
+
+
+@api.route("/employee/authenticate", methods=['GET', 'POST'])
+def employee_authentication():
+    """Endpoint to authenticate an employee logging in to MP webapp using username and password
+
+    Args:
+        employee_id: email input from user attempting login
+        password: password input from user attempting login
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, along with employee data as a json object, 400 if username/password
+        parameter missing, 404 if password or username were invalid
+    """
+    employee_id = request.args.get('employee_id')
+    password = request.args.get('password')
+    if employee_id is None:  # Check if user_id is provided
+        response = Response("No username parameter found", status=400)
+    elif password is None:  # Check if password is provided
+        response = Response("No password parameter found", status=400)
+    else:
+        employee = Employee.query.get(employee_id)  # Retrieve user with user_id from database
+        if employee is not None:
+            stored_password = employee.password.split(':')[0]  # Retrieve hashed password from password string
+            salt = employee.password.split(':')[1]  # Retrieve salt from password string
+            if verify_password(stored_password, password, salt):  # Verify provided password using hashed password
+                # and salt
+                data = json.loads(EmployeeSchema().dumps(employee))  # Return user detail for session
+                response = Response(
+                    json.dumps(data), status=200, content_type="application/json"
+                )
+            else:
+                response = Response(json.dumps({'error': 'PASSWORD'}), status=404, content_type="application/json")
+        else:
+            response = Response(json.dumps({'error': 'USER'}), status=404, content_type="application/json")
+    return response
+
+
+@api.route("/employee", methods=['PUT'])
+def update_employee():
+    """Endpoint to update an existing employee details
+
+    Args:
+
+
+    Returns:
+
+    """
+    if request.args.get("update"):
+        try:
+            data = json.loads(request.get_json())
+            employee = Employee.query.get(data["existing_username"])
+            if employee is not None:
+                try:
+                    employee.username = data["username"]
+                    employee.email = data["email"]
+                    employee.f_name = data["f_name"]
+                    employee.l_name = data["l_name"]
+                    employee.type = data["type"]
+                    salt = get_random_alphaNumeric_string(10)  # Randomise salt
+                    employee.password = hash_password(data['password'], salt) + ':' + salt
+                    db.session.commit()
+                except (IntegrityError, InvalidRequestError):
+                    return Response(
+                        json.dumps({'error': 'USER', 'message': 'Employee username already exists'}),
+                        status=400
+                    )
+                return Response(
+                    UserSchema().dumps(Employee.query.get(data["username"])),
+                    status=200
+                )
+            return Response("Employee not found in database", status=404)
+        except JSONDecodeError:
+            return Response("Incorrect JSON format", status=400)
+        except ValueError:
+            return Response("Incorrect JSON format", status=400)
+
+
+@api.route("/reports", methods=['GET'])
+def get_reports():
+    """Endpoint to retrieve multiple reports, optionally based on assignment to an engineer, or for a vehicle
+
+    Args:
+        car_id: rego of car reports to return
+        engineer_id: username of employee assigned to a repair/report
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, along with report data as a json object
+    """
+    car_id = request.args.get("car_id")
+    resolved = request.args.get("resolved")
+    engineer_id = request.args.get("engineer_id")
+    if resolved is not None:
+        try:
+            res_val = int(resolved)
+            if res_val not in (1, 0):
+                raise ValueError
+            reports = CarReport.query.filter_by(resolved=res_val)
+        except ValueError as ve:
+            return Response("Incorrect resolved param value (must be 1 or 0)", status=400)
+    elif engineer_id is not None:  # return reports assigned to an engineer
+        reports = CarReport.query.join(Employee).filter(Employee.username == engineer_id)
+    elif car_id is not None:  # return all reports for a vehicle
+        reports = CarReport.query.join(Car).filter(Car.car_id == car_id)
+    else:  # return all reports
+        reports = CarReport.query.all()
+    data = json.loads(ReportSchema(many=True).dumps(reports))
+    for report in data:
+        report['report_date'] = report['report_date'].replace("T", " ")
+        if report['complete_date'] is not None:
+            report['complete_date'] = report['complete_date'].replace("T", " ")
+    return Response(json.dumps(data), status=200, mimetype="application/json")
+
+
+@api.route("/report", methods=['GET'])
+def get_report():
+    """Returns a specific user from the database: access via report_id (int)
+
+    Args:
+        report_id: id of user to fetch from db
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, along with report data as a json object, 404 if report was not
+        found, 400 if request parameters were missing
+    """
+    report_id = request.args.get("report_id")
+    if report_id is not None:
+        report = CarReport.query.get(report_id)
+        if report is not None:  # If report is in database
+            return Response(ReportSchema().dumps(report), status=200, mimetype="application/json")
+        return Response("report {} not found".format(report), status=404)
+    return Response("report_id param not found", status=400)
+
+
+@api.route("/report", methods=["POST"])
+def create_report():
+    pass
+
+
+@api.route("/report", methods=["PUT"])
+def update_report():
+    pass
 
 
 @api.route("/users", methods=['GET'])
@@ -198,9 +437,7 @@ def get_users():
     """Endpoint to return ALL users from database (used in testing)"""
     users = User.query.all()
     if users is not None:
-        return Response(
-            UserSchema(many=True).dumps(users), status=200, mimetype="application/json"
-        )
+        return Response(UserSchema(many=True).dumps(users), status=200, mimetype="application/json")
     return Response("No users found", status=500)
 
 
@@ -313,25 +550,48 @@ def update_user():
         :class:`flask.Response`: 200 if successful, along with user data as json object, 400 if invalid encoding, or if
         missing parameters, 404 if user id/email invalid (not registered)
     """
-    user_id = request.args.get("user_id")
-    face_id = request.args.get("face_id")
-    if None not in (user_id, face_id):  # Check if user_id and face_id are provided
-        user = User.query.get(user_id)  # Retrieve user with user_id
-        if user is not None:
-            try:
-                val = int(face_id)
-                if val not in (0, 1):  # Update face_id boolean (1 if face_id is registered, 0 if not)
-                    raise ValueError
-                user.face_id = val
+    if request.args.get("update"):
+        try:
+            data = json.loads(request.get_json())
+            username = data["existing_username"]
+            print("API " + username)
+            user = User.query.get(username)
+            if user is not None:
+                user.username = data["username"]
+                user.email = data["email"]
+                user.f_name = data["f_name"]
+                user.l_name = data["l_name"]
+                salt = get_random_alphaNumeric_string(10)  # Randomise salt
+                user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.commit()
                 return Response(
-                    UserSchema().dumps(User.query.get(user_id)),
+                    UserSchema().dumps(User.query.get(data["username"])),
                     status=200
                 )
-            except ValueError:
-                return Response("Incorrect face_id param: {}".format(face_id), status=400)
-        return Response("User {} not found".format(user_id), status=404)
-    return Response("Missing request params", status=400)
+        except JSONDecodeError as je:
+            return Response("Received json data in improper format", status=400)
+        except ValueError as ve:
+            return Response("Received json data in improper format", status=400)
+    else:
+        user_id = request.args.get("user_id")
+        face_id = request.args.get("face_id")
+        if None not in (user_id, face_id):  # Check if user_id and face_id are provided
+            user = User.query.get(user_id)  # Retrieve user with user_id
+            if user is not None:
+                try:
+                    val = int(face_id)
+                    if val not in (0, 1):  # Update face_id boolean (1 if face_id is registered, 0 if not)
+                        raise ValueError
+                    user.face_id = val
+                    db.session.commit()
+                    return Response(
+                        UserSchema().dumps(User.query.get(user_id)),
+                        status=200
+                    )
+                except ValueError:
+                    return Response("Incorrect face_id param: {}".format(face_id), status=400)
+            return Response("User {} not found".format(user_id), status=404)
+        return Response("Missing request params", status=400)
 
 
 @api.route("/cars", methods=['GET'])
@@ -485,6 +745,12 @@ def get_valid_cars(start, end):
             booked_cars.append(booking.car_id)  # add to booked car list: omit from returned cars
     cars = Car.query.filter(Car.car_id.notin_(booked_cars))  # cars that are not booked between dates
     return Response(CarSchema(many=True).dumps(cars), status=200, mimetype="application/json")
+
+
+@api.route("/car_models", methods=['GET'])
+def get_car_models():
+    car_models = CarModel.query.all()
+    return Response(CarModelSchema(many=True).dumps(car_models), status=200)
 
 
 @api.route("/bookings", methods=['GET'])

@@ -1,0 +1,58 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+{% block javascript %}
+  <script src="{{url_for('static', filename='scripts/filter.js')}}"></script>
+{% endblock %}
+{% with page="employee", type="ADMIN"%}
+{% include "employee/nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    {% if employees != None and employees|length > 0 %}
+    <h5>Registered employees</h5>
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label class="sr-only" for="type-filter">Booking status</label>
+        <select class="custom-select" name="status" id="type-filter" onchange="filterEmployees()">
+        <option value="All" selected>All</option>
+        <option value="Admin">Admin</option>
+        <option value="Engineer">Engineer</option>
+        <option value="Manager">Manager</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="employee-filter" class="sr-only">Employee Search</label>
+        <input class="form-control" type="search" placeholder="Filter users" id="employee-filter" oninput="filterEmployees()">
+      </div>
+    </div>
+      <div class="card-columns">
+        {% for employee in employees %}
+          <div class="card bg-light mb-4 employee">
+            <div class="card-body">
+              <h5 class="card-title">
+                <span class="fName">{{employee.f_name}}</span> <span class="lName">{{employee.l_name}}</span>
+                <span  style="position:absolute; top: 20px; right: 20px;" class="type badge badge-info">{{employee.type}}</span>
+              </h5>
+              <p class="card-text">
+                @<span class="username">{{employee.username}}</span>
+              </p>
+              <p class="card-text email">{{employee.email}}</p>
+              <hr>
+              <a class="btn btn-primary" type="submit" href="/edit_employee?employee_id={{employee.username}}">Edit employee</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title text-center font-italic align-middle">No employees found?!</h5>
+          <p class="card-text text-center"><small>No employees exist in the database..?</small></p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</body>
+
+{% endblock %}

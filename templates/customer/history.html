@@ -5,7 +5,7 @@
   <script src="{{ url_for('static', filename='scripts/history.js')}}"></script>
 {% endblock %}
 {% with page="history"%}
-{% include "nav.html" %}
+{% include "customer/nav.html" %}
 {% endwith %}
 <body style="padding-top: 4.5rem">
   <div class="container">
@@ -19,7 +19,7 @@
         <option value="Booked">Booked</option>
         <option value="Completed">Completed</option>
         <option value="Cancelled">Cancelled</option>
-      </select>
+        </select>
       </div>
       <div class="col-md-3">
         <label for="car-search">Car Rego</label>

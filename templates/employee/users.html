@@ -1,0 +1,46 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+{% block javascript %}
+  <script src="{{url_for('static', filename='scripts/filter.js')}}"></script>
+{% endblock %}
+{% with page="user", type="ADMIN"%}
+{% include "employee/nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    {% if users != None and users|length > 0 %}
+    <h5>Registered users</h5>
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label for="user-filter" class="sr-only">User</label>
+        <input class="form-control" type="search" placeholder="Filter users" id="user-filter" oninput="filterUsers()">
+      </div>
+    </div>
+      <div class="card-columns">
+        {% for user in users %}
+          <div class="card bg-light mb-4 user">
+            <div class="card-body">
+            <h5 class="card-title">@<span class="username">{{user.username}}</span></h5>
+              <p class="card-text">
+                <span class="fName">{{user.f_name}}</span> <span class="lName">{{user.l_name}}</span>
+              </p>
+              <p class="card-text email">{{user.email}}</p>
+              <hr>
+              <a class="btn btn-primary" type="submit" href="/edit_user?user_id={{user.username}}">Edit user</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title text-center font-italic align-middle">No users found</h5>
+          <p class="card-text text-center"><small>No users exist in the database</small></p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</body>
+
+{% endblock %}

@@ -37,15 +37,16 @@
               <h5 class="card-title car-rego">Vehicle - {{booking.car.car_id}}</h5>
               <p class="card-text">{{booking.car.model.make}} {{booking.car.model.model}}, {{booking.car.model.year}}</p>
               <hr>
-              <h5 class="card-title user">Customer - @{{booking.user.username}}</h5>
-              <p class="card-text">{{booking.user.f_name}} {{booking.user.l_name}}, {{booking.user.email}}</p>
+              <h5 class="card-title user">Customer - {{booking.user.f_name}} {{booking.user.l_name}}</h5>
+              <p class="card-text">@{{booking.user.username}} / {{booking.user.email}}</p>
               <hr>
               <p class="card-text">Start date: {{booking.start}}</p>
               <p class="card-text">End date: {{booking.end}}</p>
               <p class="card-text">Cost: ${{booking.car.cph}} per hour
               <br/><small class="text-muted">Total cost: ${{booking.cost}}</small></p>
               {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("Missing") -%}
-              <p class="card-text status-value">Status: {{status}}</p>
+              {% set badge_class = {0: "badge-info", 1: "badge-success", 2: "badge-dark"}[ booking.completed]|default("badge-info") -%}
+              <h5><span style="position:absolute; top: 20px; right: 20px;" class="status-value badge {{badge_class}}">{{status}}</span></h5>
             </div>
           </div>
         {% endfor %}
