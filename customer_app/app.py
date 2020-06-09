@@ -1,8 +1,8 @@
 """
 MP Flask Web App
 
-Creates Flask app and registers database :class:`api` and :class:`website` endpoints.
-Contains endpoints for encoding and accessing :class:`facial_recognition` functionality.
+Creates Flask app and registers database :class:`api` and :class:`customer_app.website` endpoints.
+Contains endpoints for encoding and accessing :class:`customer_app.facial_recognition` functionality.
 
 """
 import pickle
@@ -10,9 +10,9 @@ import os
 
 from flask import Flask, render_template, request, Response
 from flask_bootstrap import Bootstrap
-from facial_recognition import FaceDetector
+from customer_app.facial_recognition import FaceDetector
 from api import api, db, DB_URI
-from website import site
+from customer_app.website import site
 from datetime import timedelta
 
 app = Flask(__name__)
@@ -91,7 +91,7 @@ def auth_by_face():
         detector = FaceDetector()
         with open("{}/{}".format(directory, user_id), 'rb') as log_pickle:
             login = pickle.load(log_pickle)  # load login encodings
-        pickles_dir = "user_data/pickles"
+        pickles_dir = "../user_data/pickles"
         pickles = {
             filename: pickle.load(open("{}/{}".format(pickles_dir, filename), "rb"))
             for filename in os.listdir(pickles_dir)

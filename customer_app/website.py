@@ -1,5 +1,5 @@
 """
-MP Web App
+MP Customer Web App
 
 website.py renders html templates and handles page endpoints.
 Also handles input validation for login, register, booking, and cancel, along with processing forms.
@@ -18,7 +18,7 @@ from datetime import datetime
 from httplib2 import Http
 from oauth2client import client
 from googleapiclient import discovery
-from utils import allowed_file, calc_hours
+from customer_app.utils import allowed_file, calc_hours
 from werkzeug.utils import secure_filename
 
 site = Blueprint("site", __name__)
@@ -132,7 +132,7 @@ class BookingQueryForm(FlaskForm):
     start = DateTimeField('Start', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
                           default=datetime.now)
     end = DateTimeField('End', format="%Y-%m-%d %H:%M", validators=[InputRequired(), validate_date],
-default=datetime.now)
+                        default=datetime.now)
 
 
 @site.route("/")
@@ -150,7 +150,7 @@ def home():
     if 'user' in session:
         return redirect(url_for("site.main"))
     # Else, go to home page
-    return render_template("index.html")
+    return render_template("customer/index.html")
 
 
 @site.route("/login", methods=['POST', 'GET'])
@@ -209,7 +209,7 @@ def register():
             form.username.errors.append('This username has been used for register before')
     elif 'user' in session:
         return redirect(url_for("site.main"))
-    return render_template("register.html", form=form)
+    return render_template("customer/register.html", form=form)
 
 
 @site.route("/main")
@@ -225,7 +225,7 @@ def main():
             test = result.json()
         except JSONDecodeError:
             test = []  # error - unable to load cars
-        return render_template("main.html", user=session['user'], points=json.dumps(test))
+        return render_template("customer/main.html", user=session['user'], points=json.dumps(test))
     return redirect(url_for("site.home"))  # Else go to home page
 
 
@@ -330,9 +330,9 @@ def render_booking_page():
                     cars = None
                 form.start.data = start_dt
                 form.end.data = end_dt
-                return render_template("booking.html", form=form, cars=cars, start=start_dt, end=end_dt,
+                return render_template("customer/booking.html", form=form, cars=cars, start=start_dt, end=end_dt,
                                        attributes=attributes)
-        return render_template("booking.html", form=form, attributes=attributes)
+        return render_template("customer/booking.html", form=form, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
@@ -394,7 +394,7 @@ def process_booking():
                         "error": response.text
                     }
                 )]  # append error message - displayed as bootstrap alerts
-        return render_template("booking.html", form=BookingQueryForm(), messages=messages)
+        return render_template("customer/booking.html", form=BookingQueryForm(), messages=messages)
     return redirect(url_for('site.home'))
 
 
@@ -421,7 +421,7 @@ def render_cancel_page():
                 message_data = None
         else:
             message_data = None
-        return render_template("cancel.html", user_bookings=bookings_data, messages=message_data)
+        return render_template("customer/cancel.html", user_bookings=bookings_data, messages=message_data)
     return redirect(url_for('site.home'))
 
 
@@ -440,7 +440,6 @@ def get_valid_bookings(bookings: []) -> []:
         if datetime.strptime(booking['end'], "%Y-%m-%d %H:%M:%S") >= datetime.now():
             valid_bookings.append(booking)
     return valid_bookings
-
 
 
 @site.route("/cancel", methods=['POST'])
@@ -534,7 +533,7 @@ def view_history():
             bookings_data = bookings.json()
         except JSONDecodeError as je:
             bookings_data = None
-        return render_template("history.html", user_bookings=bookings_data)
+        return render_template("customer/history.html", user_bookings=bookings_data)
     return redirect(url_for('site.home'))
 
 
@@ -560,7 +559,7 @@ def available_cars():
         else:
             car_data = None
             attributes = None
-        return render_template("list.html", cars=car_data, attributes=attributes)
+        return render_template("customer/list.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
@@ -575,7 +574,7 @@ def render_map():
         result = requests.get("{}{}".format(URL, "/cars"), params={})  # Get all cars in the database for cars's
         # location
         test = result.json()
-        return render_template('map.html', points=json.dumps(test))
+        return render_template('customer/map.html', points=json.dumps(test))
     return redirect(url_for("site.home"))
 
 
@@ -600,7 +599,7 @@ def search_cars():
                 car_data = None
             else:
                 attributes = make_attributes(car_data)  # Get cars's attributes to send to front-end for filter
-            return render_template("search.html", cars=car_data, attributes=attributes)
+            return render_template("customer/search.html", cars=car_data, attributes=attributes)
     return redirect(url_for('site.home'))
 
 
@@ -710,7 +709,7 @@ def oauth2callback():
         redirects to add_event if successful
     """
     flow = client.flow_from_clientsecrets(
-        'credentials.json',
+        '../credentials.json',
         scope='https://www.googleapis.com/auth/calendar',
         redirect_uri=url_for('site.oauth2callback', _external=True))
     if 'code' not in request.args:

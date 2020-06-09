@@ -167,4 +167,4 @@ if __name__ == "__main__":
     encoding = detector.capture_user(images, min_faces=1)
     data = pickle.dumps(encoding)
     temp = pickle.loads(data)
-    pickle.dump(temp, open("test_data/test_login/temp", "wb"))
+    pickle.dump(temp, open("../test_data/test_login/temp", "wb"))

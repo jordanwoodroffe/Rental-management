@@ -75,7 +75,7 @@ meta.create_all(engine)
 
 # load data
 # cars table
-with open('test_data/car_model.csv') as csv_file:
+with open('../test_data/car_model.csv') as csv_file:
   csv_reader = csv.reader(csv_file, delimiter=',')
   line_count = 0
   for row in csv_reader:
@@ -84,7 +84,7 @@ with open('test_data/car_model.csv') as csv_file:
     line_count += 1
 
 # users table
-with open('test_data/user.csv') as csv_file:
+with open('../test_data/user.csv') as csv_file:
   csv_reader = csv.reader(csv_file, delimiter=',')
   line_count = 0
   for row in csv_reader:

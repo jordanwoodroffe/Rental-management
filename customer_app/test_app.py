@@ -1,11 +1,9 @@
 import unittest
-import app
+from customer_app import app
 from api import api, DB_URI
 from datetime import timedelta
-from website import site
-import pickle
+from customer_app.website import site
 import requests
-import facial_recognition
 
 URL = "http://127.0.0.1:5000/"
 

@@ -31,7 +31,7 @@ with warnings.catch_warnings():
     from flask_marshmallow import Marshmallow
 from marshmallow import fields
 from sqlalchemy.orm import sessionmaker
-from utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates, calc_hours
+from customer_app.utils import get_random_alphaNumeric_string, hash_password, verify_password, compare_dates, calc_hours
 from sqlalchemy.dialects.mysql import TINYINT, VARCHAR, TEXT
 from environs import Env
 
@@ -42,8 +42,8 @@ DB_NAME = env("DB_NAME")
 DB_USER = env("DB_USER")
 DB_PASS = env("DB_PASS")
 PORT_NUMBER = env("PORT_NUMBER")
-LOCAL_IP = env("LOCAL_IP")
-DB_URI = "mysql+pymysql://{}:{}@{}:{}/{}".format(DB_USER, DB_PASS, LOCAL_IP, PORT_NUMBER, DB_NAME)
+DB_IP = env("DB_IP")
+DB_URI = "mysql+pymysql://{}:{}@{}:{}/{}".format(DB_USER, DB_PASS, DB_IP, PORT_NUMBER, DB_NAME)
 
 api = Blueprint("api", __name__)
 
@@ -68,6 +68,16 @@ class User(db.Model):
     face_id = db.Column('face_id', TINYINT(1))
 
 
+class Employee(db.Model):
+    """Employee table - contains basic employee information"""
+    username = db.Column('username', VARCHAR(12), primary_key=True, nullable=False)
+    email = db.Column('email', VARCHAR(45), nullable=False)
+    f_name = db.Column('first_name', VARCHAR(45), nullable=False)
+    l_name = db.Column('last_name', VARCHAR(45), nullable=False)
+    password = db.Column('password', TEXT(75), nullable=False)
+    type = db.Column('type', VARCHAR(45), nullable=False)
+
+
 class Car(db.Model):
     """Car Table - contains basic car information"""
     __tablename__ = "car"
@@ -79,6 +89,9 @@ class Car(db.Model):
     locked = db.Column('available', TINYINT(1), nullable=False)
     lng = db.Column('lng', Float())
     lat = db.Column('lat', Float())
+    employee_id = db.Column('employee_id', VARCHAR(12), ForeignKey('employee.username'), nullable=True)
+    employee = db.relationship("Employee")
+    repair_required = db.Column('repair_required', TINYINT(1), nullable=False, default=0)
 
 
 class CarModel(db.Model):
@@ -134,6 +147,14 @@ class UserSchema(ma.Schema):
         fields = ("username", "email", "f_name", "l_name", "face_id")
 
 
+class EmployeeScehma(ma.Schema):
+    """Schema to expose Employee record information"""
+
+    class Meta:
+        model = Employee
+        fields = ("username", "email", "f_name", "l_name", "type")
+
+
 class CarModelSchema(ma.Schema):
     """Schema to expose CarModel record information"""
 
@@ -148,9 +169,11 @@ class CarSchema(ma.Schema):
 
     class Meta:
         model = Car
-        fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
+        fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng",
+                  "employee_id", "employee", "repair_required")
 
     model = fields.Nested(CarModelSchema)
+    employee = fields.Nested(EmployeeScehma)
 
 
 class BookingSchema(ma.Schema):

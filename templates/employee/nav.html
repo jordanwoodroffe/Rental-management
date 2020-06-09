@@ -1,0 +1,52 @@
+{% block content %}
+<!-- source: bootstrap docs -->
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+  {% if type == "ADMIN" %}
+  <a class="navbar-brand" href="/history">MP (Admin)</a>
+  {% elif type == "ENGINEER" %}
+  <a class="navbar-brand" href="/engineer">MP (Engineer)</a>
+  {% elif type == "MANAGER" %}
+  <a class="navbar-brand" href="/manager">MP (Manager)</a>
+  {% endif %}
+  <button class="navbar-toggler" type="button" data-toggle="collapse"
+  data-target="#navbarToggler" aria-controls="navbarToggler"
+  aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarToggler">
+    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+      {% if type == "ADMIN" %}
+      <li class="nav-item {{'active' if page == 'history'}}">
+        <a class="nav-link" href="/history">Rental History</a>
+      </li>
+      <li class="nav-item {{'active' if page == 'report'}}">
+        <a class="nav-link" href="/report">Report Vehicle</a>
+      </li>
+      <li class="nav-item {{'active' if page == 'car'}}">
+        <a class="nav-link" href="/update_car">Update Vehicle</a>
+      </li>
+	  <li class="nav-item {{'active' if page == 'user'}}">
+        <a class="nav-link" href="/update_user">Update User</a>
+      </li>
+      <li class="nav-item {{'active' if page == 'employee'}}">
+        <a class="nav-link" href="/update_employee">Update Employee</a>
+      </li>
+      <li class="nav-item {{'active' if page == 'search'}}">
+        <a class="nav-link" href="/search">Car Search</a>
+      </li>
+      {% elif type == "ENGINEER" %}
+      <li class="nav-item active">
+        <a class="nav-link" href="/engineer">Maintenance Dashboard</a>
+      </li>
+      {% elif type == "MANAGER" %}
+      <li class="nav-item active">
+        <a class="nav-link" href="/manager">Analytics Dashboard</a>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('site.logout') }}" tabindex="-1" aria-disabled="true">Logout</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}

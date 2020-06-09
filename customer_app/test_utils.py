@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-import utils
+from customer_app import utils
 
 
 class TestUntils(unittest.TestCase):

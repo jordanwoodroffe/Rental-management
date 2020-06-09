@@ -1,7 +1,6 @@
 import unittest
-from facial_recognition import AbstractFaceDetector, FaceDetector
+from customer_app.facial_recognition import AbstractFaceDetector, FaceDetector
 import pickle
-from os import path
 
 
 class TestFacialRecognition(unittest.TestCase):

@@ -1,7 +1,6 @@
 import socket
-import facial_recognition
 import pickle
-import json, requests
+import requests
 import time
 import threading
 import sys

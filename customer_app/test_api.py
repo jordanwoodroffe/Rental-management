@@ -1,5 +1,5 @@
 import unittest
-from website import site
+from customer_app.website import site
 from datetime import timedelta
 from api import create_app
 import json
