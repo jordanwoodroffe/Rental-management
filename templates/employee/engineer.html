@@ -31,19 +31,26 @@
           </div>
         </div>
         {% if reports != None and reports|length > 0 %}
-        <div style="overflow: scroll; max-height: 50vh">
-          {% for report in reports %}
-          <div class="card bg-light mb-4 report">
-              <div class="card-body">
-                <h5 class="card-title car-rego">Vehicle: {{report.car.car_id}}</h5>
-                <p class="card-text">{{report.car.model.make}} {{report.car.model.model}}, {{report.car.model.year}}</p>
-                <p class="card-text">Reported on {{report.report_date}}</p>
-                <hr>
-                <h5 class="card-title">Details</h5>
-                <p class="card-text">{{report.details}}</p>
-              </div>
+        <div class="card bg-light">
+          <div class="card-header">
+            Requested repairs
           </div>
+          <div style="overflow: scroll; max-height: 281px;" class="card-body">
+            {% for report in reports %}
+            <div class="card bg-light mb-4 report">
+                <div class="card-body">
+                  <h5 class="card-title car-rego">Vehicle: {{report.car.car_id}}</h5>
+                  <p class="card-text">{{report.car.model.make}} {{report.car.model.model}}, {{report.car.model.year}}</p>
+                  <p class="card-text">Reported on {{report.report_date}}</p>
+                  <hr>
+                  <h5 class="card-title">Details</h5>
+                  <p class="card-text">{{report.details}}</p>
+                  {% set badge_class = {'LOW': "badge-info", 'MEDIUM': "badge-warning text-light", 'HIGH': "badge-danger"}[ report.priority]|default("badge-info") -%}
+                  <h5><span style="position:absolute; top: 20px; right: 20px;" class="status-value badge {{badge_class}}">{{report.priority}}</span></h5>
+                </div>
+            </div>
           {% endfor %}
+          </div>
         </div>
         {% else %}
         <div class="card bg-light">

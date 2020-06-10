@@ -14,7 +14,7 @@
   </div>
   <div class="row">
     <div class="col">
-      <form class="form-signin" method="POST">
+      <form class="form-signin" method="POST" action="/edit_car">
         {{ form.hidden_tag() }}
         <div class="form-row">
           <div class="form-group col-md-4">
@@ -52,9 +52,9 @@
             </small>
           </div>
           <div class="form-group col-md-4">
-              {{ wtf.form_field(form.model)}}
+              {{ wtf.form_field(form.model_id)}}
             <small id="modelHelpBlock" class="form-text text-muted">
-              {% for error in form.model.errors %}
+              {% for error in form.model_id.errors %}
               {{error}}<br/>
               {% endfor %}
             </small>

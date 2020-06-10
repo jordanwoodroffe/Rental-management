@@ -2,7 +2,7 @@
 
 {% block content %}
 {% block javascript %}
-  <script src="{{url_for('static', filename='scripts/history.js')}}"></script>
+  <script src="{{url_for('static', filename='scripts/filter.js')}}"></script>
 {% endblock %}
 {% with page="history", type="ADMIN"%}
 {% include "employee/nav.html" %}
@@ -14,7 +14,7 @@
     <div class="row mb-3">
       <div class="col-md-3">
         <label for="status-filter">Booking status</label>
-        <select class="custom-select" name="status" id="status-filter" onchange="filter()">
+        <select class="custom-select" name="status" id="status-filter" onchange="filterHistory()">
         <option value="All" selected>All</option>
         <option value="Booked">Booked</option>
         <option value="Completed">Completed</option>
@@ -23,11 +23,11 @@
       </div>
       <div class="col-md-3">
         <label for="car-search">Car Rego</label>
-        <input class="form-control" type="search" placeholder="Rego" id="car-search" oninput="filter()">
+        <input class="form-control" type="search" placeholder="Rego" id="car-search" oninput="filterHistory()">
       </div>
       <div class="col-md-3">
-        <label for="user-search">User</label>
-        <input class="form-control" type="search" placeholder="Filter users" id="user-search" oninput="filter()">
+        <label for="user-filter">User</label>
+        <input class="form-control" type="search" placeholder="Filter users" id="user-filter" oninput="filterHistory()">
       </div>
     </div>
       <div class="card-columns">
@@ -37,8 +37,13 @@
               <h5 class="card-title car-rego">Vehicle - {{booking.car.car_id}}</h5>
               <p class="card-text">{{booking.car.model.make}} {{booking.car.model.model}}, {{booking.car.model.year}}</p>
               <hr>
-              <h5 class="card-title user">Customer - {{booking.user.f_name}} {{booking.user.l_name}}</h5>
-              <p class="card-text">@{{booking.user.username}} / {{booking.user.email}}</p>
+              <h5 class="card-title user">Customer -
+                <span class="fName">{{booking.user.f_name}}</span> <span class="lName">{{booking.user.l_name}}</span>
+              </h5>
+              <p class="card-text">
+                @<span class="username">{{booking.user.username}}</span>
+                / <span class="email">{{booking.user.email}}</span>
+              </p>
               <hr>
               <p class="card-text">Start date: {{booking.start}}</p>
               <p class="card-text">End date: {{booking.end}}</p>

@@ -1,0 +1,78 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+{% block javascript %}
+  <script src="{{url_for('static', filename='scripts/filter.js')}}"></script>
+{% endblock %}
+{% with page="report", type="ADMIN"%}
+{% include "employee/nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    {% if reports != None and reports|length > 0 %}
+    <h5>Reports - vehicle repair records</h5>
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label for="status-filter">Report status</label>
+        <select class="custom-select" name="status" id="status-filter" onchange="filterReports()">
+          <option value="All" selected>All</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Requested">Requested</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="priority-filter">Report status</label>
+        <select class="custom-select" name="priority" id="priority-filter" onchange="filterReports()">
+          <option value="All" selected>All</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="car-search">Car Rego</label>
+        <input class="form-control" type="search" placeholder="Rego" id="car-search" oninput="filterReports()">
+      </div>
+    </div>
+      <div class="card-columns">
+        {% for report in reports %}
+          <div class="card bg-light mb-4 report">
+            <div class="card-body">
+              <h5 class="card-title">Vehicle - <span class="car-rego">{{report.car.car_id}}</span></h5>
+              <p class="card-text">{{report.car.model.make}} {{report.car.model.model}}, {{report.car.model.year}}</p>
+              <hr>
+              <h5 class="card-title">Report details</h5>
+              <p class="card-text font-italic">"{{report.details}}"</p>
+              <p class="card-text">Requested on {{report.report_date}}</p>
+              {% if report.resolved == 1 %}
+              <p class="card-text">Completed on {{report.complete_date}}</p>
+              <hr>
+              <h5 class="card-title employee">Engineer -
+                <span class="fName">{{report.engineer.f_name}}</span> <span class="lName">{{report.engineer.l_name}}</span>
+              </h5>
+              <p class="card-text">
+                @<span class="username">{{report.engineer.username}}</span>
+                / <span class="email">{{report.engineer.email}}</span>
+              </p>
+              {% endif %}
+              {% set status = {0: "Requested", 1: "Resolved"}[ report.resolved]|default("Requested") -%}
+              {% set badge_class = {0: "badge-dark", 1: "badge-light"}[ report.resolved]|default("badge-info") -%}
+              {% set priority_badge_class = {'LOW': "badge-info", 'MEDIUM': "badge-warning text-light", 'HIGH': "badge-danger"}[ report.priority]|default("badge-info") -%}
+              <p>Priority <span class="priority-value badge {{priority_badge_class}}">{{report.priority}}</span></p>
+              <h5><span style="position:absolute; top: 20px; right: 20px;" class="status-value badge {{badge_class}}">{{status}}</span></h5>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title text-center font-italic align-middle">No reports found</h5>
+          <p class="card-text text-center"><small>No repair requests found in database</small></p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</body>
+
+{% endblock %}

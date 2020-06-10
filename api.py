@@ -138,6 +138,7 @@ class CarReport(db.Model):
     report_date = db.Column('report_date', DateTime(), nullable=False)
     complete_date = db.Column('complete_date', DateTime(), nullable=True)
     resolved = db.Column('resolved', TINYINT(1), default=0)
+    priority = db.Column('priority', VARCHAR(6), default='LOW')
 
 
 class Encoding(db.Model):
@@ -205,7 +206,7 @@ class ReportSchema(ma.Schema):
     class Meta:
         model = CarReport
         fields = ("report_id", "car_id", "car", "engineer_id", "engineer", "details", "report_date", "complete_date",
-                  "resolved")
+                  "resolved", "priority")
 
     car = fields.Nested(CarSchema)
     engineer = fields.Nested(EmployeeSchema)
@@ -424,12 +425,37 @@ def get_report():
 
 @api.route("/report", methods=["POST"])
 def create_report():
-    pass
+    try:
+        data = json.loads(request.get_json())
+        report = CarReport()
+        report.car_id = data["car_id"]
+        report.report_date = data["report_date"]
+        report.details = data["details"]
+        db.session.add(report)
+        db.session.commit()
+        return Response("Created new report", status=200)
+    except (JSONDecodeError, ValueError, KeyError):
+        return Response("Unable to decode report object", status=400)
 
 
 @api.route("/report", methods=["PUT"])
 def update_report():
-    pass
+    report_id = request.args.get("report_id")
+    engineer_id = request.args.get("engineer_id")
+    complete_date = request.args.get("complete_date")
+    if None in (report_id, engineer_id, complete_date):
+        return Response("Missing request params", status=400)
+    report = CarReport.query.get(report_id)
+    if report is None:
+        return Response("Invalid report id", status=404)
+    engineer = Employee.query.get(engineer_id)
+    if engineer is None or engineer.type != "ENGINEER":
+        return Response("Invalid engineer id", status=404)
+    report.engineer_id = engineer_id
+    report.complete_date = datetime.strptime(complete_date, "%Y-%m-%d %H:%M:%S")
+    report.resolved = 1
+    db.session.commit()
+    return Response(ReportSchema().dumps(CarReport.query.get(report_id)), status=200)
 
 
 @api.route("/users", methods=['GET'])
@@ -628,8 +654,31 @@ def get_car():
     return Response("car_id param was not found", status=400)
 
 
-@api.route("/car", methods=['PUT'])
+@api.route("/update_car", methods=['PUT'])
 def update_car():
+    try:
+        data = json.loads(request.get_json())
+        car = Car.query.get(data['existing_car_id'])
+        if car is not None:
+            try:
+                car.car_id = data["car_id"]
+                car.cph = float(data["cph"])
+                car.lat = float(data["lat"])
+                car.lng = float(data["lng"])
+                car.model_id = data["model_id"]
+                db.session.commit()
+            except (IntegrityError, InvalidRequestError):
+                return Response('Car rego already exists', status=400)
+            return Response(
+                UserSchema().dumps(Car.query.get(data['car_id'])),
+                status=200
+            )
+    except (JSONDecodeError, ValueError, KeyError):
+        return Response("Incorrect JSON format", status=400)
+
+
+@api.route("/car", methods=['PUT'])
+def unlock_car():
     """Endpoint to update a car called from MP after it receives login information from AP. First, bookings matching
     the user_id and car_id are retrieved, and if they are valid (i.e. have not been completed or are within their
     start/end dates) then the car is unlocked. If the car is to be locked, then the booking is also marked as

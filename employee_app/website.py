@@ -4,30 +4,40 @@ MP Employee Web App
 website.py renders html templates and handles page endpoints.
 Also handles input validation for login, register, booking, and cancel, along with processing forms.
 """
+from customer_app.website import LoginForm, make_attributes, valid_name, valid_username, valid_password
 import json
-import re
 from json.decoder import JSONDecodeError
-from templates import *
-import requests
-import os
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
 from flask_googlemaps import Map
-from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField, BooleanField
+import re
+import requests
+from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
-from collections import defaultdict
-from datetime import datetime
-from httplib2 import Http
-from oauth2client import client
-from googleapiclient import discovery
-from customer_app.utils import allowed_file, calc_hours
-from customer_app.website import LoginForm, make_attributes, RegistrationForm, valid_name, valid_username, \
-    valid_password
-from werkzeug.utils import secure_filename
 
 site = Blueprint("site", __name__)
 
 URL = "http://127.0.0.1:5000"
+
+
+def valid_lat(form, field):
+    if float(field.data) < -90 or float(field.data) > 90:
+        raise ValidationError("Latitude value must be between -90 and +90")
+
+
+def valid_lng(form, field):
+    if float(field.data) < -180 or float(field.data) > 180:
+        raise ValidationError("Longitude value must be between -180 and +180")
+
+
+def valid_cph(form, field):
+    if float(field.data) <= 0:
+        raise ValidationError("Cph value must be > 0")
+
+
+def valid_rego(form, field):
+    if not re.match("[A-Za-z0-9]", field.data):
+        raise ValidationError("Rego value must be alphanumeric")
 
 
 class UpdateUserForm(FlaskForm):
@@ -54,16 +64,17 @@ class UpdateEmployeeForm(FlaskForm):
 class UpdateCarForm(FlaskForm):
     existing_car_id = HiddenField("Existing CarID")
     car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
-    cph = FloatField('Cost per hour', validators=[InputRequired()])
-    lat = FloatField('Latitude', validators=[InputRequired()])
-    lng = FloatField('Longitude', validators=[InputRequired()])
-    model = SelectField('Model', validators=[InputRequired()], id="model_id")
+    cph = FloatField('Cost per hour', validators=[InputRequired(), valid_cph])
+    lat = FloatField('Latitude', validators=[InputRequired(), valid_lat])
+    lng = FloatField('Longitude', validators=[InputRequired(), valid_lng])
+    model_id = SelectField('Model', validators=[InputRequired()], id="model_id", coerce=int)
 
     def __init__(self, models: [], *args, **kwargs):
         super(UpdateCarForm, self).__init__(*args, **kwargs)
-        self.model.choices = [
-            (model["model_id"], "{} {} {}".format(model["year"], model["make"], model["model"])) for model in models
-        ]
+        if models is not None:
+            self.model_id.choices = [
+                (model["model_id"], "{} {} {}".format(model["year"], model["make"], model["model"])) for model in models
+            ]
 
 
 @site.route("/", methods=['POST', 'GET'])
@@ -166,22 +177,45 @@ def render_edit_car():
             'cph': form.cph.data,
             'lat': form.lat.data,
             'lng': form.lng.data,
-            'model': form.model_id.data,
+            'model_id': form.model_id.data,
         }
+        result = requests.put("{}{}".format(URL, "/update_car"), json=json.dumps(car))
+        print(result)
+        if result.status_code == 200:
+            print("Updated car")
+            return redirect(url_for("site.search_cars"))
+        else:
+            form.car_id.errors.append(result.text)
+            return render_template("employee/update_car.html", form=form, models=models)
     if 'user' in session and session['user']['type'] == 'ADMIN':
         car_id = request.args.get("car_id")
         if car_id is not None:
             result = requests.get("{}{}".format(URL, "/car"), params={"car_id": car_id})
             car = result.json()
-            form = UpdateCarForm(models=models, model=car['model_id'])
+            form = UpdateCarForm(models=models, model_id=car['model_id'])
             form.existing_car_id.data = car['car_id']
             form.car_id.data = car['car_id']
             form.cph.data = car['cph']
             form.lat.data = car['lat']
             form.lng.data = car['lng']
         else:
-            user = None
+            car = None
         return render_template("employee/update_car.html", form=form, models=models)
+    return redirect(url_for('site.home'))
+
+
+@site.route("/view_reports", methods=['GET'])
+def view_reports():
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        result = requests.get("{}{}".format(URL, "/reports"))
+        if result.status_code == 200:
+            try:
+                reports = result.json()
+            except JSONDecodeError as je:
+                reports = None
+        else:
+            reports = None
+        return render_template("employee/reports.html", reports=reports)
     return redirect(url_for('site.home'))
 
 
@@ -301,12 +335,17 @@ def engineer_dashboard():
                 markers = []
                 for i in range(len(data)):
                     item = data[i]
+                    badge_class = "badge-info" if item['priority'] == 'LOW' else \
+                        "badge-warning text-light" if item['priority'] == 'MEDIUM' else 'badge-danger'
+                    badge = "<p><span style='position:absolute; top: 16px; right: 20px;' class='status-value badge \
+                        {}'>{}</span></p>".format(badge_class, item["priority"])
                     markers.append(
                         {
                             "infobox": "<h5>{}:</h5><p>{} {} {}<br>"
-                                       "<small class='text-muted'>Details: {}</small></p>".format(
+                                       "<small class='text-muted'>Details: {}</small></p>{}".format(
                                 item['car_id'], item['car']['model']['year'], item['car']['model']['make'],
-                                item['car']['model']['model'], item['details']),
+                                item['car']['model']['model'], item['details'], badge
+                            ),
                             "lat": item['car']['lat'],
                             "lng": item['car']['lng']
                         }
