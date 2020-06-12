@@ -220,8 +220,18 @@ def create_app():
 
 @api.route("/employees", methods=['GET'])
 def get_employees():
-    """Endpoint to return employees from database"""
-    employees = Employee.query.all()
+    """Endpoint to return employees from database
+
+    Args:
+        type: filter by employee type
+
+    Returns:
+        :class:`flask.Response`: 200 if successful along with employees as a json object, or 500 if no employees found
+    """
+    if request.args.get("type") is not None:
+        employees = Employee.query.filter_by(type=request.args.get("type"))
+    else:
+        employees = Employee.query.all()
     if employees is not None:
         return Response(
             EmployeeSchema(many=True).dumps(employees), status=200, mimetype="application/json"
@@ -332,10 +342,11 @@ def update_employee():
     """Endpoint to update an existing employee details
 
     Args:
-
+        data: json data containing employee fields to be updated
 
     Returns:
-
+        :class:`flask.Response`: 200 if successful, along with new employee data as a json object, or 400 if json was
+        invalid or employee username already exists, or 404 if the username pre-update did not exist
     """
     if request.args.get("update"):
         try:
@@ -425,9 +436,21 @@ def get_report():
 
 @api.route("/report", methods=["POST"])
 def create_report():
+    """Endpoint to create a new report: created when admin completes repair form for a vehicle
+
+    Args:
+        data: report data to be added (report_date, priority, car_id, details)
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, or 400 if json data was invalid
+    """
     try:
         data = json.loads(request.get_json())
         report = CarReport()
+        try:
+            report.priority = data["priority"]
+        except KeyError:
+            print("no priority in received data - applying default (LOW)")
         report.car_id = data["car_id"]
         report.report_date = data["report_date"]
         report.details = data["details"]
@@ -440,6 +463,17 @@ def create_report():
 
 @api.route("/report", methods=["PUT"])
 def update_report():
+    """Endpoint to mark a report/repair as completed
+
+    Args:
+        report_id: id of report to complete (a car may have multiple reports, so this is required)
+        engineer_id: id of the engineer who carried out the repair
+        complete_date: datetime value of date of completion
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, along with updated report data as a json object, 404 if report was
+        not found, 400 if request parameters were missing
+    """
     report_id = request.args.get("report_id")
     engineer_id = request.args.get("engineer_id")
     complete_date = request.args.get("complete_date")
@@ -656,6 +690,15 @@ def get_car():
 
 @api.route("/update_car", methods=['PUT'])
 def update_car():
+    """Endpoint to update car attributes, including CarModel
+
+    Args:
+        data: json data containing new attribute values
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, along with updated Car data as json object, or 400 if json was
+        invalid or if the car_id already exists
+    """
     try:
         data = json.loads(request.get_json())
         car = Car.query.get(data['existing_car_id'])
