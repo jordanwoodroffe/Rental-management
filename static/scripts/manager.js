@@ -4,26 +4,22 @@ window.onload = function() {
     var barChart = new Chart(barctx, {
         type: 'bar',
         data: {
-            labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+            labels: ['1', '2', '3', '4', 'This week'],
             datasets: [{
-                label: '# of Votes',
+                label: 'New customers per week',
                 data: [12, 19, 3, 5, 2, 3],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',
                     'rgba(255, 206, 86, 0.2)',
                     'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
+                    'rgba(153, 102, 255, 0.2)'                ],
                 borderColor: [
                     'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
                     'rgba(255, 206, 86, 1)',
                     'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
+                    'rgba(153, 102, 255, 1)'                ],
                 borderWidth: 1
             }]
         },
@@ -34,6 +30,9 @@ window.onload = function() {
                         beginAtZero: true
                     }
                 }]
+            },
+            legend: {
+                display: false,
             }
         }
     });
@@ -44,31 +43,22 @@ window.onload = function() {
         type: 'doughnut',
         data: {
             datasets: [{
-                data: [10, 20, 30, 40, 30],
+                data: [5, 40],
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
                     'rgba(255, 206, 86, 0.2)',
                     'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
                     'rgba(255, 206, 86, 1)',
                     'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
                 ],
                 borderWidth: 1
             }],
 
             // These labels appear in the legend and in the tooltips when hovering different arcs
             labels: [
-                'Red',
-                'Yellow',
-                'Blue'
+                'In service',
+                'Available'
             ]
         }
     });
@@ -78,14 +68,15 @@ window.onload = function() {
         type: 'line',
         data: {
             datasets: [{
-                data: [10, 20, 30, 40, 30, 50],
+                data: [10, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50],
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)'
+                    'rgba(255, 99, 132, 0.2)',
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)'
+                    'rgba(255, 99, 132, 0.2)',
                 ],
-                borderWidth: 1
+                borderWidth: 3,
+                fill: false
             }],
 
             // These labels appear in the legend and in the tooltips when hovering different arcs
@@ -95,14 +86,35 @@ window.onload = function() {
                 'Blue',
                 'Green',
                 'Pink',
-                'Black'
+                'Black',
+                'Yellow',
+                'Blue',
+                'Green',
+                'Pink',
+                'Yellow',
+                'Blue',
+                'Green',
+                'Pink',
+                'Yellow',
+                'Blue',
+                'Green',
+                'Pink',
             ]
         },
         options: {
             scales: {
                 yAxes: [{
                     stacked: true
+                }],
+                xAxes: [{
+                    ticks: {
+                        autoSkip: true,
+                        maxTicksLimit: 5
+                        }
                 }]
+            },
+            legend: {
+                display: false,
             }
         }
     });
