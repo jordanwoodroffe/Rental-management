@@ -41,8 +41,9 @@ def valid_rego(form, field):
 
 
 def valid_mac_address(form, field):
-    if len(field.data) > 0 and not re.match("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$", field.data):
-        raise ValidationError("Invalid mac address")
+    if not re.match("^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$", field.data):
+        raise ValidationError("Invalid mac address: must be 12 hexadecimal charaters separated by : or -"
+                              " for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
 
 
 class UpdateUserForm(FlaskForm):
@@ -55,16 +56,18 @@ class UpdateUserForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
 
 
-class UpdateEmployeeForm(FlaskForm):
+class UpdateEmployeeForm(UpdateUserForm):
     """UpdateEmployeeForm form to update employee details"""
-    first_name = StringField('First Name', validators=[InputRequired(), valid_name])
-    last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
-    existing_username = HiddenField("Existing Username")
-    username = StringField('Username', validators=[InputRequired(), Length(6, 12), valid_username])
-    email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
+    # first_name = StringField('First Name', validators=[InputRequired(), valid_name])
+    # last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
+    # existing_username = HiddenField("Existing Username")
+    # username = StringField('Username', validators=[InputRequired(), Length(6, 12), valid_username])
+    # email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
+    # password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
     type = SelectField('Type', choices=[('ADMIN', 'Admin'), ('ENGINEER', 'Engineer'), ('MANAGER', 'Manager')])
-    mac_address = StringField('Mac Address (Bluetooth ID)', validators=[Length(17), valid_mac_address])
+    mac_address = StringField('Mac Address (Bluetooth ID)', validators=[
+        Length(17, message="mac address must be 17 characters long"), valid_mac_address
+    ], render_kw={"placeholder": "No mac address"})
 
 
 class UpdateCarForm(FlaskForm):
@@ -110,7 +113,7 @@ def home():
                 form.password.errors.append('Incorrect password')  # Form error message
     if 'user' in session:
         return redirect(url_for("site.main"))
-    return render_template("login.html", form=form)
+    return render_template("login.html", form=form, login_type="Employee")
 
 
 @site.route("/main", methods=['GET'])
@@ -167,7 +170,8 @@ def search_cars():
         else:
             attributes = None
             car_data = None
-        return render_template("employee/vehicles.html", cars=car_data, attributes=attributes)
+        messages = session.pop('messages') if 'messages' in session else None
+        return render_template("employee/vehicles.html", cars=car_data, attributes=attributes, messages=messages)
     return redirect(url_for('site.home'))
 
 
@@ -188,6 +192,13 @@ def render_edit_car():
         result = requests.put("{}{}".format(URL, "/update_car"), json=json.dumps(car))
         print(result)
         if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Car successfully updated",
+                    "data": "Registration number: {}".format(form.car_id.data)
+                }
+            )]
             print("Updated car")
             return redirect(url_for("site.search_cars"))
         else:
@@ -236,7 +247,8 @@ def view_users():
                 users = None
         else:
             users = None
-        return render_template("employee/users.html", users=users)
+        messages = session.pop('messages') if 'messages' in session else None
+        return render_template("employee/users.html", users=users, messages=messages)
     return redirect(url_for('site.home'))
 
 
@@ -259,7 +271,23 @@ def render_edit_user():
         )
         print(result)
         if result.status_code == 200:
-            return redirect(url_for("site.view_users"))
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Customer successfully updated",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
+                }
+            )]
+        else:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Customer unable to be updated",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data),
+                    "error": result.text
+                }
+            )]
+        return redirect(url_for("site.view_users"))
     if 'user' in session and session['user']['type'] == 'ADMIN':
         user_id = request.args.get("user_id")
         if user_id is not None:
@@ -288,7 +316,8 @@ def render_view_employees():
                 employees = None
         else:
             employees = None
-        return render_template("employee/employees.html", employees=employees)
+        messages = session.pop('messages') if 'messages' in session else None
+        return render_template("employee/employees.html", employees=employees, messages=messages)
     return redirect(url_for('site.home'))
 
 
@@ -303,16 +332,32 @@ def render_edit_employee():
             'l_name': form.last_name.data,
             'f_name': form.first_name.data,
             'password': form.password.data,
-            'type': form.type.data
+            'type': form.type.data,
+            'mac_address': form.mac_address.data
         }
         result = requests.put(
             "{}{}".format(URL, "/employee"),
             json=json.dumps(employee),
             params={"update": True}
         )
-        print(result)
         if result.status_code == 200:
-            return redirect(url_for("site.render_view_employees"))
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Employee successfully updated",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
+                }
+            )]
+        else:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Employee unable to be updated",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data),
+                    "error": result.text
+                }
+            )]
+        return redirect(url_for("site.render_view_employees"))
     if 'user' in session and session['user']['type'] == 'ADMIN':
         employee_id = request.args.get("employee_id")
         if employee_id is not None:

@@ -179,7 +179,7 @@ def login():
                 form.password.errors.append('Incorrect password')  # Form error message
     if 'user' in session:
         return redirect(url_for("site.main"))
-    return render_template("login.html", form=form)
+    return render_template("login.html", form=form, login_type="Customer")
 
 
 @site.route("/register", methods=['POST', 'GET'])

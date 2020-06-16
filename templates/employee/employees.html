@@ -8,6 +8,22 @@
 {% include "employee/nav.html" %}
 {% endwith %}
 <body style="padding-top: 4.5rem">
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0; z-index: 20;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>{{message.message}}</strong>
+        <div>
+          <small class="text-muted">{{message.data}}</small>
+          {% if message.error %}
+          <br><small class="text-muted"><i>{{message.error}}</i></small>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
   <div class="container">
     {% if employees != None and employees|length > 0 %}
     <h5>Registered employees</h5>

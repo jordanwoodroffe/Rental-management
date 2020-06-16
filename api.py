@@ -359,6 +359,7 @@ def update_employee():
                     employee.f_name = data["f_name"]
                     employee.l_name = data["l_name"]
                     employee.type = data["type"]
+                    employee.mac_address = data["mac_address"]
                     salt = get_random_alphaNumeric_string(10)  # Randomise salt
                     employee.password = hash_password(data['password'], salt) + ':' + salt
                     db.session.commit()
