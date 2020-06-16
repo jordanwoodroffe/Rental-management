@@ -15,6 +15,7 @@ import requests
 from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
 import datetime, calendar
+from dateutil.relativedelta import *
 
 site = Blueprint("site", __name__)
 
@@ -384,6 +385,9 @@ def manager_dashboard():
     if 'user' in session and session['user']['type'] == 'MANAGER':
         # Bookings related queries
         revenue = 0
+        last_month_revenue = 0
+        bookings_num = 0
+        last_bookings_num = 0
         month_revenue = []
         result = requests.get("{}{}".format(URL, "/bookings"))
         try:
@@ -400,9 +404,18 @@ def manager_dashboard():
                 if date.year == today.year and date.month == today.month:
                     revenue += int(booking["cost"])
                     month_revenue[date.day - 1] = int(booking["cost"])
-
+                    bookings_num += 1
+                elif date.year == today.year and (date + relativedelta(months=1)).month == today.month:
+                    last_month_revenue += int(booking["cost"])
+                    last_bookings_num += 1
+        if (last_month_revenue is not 0):
+            revenue_grow = (revenue/last_month_revenue)*100-100
+            booking_grow = (bookings_num/last_bookings_num)*100-100
+        else:
+            revenue_grow = 100
+            booking_grow = 100
         # Users related queries
-        return render_template("employee/manager.html", user=session['user'], revenue=revenue, month_revenue=month_revenue)
+        return render_template("employee/manager.html", user=session['user'], revenue=revenue, month_revenue=month_revenue, revenue_grow=revenue_grow, booking_grow=booking_grow)
     return redirect(url_for("site.home"))
 
 
