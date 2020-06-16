@@ -127,7 +127,7 @@ def main():
         elif employee_type == "ENGINEER":  # redirect to ENGINEER dashboard
             return redirect(url_for("site.engineer_dashboard"))
         elif employee_type == "MANAGER":  # redirect to MANAGER dashboard
-            return redirect(url_for("site.manager"))
+            return redirect(url_for("site.manager_dashboard"))
     return redirect(url_for("site.home"))
 
 
@@ -332,6 +332,12 @@ def render_edit_employee():
         return render_template("employee/update_employee.html", form=form)
     return redirect(url_for('site.home'))
 
+
+@site.route("/manager")
+def manager_dashboard():
+    if 'user' in session and session['user']['type'] == 'MANAGER':
+        return render_template("employee/manager.html", user=session['user'])
+    return redirect(url_for("site.home"))
 
 @site.route("/engineer")
 def engineer_dashboard():
