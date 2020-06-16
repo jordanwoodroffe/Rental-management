@@ -409,13 +409,14 @@ def manager_dashboard():
                     last_month_revenue += int(booking["cost"])
                     last_bookings_num += 1
         if (last_month_revenue is not 0):
-            revenue_grow = (revenue/last_month_revenue)*100-100
-            booking_grow = (bookings_num/last_bookings_num)*100-100
+            revenue_grow = (revenue / last_month_revenue) * 100 - 100
+            booking_grow = (bookings_num / last_bookings_num) * 100 - 100
         else:
             revenue_grow = 100
             booking_grow = 100
         # Users related queries
-        return render_template("employee/manager.html", user=session['user'], revenue=revenue, month_revenue=month_revenue, revenue_grow=revenue_grow, booking_grow=booking_grow)
+        return render_template("employee/manager.html", user=session['user'], revenue=revenue,
+                               month_revenue=month_revenue, revenue_grow=revenue_grow, booking_grow=booking_grow)
     return redirect(url_for("site.home"))
 
 
