@@ -108,12 +108,17 @@ window.onload = function() {
     updateReportsNumber(pieChart)
     updateCarsNumber(pieChart)
 
+    month_revenue = JSON.parse(document.getElementById("manager_script").getAttribute("month-revenue"));
+    labels = new Array(month_revenue.length)
+    for (i = 0; i < month_revenue.length; i++) {
+        labels[i] = i+1
+    }
     var linectx = document.getElementById('lineChart').getContext('2d');
     var stackedLine = new Chart(linectx, {
         type: 'line',
         data: {
             datasets: [{
-                data: [10, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50, 20, 30, 40, 30, 50],
+                data: month_revenue,
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                 ],
@@ -125,26 +130,7 @@ window.onload = function() {
             }],
 
             // These labels appear in the legend and in the tooltips when hovering different arcs
-            labels: [
-                '1',
-                '2',
-                '3',
-                '4',
-                '5',
-                '6',
-                '7',
-                '8',
-                '9',
-                'Pink',
-                'Yellow',
-                'Blue',
-                'Green',
-                'Pink',
-                'Yellow',
-                'Blue',
-                'Green',
-                'Pink',
-            ]
+            labels: labels
         },
         options: {
             scales: {
@@ -163,15 +149,5 @@ window.onload = function() {
             }
         }
     });
-    month_revenue = JSON.parse(document.getElementById("manager_script").getAttribute("month-revenue"));
-    labels = new Array(month_revenue.length)
-    for (i = 0; i < month_revenue.length; i++) {
-        labels[i] = i+1
-    }
-    stackedLine.data.datasets.forEach((dataset) => {
-                    dataset.data = month_revenue;
-                });
-    stackedLine.data.labels = labels
-    stackedLine.update();
 }
 
