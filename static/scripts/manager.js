@@ -1,10 +1,53 @@
+updateReportsNumber = function(chart) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', "/reports", true);
+
+    // If specified, responseType must be empty string or "text"
+    xhr.responseType = 'text';
+
+    xhr.onload = function () {
+        if (xhr.readyState === xhr.DONE) {
+            if (xhr.status === 200) {
+                chart.data.datasets.forEach((dataset) => {
+                    dataset.data[0] = JSON.parse(xhr.responseText).length;
+                });
+                chart.update();
+//                updateCarsNumber(chart)
+            }
+        }
+    };
+
+    xhr.send(null);
+}
+
+updateCarsNumber = function(chart) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', "/cars", true);
+
+    // If specified, responseType must be empty string or "text"
+    xhr.responseType = 'text';
+
+    xhr.onload = function () {
+        if (xhr.readyState === xhr.DONE) {
+            if (xhr.status === 200) {
+                chart.data.datasets.forEach((dataset) => {
+                    dataset.data[1] = JSON.parse(xhr.responseText).length;
+                });
+                chart.update();
+            }
+        }
+    };
+
+    xhr.send(null);
+}
+
 window.onload = function() {
     // Bar chart
     var barctx = document.getElementById('barChart').getContext('2d');
     var barChart = new Chart(barctx, {
         type: 'bar',
         data: {
-            labels: ['1', '2', '3', '4', 'This week'],
+            labels: ['-4', '-3', '-2', '-1', 'This week'],
             datasets: [{
                 label: 'New customers per week',
                 data: [12, 19, 3, 5, 2, 3],
@@ -57,11 +100,13 @@ window.onload = function() {
 
             // These labels appear in the legend and in the tooltips when hovering different arcs
             labels: [
-                'In service',
-                'Available'
+                'In-service Cars',
+                'Available Cars'
             ]
         }
     });
+    updateReportsNumber(pieChart)
+    updateCarsNumber(pieChart)
 
     var linectx = document.getElementById('lineChart').getContext('2d');
     var stackedLine = new Chart(linectx, {

@@ -14,6 +14,7 @@ import re
 import requests
 from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
+import datetime, calendar
 
 site = Blueprint("site", __name__)
 
@@ -328,6 +329,31 @@ def render_edit_employee():
 @site.route("/manager")
 def manager_dashboard():
     if 'user' in session and session['user']['type'] == 'MANAGER':
+        result = requests.get("{}{}".format(URL, "/bookings"))
+        try:
+            bookings_data = result.json()
+        except JSONDecodeError as je:
+            bookings_data = None
+        if bookings_data is not None:
+            today = datetime.datetime.today()
+            num_days = calendar.monthrange(today.year, today.month)[1]
+            days = [datetime.date(today.year, today.month, day) for day in range(1, num_days + 1)]
+            print(days)
+
+        # cars = requests.get("{}{}".format(URL, "/cars"))
+        # reports = requests.get("{}{}".format(URL, "/reports"))
+        # try:
+        #     cars = cars.json()
+        #     reports = reports.json()
+        # except JSONDecodeError as je:
+        #     cars = None
+        #     reports = None
+        # if cars is not None and reports is not None:
+        #     print(len(cars))
+        #     print(len(reports))
+
+
+
         return render_template("employee/manager.html", user=session['user'])
     return redirect(url_for("site.home"))
 
