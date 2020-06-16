@@ -43,7 +43,7 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
             {{ wtf.form_field(form.username)}}
             <small id="usernameHelpBlock" class="form-text text-muted">
               {% for error in form.username.errors %}
@@ -51,7 +51,7 @@
               {% endfor %}
             </small>
           </div>
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
             {{ wtf.form_field(form.email)}}
             <small id="emailHelpBlock" class="form-text text-muted">
               {% for error in form.email.errors %}
@@ -59,10 +59,18 @@
               {% endfor %}
             </small>
           </div>
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
             {{ wtf.form_field(form.password)}}
             <small id="passwordHelpBlock" class="form-text text-muted">
               {% for error in form.password.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+            {{ wtf.form_field(form.mac_address)}}
+            <small id="macAddressHelpBlock" class="form-text text-muted">
+              {% for error in form.mac_address.errors %}
               {{error}}<br/>
               {% endfor %}
             </small>

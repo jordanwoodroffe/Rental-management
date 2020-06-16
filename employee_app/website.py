@@ -40,6 +40,11 @@ def valid_rego(form, field):
         raise ValidationError("Rego value must be alphanumeric")
 
 
+def valid_mac_address(form, field):
+    if len(field.data) > 0 and not re.match("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$", field.data):
+        raise ValidationError("Invalid mac address")
+
+
 class UpdateUserForm(FlaskForm):
     """UpdateUserForm form to update user details"""
     first_name = StringField('First Name', validators=[InputRequired(), valid_name])
@@ -59,6 +64,7 @@ class UpdateEmployeeForm(FlaskForm):
     email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
     password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
     type = SelectField('Type', choices=[('ADMIN', 'Admin'), ('ENGINEER', 'Engineer'), ('MANAGER', 'Manager')])
+    mac_address = StringField('Mac Address (Bluetooth ID)', validators=[Length(17), valid_mac_address])
 
 
 class UpdateCarForm(FlaskForm):
@@ -318,6 +324,8 @@ def render_edit_employee():
             form.email.data = employee['email']
             form.first_name.data = employee['f_name']
             form.last_name.data = employee['l_name']
+            if employee['mac_address'] is not None:
+                form.mac_address.data = employee['mac_address']
         else:
             employee = None
         print(employee)
