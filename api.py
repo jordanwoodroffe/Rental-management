@@ -18,14 +18,14 @@ Short instructions:
 - And update the below/db code to use the right port number, database name, etc.
 """
 
-import json
 import csv
+import json
+import warnings
 from datetime import datetime
 from json.decoder import JSONDecodeError
-from sqlalchemy import DateTime, Integer, Float, ForeignKey, LargeBinary
 from flask import Flask, Blueprint, request, Response
 from flask_sqlalchemy import SQLAlchemy
-import warnings
+from sqlalchemy import DateTime, Integer, Float, ForeignKey, LargeBinary
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from flask_marshmallow import Marshmallow
@@ -254,7 +254,6 @@ def get_employee():
     if employee_id is not None:
         employee = Employee.query.get(employee_id)
         if employee is not None:
-            print("GET EMPLOYEE")
             return Response(EmployeeSchema().dumps(employee), status=200, mimetype="application/json")
         return Response("Employee {} not found".format(employee_id), status=404)
     return Response("user_id param not found", status=400)
@@ -340,6 +339,7 @@ def employee_authentication():
 @api.route("/employee", methods=['PUT'])
 def update_employee():
     """Endpoint to update an existing employee details
+    TODO: add mac_address to endpoint & update form (only if engineer?)
 
     Args:
         data: json data containing employee fields to be updated
@@ -359,6 +359,7 @@ def update_employee():
                     employee.f_name = data["f_name"]
                     employee.l_name = data["l_name"]
                     employee.type = data["type"]
+                    employee.mac_address = data["mac_address"]
                     salt = get_random_alphaNumeric_string(10)  # Randomise salt
                     employee.password = hash_password(data['password'], salt) + ':' + salt
                     db.session.commit()

@@ -6,8 +6,8 @@
   <div class="row">
     <div class="col">
       <div class="jumbotron">
-        <h1 class="display-4">User Login</h1>
-        <p class="lead">Please login with your existing details, or register now.</p>
+        <h1 class="display-4">{{login_type}} Login</h1>
+        <p class="lead">Please login with your {{login_type|lower}} details{% if login_type=="Customer" %}, or register now{%endif%}.</p>
         <hr class="my-4">
       </div>
     </div>
