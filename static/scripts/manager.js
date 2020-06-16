@@ -126,15 +126,15 @@ window.onload = function() {
 
             // These labels appear in the legend and in the tooltips when hovering different arcs
             labels: [
-                'Red',
-                'Yellow',
-                'Blue',
-                'Green',
-                'Pink',
-                'Black',
-                'Yellow',
-                'Blue',
-                'Green',
+                '1',
+                '2',
+                '3',
+                '4',
+                '5',
+                '6',
+                '7',
+                '8',
+                '9',
                 'Pink',
                 'Yellow',
                 'Blue',
@@ -163,5 +163,15 @@ window.onload = function() {
             }
         }
     });
+    month_revenue = JSON.parse(document.getElementById("manager_script").getAttribute("month-revenue"));
+    labels = new Array(month_revenue.length)
+    for (i = 0; i < month_revenue.length; i++) {
+        labels[i] = i+1
+    }
+    stackedLine.data.datasets.forEach((dataset) => {
+                    dataset.data = month_revenue;
+                });
+    stackedLine.data.labels = labels
+    stackedLine.update();
 }
 

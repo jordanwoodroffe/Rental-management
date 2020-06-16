@@ -329,6 +329,9 @@ def render_edit_employee():
 @site.route("/manager")
 def manager_dashboard():
     if 'user' in session and session['user']['type'] == 'MANAGER':
+        # Bookings related queries
+        revenue = 0
+        month_revenue = []
         result = requests.get("{}{}".format(URL, "/bookings"))
         try:
             bookings_data = result.json()
@@ -337,25 +340,18 @@ def manager_dashboard():
         if bookings_data is not None:
             today = datetime.datetime.today()
             num_days = calendar.monthrange(today.year, today.month)[1]
-            days = [datetime.date(today.year, today.month, day) for day in range(1, num_days + 1)]
-            print(days)
+            # days = [datetime.date(today.year, today.month, day) for day in range(1, num_days + 1)]
+            month_revenue = [0 for i in range(num_days)]
+            for booking in bookings_data:
+                date = datetime.datetime.strptime(booking["start"], "%Y-%m-%d %H:%M:%S")
+                if date.year == today.year and date.month == today.month:
+                    revenue += int(booking["cost"])
+                    month_revenue[date.day - 1] = int(booking["cost"])
 
-        # cars = requests.get("{}{}".format(URL, "/cars"))
-        # reports = requests.get("{}{}".format(URL, "/reports"))
-        # try:
-        #     cars = cars.json()
-        #     reports = reports.json()
-        # except JSONDecodeError as je:
-        #     cars = None
-        #     reports = None
-        # if cars is not None and reports is not None:
-        #     print(len(cars))
-        #     print(len(reports))
-
-
-
-        return render_template("employee/manager.html", user=session['user'])
+        # Users related queries
+        return render_template("employee/manager.html", user=session['user'], revenue=revenue, month_revenue=month_revenue)
     return redirect(url_for("site.home"))
+
 
 @site.route("/engineer")
 def engineer_dashboard():

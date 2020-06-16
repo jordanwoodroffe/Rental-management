@@ -6,7 +6,7 @@
 
 {% block content %}
 {% block javascript %}
-  <script src="{{url_for('static', filename='scripts/manager.js')}}" revenue="" car-status="customer" ></script>
+  <script src="{{url_for('static', filename='scripts/manager.js')}}" id="manager_script" car-status="customer" month-revenue="{{month_revenue}}"></script>
   <script src="{{url_for('static', filename='scripts/Chart.js')}}"></script>
   <script src="{{url_for('static', filename='css/Chart.css')}}"></script>
 {% endblock %}
@@ -32,13 +32,13 @@
         </div>
         <div class="card text-white bg-info mt-3 mt-md-3">
           <div class="card-body">
-            <h5 class="card-title">$<span>60.909</span></h5>
+            <h5 class="card-title">$<span>{{revenue}}</span></h5>
             <p class="card-text">Current month revenue</p>
           </div>
         </div>
         <div class="card text-white bg-info mt-3 mt-md-3">
           <div class="card-body">
-            <h5 class="card-title">$<span>10.909</span></h5>
+            <h5 class="card-title">$<span>{{revenue * 30 / 100}}</span></h5>
             <p class="card-text">Current month profit</p>
           </div>
         </div>
