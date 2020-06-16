@@ -383,6 +383,7 @@ def render_edit_employee():
 @site.route("/manager")
 def manager_dashboard():
     if 'user' in session and session['user']['type'] == 'MANAGER':
+        today = datetime.datetime.today()
         # Bookings related queries
         revenue = 0
         last_month_revenue = 0
@@ -395,7 +396,6 @@ def manager_dashboard():
         except JSONDecodeError as je:
             bookings_data = None
         if bookings_data is not None:
-            today = datetime.datetime.today()
             num_days = calendar.monthrange(today.year, today.month)[1]
             # days = [datetime.date(today.year, today.month, day) for day in range(1, num_days + 1)]
             month_revenue = [0 for i in range(num_days)]
@@ -408,13 +408,30 @@ def manager_dashboard():
                 elif date.year == today.year and (date + relativedelta(months=1)).month == today.month:
                     last_month_revenue += int(booking["cost"])
                     last_bookings_num += 1
-        if (last_month_revenue is not 0):
+        if last_month_revenue is not 0:
             revenue_grow = (revenue / last_month_revenue) * 100 - 100
             booking_grow = (bookings_num / last_bookings_num) * 100 - 100
         else:
             revenue_grow = 100
             booking_grow = 100
+
         # Users related queries
+        last_five_week_users = [0, 0, 0, 0, 0]
+        current_month_users = 0
+        last_month_users = 0
+        result = requests.get("{}{}".format(URL, "/users"))
+        try:
+            users_data = result.json()
+        except JSONDecodeError as je:
+            users_data = None
+        if users_data is not None:
+            for user in users_data:
+                reg_date = datetime.datetime.strptime(user["register_date"], "%Y-%m-%d %H:%M:%S")
+                if reg_date.year == today.year and reg_date.month == today.month:
+                    current_month_users += 1
+                elif reg_date.year == today.year and (reg_date + relativedelta(months=1)).month == today.month:
+                    last_month_users += 1
+
         return render_template("employee/manager.html", user=session['user'], revenue=revenue,
                                month_revenue=month_revenue, revenue_grow=revenue_grow, booking_grow=booking_grow)
     return redirect(url_for("site.home"))

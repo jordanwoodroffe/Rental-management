@@ -67,6 +67,7 @@ class User(db.Model):
     l_name = db.Column('last_name', VARCHAR(45), nullable=False)
     password = db.Column('password', TEXT(75), nullable=False)
     face_id = db.Column('face_id', TINYINT(1))
+    register_date = db.Column('register_date', DateTime(), nullable=False)
 
 
 class Employee(db.Model):
@@ -159,7 +160,7 @@ class UserSchema(ma.Schema):
 
     class Meta:
         model = User
-        fields = ("username", "email", "f_name", "l_name", "face_id")
+        fields = ("username", "email", "f_name", "l_name", "face_id", "register_date")
 
 
 class EmployeeSchema(ma.Schema):
@@ -548,6 +549,7 @@ def add_user():
                 user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
+                user.register_date = data['register_date']
                 user.face_id = 0
                 user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.add(user)  # Add user to database
@@ -622,6 +624,7 @@ def update_user():
                 user.email = data["email"]
                 user.f_name = data["f_name"]
                 user.l_name = data["l_name"]
+                user.register_date = data["register_date"]
                 salt = get_random_alphaNumeric_string(10)  # Randomise salt
                 user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.commit()
@@ -1058,6 +1061,7 @@ def populate():
                 user.f_name = row[2]
                 user.l_name = row[3]
                 user.password = row[4]
+                user.register_date = row[5]
                 user.face_id = False
                 db.session.add(user)
             response['users'] = True
