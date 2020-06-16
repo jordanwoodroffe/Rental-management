@@ -1,0 +1,99 @@
+{% extends "bootstrap/base.html" %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}}
+
+{% block content %}
+{% block javascript %}
+  <script src="{{url_for('static', filename='scripts/manager.js')}}"></script>
+  <script src="{{url_for('static', filename='scripts/Chart.js')}}"></script>
+  <script src="{{url_for('static', filename='css/Chart.css')}}"></script>
+{% endblock %}
+{% with page="main", type="MANAGER"%}
+{% include "employee/nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="card bg-light mb-4 employee">
+          <div class="card-header">
+            Profile
+          </div>
+          <div class="card-img-top d-flex justify-content-center" style="padding-top: 5px">
+            <i class="fas fa-user fa-7x"></i>
+          </div>
+          <div class="card-body">
+            <h5>{{user.f_name}} {{user.l_name}}</h5>
+            <p class="mb-0">@{{user.username}}</p>
+            <p class="mt-2 mb-0">{{user.email}}</p>
+          </div>
+        </div>
+        <div class="card text-white bg-info mt-3 mt-md-3">
+          <div class="card-body">
+            <h5 class="card-title">Card title</h5>
+            <p class="card-text">100%</p>
+          </div>
+        </div>
+        <div class="card text-white bg-info mt-3 mt-md-3">
+          <div class="card-body">
+            <h5 class="card-title">Card title</h5>
+            <p class="card-text">100%</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card text-white bg-info mt-3 mt-md-0">
+              <div class="card-body">
+                <h5 class="card-title">Card title</h5>
+                <p class="card-text">100%</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-white bg-success mt-3 mt-md-0">
+              <div class="card-body">
+                <h5 class="card-title">Card title</h5>
+                <p class="card-text">100%</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-white bg-warning mt-3 mt-md-0">
+              <div class="card-body">
+                <h5 class="card-title">Card title</h5>
+                <p class="card-text">100%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card bg-light mt-3 mt-md-3">
+              <canvas id="barChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-light mt-3 mt-md-3">
+              <canvas id="pieChart" width="300" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card bg-light mt-3 mt-md-3">
+              <canvas id="lineChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock %}
