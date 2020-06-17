@@ -410,8 +410,8 @@ def manager_dashboard():
                     last_bookings_num += 1
 
         if last_month_revenue is not 0:
-            revenue_grow = (revenue / last_month_revenue) * 100 - 100
-            booking_grow = (bookings_num / last_bookings_num) * 100 - 100
+            revenue_grow = int((revenue / last_month_revenue) * 100 - 100)
+            booking_grow = int((bookings_num / last_bookings_num) * 100 - 100)
         else:
             revenue_grow = 100
             booking_grow = 100
@@ -428,7 +428,7 @@ def manager_dashboard():
             users_data = None
         if users_data is not None:
             for user in users_data:
-                reg_date = datetime.datetime.strptime(user["register_date"], "%Y-%m-%d %H:%M:%S")
+                reg_date = datetime.datetime.strptime(user["register_date"], "%Y-%m-%dT%H:%M:%S")
                 if reg_date.year == today.year and reg_date.month == today.month:
                     current_month_users += 1
                 elif reg_date.year == today.year and (reg_date + relativedelta(months=1)).month == today.month:
@@ -446,7 +446,7 @@ def manager_dashboard():
                     last_five_week_users[0] += 1
 
         if last_month_users is not 0:
-            user_grow = (current_month_users / last_month_users) * 100 - 100
+            user_grow = int((current_month_users / last_month_users) * 100 - 100)
         else:
             user_grow = 100
         return render_template("employee/manager.html", user=session['user'], revenue=revenue,
