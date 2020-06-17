@@ -277,7 +277,7 @@
               <hr>
               <form class="mt-1" action="/remove_car?car_id={{car.car_id}}" method="POST">
                   <a class="btn btn-primary text-light" href="/edit_car?car_id={{car.car_id}}">Update</a>
-                  <a class="btn btn-warning text-light {% if car.repairs %}disabled{% endif %}"  href="/report_car?car_id={{car.car_id}}">Report</a>
+                  {% if not car.repairs %}<a class="btn btn-warning text-light" href="/report_car?car_id={{car.car_id}}">Report</a>{% endif %}
                   <button type="submit" class="btn btn-danger text-light">Remove</button>
               </form>
             </div>
