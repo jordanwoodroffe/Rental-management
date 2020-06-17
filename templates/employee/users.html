@@ -43,7 +43,11 @@
               </p>
               <p class="card-text email">{{user.email}}</p>
               <hr>
-              <a class="btn btn-primary" type="submit" href="/edit_user?user_id={{user.username}}">Edit user</a>
+              <form class="mt-1" action="/remove_user?user_id={{user.username}}" method="POST">
+                <a class="btn btn-primary" type="submit" href="/edit_user?user_id={{user.username}}">Edit user</a>
+                <button type="submit" class="btn btn-danger text-light">Remove</button>
+              </form>
+
             </div>
           </div>
         {% endfor %}
@@ -56,6 +60,11 @@
         </div>
       </div>
     {% endif %}
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <a class="btn btn-secondary" type="submit" href="/create_user">Create new user</a>
+      </div>
+    </div>
   </div>
 </body>
 

@@ -44,9 +44,9 @@ def valid_rego(form, field):
 
 
 def valid_mac_address(form, field):
-    if not re.match("^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$", field.data):
+    if len(field.data) > 0 and not re.match("^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$", field.data):
         raise ValidationError("Invalid mac address: must be 12 hexadecimal charaters separated by : or -"
-                              " for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
+                              "<br>for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
 
 
 class UpdateUserForm(RegistrationForm):
@@ -54,16 +54,22 @@ class UpdateUserForm(RegistrationForm):
     existing_username = HiddenField("Existing Username")
 
 
-class UpdateEmployeeForm(UpdateUserForm):
-    """UpdateEmployeeForm form to update employee details"""
+class CreateEmployeeForm(RegistrationForm):
+    """CreateEmployeeForm form to create a new employee"""
     type = SelectField('Type', choices=[('ADMIN', 'Admin'), ('ENGINEER', 'Engineer'), ('MANAGER', 'Manager')])
     mac_address = StringField('Mac Address (Bluetooth ID)', validators=[
-        Length(17, message="mac address must be 17 characters long"), valid_mac_address
+        Length(0, 17, message="mac address must be 17 characters long"), valid_mac_address
     ], render_kw={"placeholder": "No mac address"})
+
+
+class UpdateEmployeeForm(CreateEmployeeForm):
+    """UpdateEmployeeForm form to update employee details"""
+    existing_username = HiddenField("Existing Username")
 
 
 class CreateCarForm(FlaskForm):
     car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
+    name = StringField('Name', validators=[InputRequired(), valid_name])
     cph = FloatField('Cost per hour', validators=[InputRequired(), valid_cph])
     lat = FloatField('Latitude', validators=[InputRequired(), valid_lat])
     lng = FloatField('Longitude', validators=[InputRequired(), valid_lng])
@@ -198,6 +204,7 @@ def render_edit_car():
             'lat': form.lat.data,
             'lng': form.lng.data,
             'model_id': form.model_id.data,
+            'name': form.name.data
         }
         result = requests.put("{}{}".format(URL, "/update_car"), json=json.dumps(car))
         print(result)
@@ -225,9 +232,76 @@ def render_edit_car():
             form.cph.data = car['cph']
             form.lat.data = car['lat']
             form.lng.data = car['lng']
+            form.name.data = car['name']
+        return render_template("employee/update_car.html", form=form, models=models, method="Update")
+    return redirect(url_for('site.home'))
+
+
+@site.route("/create_vehicle", methods=['GET', 'POST'])
+def render_create_vehicle():
+    models = requests.get("{}{}".format(URL, "/car_models"))
+    models = models.json()
+    form = CreateCarForm(models=models)
+    if request.method == 'POST' and form.validate_on_submit():
+        car = {
+            'car_id': form.car_id.data,
+            'cph': form.cph.data,
+            'lat': form.lat.data,
+            'lng': form.lng.data,
+            'model_id': form.model_id.data,
+            'name': form.name.data
+        }
+        result = requests.post(
+            "{}{}".format(URL, "/car"),
+            json=json.dumps(car),
+        )
+        print("create response" + str(result))
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Car successfully created",
+                    "data": "Registration number: {}".format(form.car_id.data)
+                }
+            )]
+            return redirect(url_for("site.search_cars"))
         else:
-            car = None
-        return render_template("employee/update_car.html", form=form, models=models)
+            form.car_id.errors.append(result.text)
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        return render_template("employee/update_car.html", form=form, models=models, method="Create")
+    return redirect(url_for('site.home'))
+
+
+@site.route("/remove_car", methods=['POST'])
+def remove_car():
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        car_id = request.args.get('car_id')
+        err = "Missing car_id parameter"
+        if car_id is not None:
+            result = requests.delete(
+                "{}{}".format(URL, "/car"),
+                params={"car_id": car_id}
+            )
+            if result.status_code == 200:
+                session['messages'] = [(
+                    "success",
+                    {
+                        "message": "Car successfully removed",
+                        "data": "Registration number: {}".format(car_id)
+                    }
+                )]
+                return redirect(url_for("site.search_cars"))
+            else:
+                err = result.text
+        session['messages'] = [(
+            "warning",
+            {
+                "message": "Car unable to be removed",
+                "data": "Registration number: {}".format(car_id),
+                "error": err
+            }
+        )]
+        return redirect(url_for("site.search_cars"))
     return redirect(url_for('site.home'))
 
 
@@ -290,7 +364,7 @@ def render_edit_user():
             )]
         else:
             session['messages'] = [(
-                "success",
+                "warning",
                 {
                     "message": "Customer unable to be updated",
                     "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data),
@@ -311,7 +385,81 @@ def render_edit_user():
         else:
             user = None
         print(user)
-        return render_template("employee/update_user.html", form=form)
+        return render_template("employee/update_user.html", form=form, method="Update")
+    return redirect(url_for('site.home'))
+
+
+@site.route("/create_user", methods=['GET', 'POST'])
+def create_user():
+    form = RegistrationForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        user = {
+            'username': form.username.data,
+            'email': form.email.data,
+            'l_name': form.last_name.data,
+            'f_name': form.first_name.data,
+            'password': form.password.data
+        }
+        result = requests.post(
+            "{}{}".format(URL, "/user"),
+            json=json.dumps(user),
+        )
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Customer successfully updated",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
+                }
+            )]
+            return redirect(url_for("site.view_users"))
+        elif result.status_code == 404:
+            form.username.errors.append('This username has been used for register before')
+        else:
+            session['messages'] = [(
+                "warning",
+                {
+                    "message": "Customer unable to be updated",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data),
+                    "error": result.text
+                }
+            )]
+            return redirect(url_for("site.view_users"))
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        return render_template("employee/update_user.html", form=form, method="Create")
+    return redirect(url_for('site.home'))
+
+
+@site.route("/remove_user", methods=['POST'])
+def remove_user():
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        user_id = request.args.get('user_id')
+        err = "Missing user_id parameter"
+        if user_id is not None:
+            result = requests.delete(
+                "{}{}".format(URL, "/user"),
+                params={"user_id": user_id}
+            )
+            if result.status_code == 200:
+                session['messages'] = [(
+                    "success",
+                    {
+                        "message": "User successfully removed",
+                        "data": "@{}".format(user_id)
+                    }
+                )]
+                return redirect(url_for("site.view_users"))
+            else:
+                err = result.text
+        session['messages'] = [(
+            "warning",
+            {
+                "message": "User unable to be removed",
+                "data": "@{}".format(user_id),
+                "error": err
+            }
+        )]
+        return redirect(url_for("site.view_users"))
     return redirect(url_for('site.home'))
 
 
@@ -384,13 +532,84 @@ def render_edit_employee():
         else:
             employee = None
         print(employee)
-        return render_template("employee/update_employee.html", form=form)
+        return render_template("employee/update_employee.html", form=form, method="Update")
     return redirect(url_for('site.home'))
 
 
 @site.route("/create_employee", methods=['GET', 'POST'])
 def create_employee():
-    pass
+    form = CreateEmployeeForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        employee = {
+            'username': form.username.data,
+            'email': form.email.data,
+            'l_name': form.last_name.data,
+            'f_name': form.first_name.data,
+            'password': form.password.data,
+            'type': form.type.data,
+            'mac_address': form.mac_address.data
+        }
+        result = requests.post(
+            "{}{}".format(URL, "/employee"),
+            json=json.dumps(employee),
+            params={"update": True}
+        )
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Employee successfully created",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
+                }
+            )]
+        else:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Unable to create new employee",
+                    "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data),
+                    "error": result.text
+                }
+            )]
+        return redirect(url_for("site.render_view_employees"))
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        return render_template("employee/update_employee.html", form=form, method="Create")
+    return redirect(url_for('site.home'))
+
+
+@site.route("/remove_employee", methods=['POST'])
+def remove_employee():
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        employee_id = request.args.get('employee_id')
+        err = "Missing employee_id parameter"
+        if employee_id == session['user']['username']:
+            err = "{} is unable to delete themselves".format(session['user']['username'])
+        elif employee_id is not None:
+            result = requests.delete(
+                "{}{}".format(URL, "/employee"),
+                params={"employee_id": employee_id}
+            )
+            if result.status_code == 200:
+                session['messages'] = [(
+                    "success",
+                    {
+                        "message": "Employee successfully removed",
+                        "data": "@{}".format(employee_id)
+                    }
+                )]
+                return redirect(url_for("site.render_view_employees"))
+            else:
+                err = result.text
+        session['messages'] = [(
+            "warning",
+            {
+                "message": "Employee unable to be removed",
+                "data": "@{}".format(employee_id),
+                "error": err
+            }
+        )]
+        return redirect(url_for("site.render_view_employees"))
+    return redirect(url_for('site.home'))
 
 
 @site.route("/manager")

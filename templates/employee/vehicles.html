@@ -274,8 +274,12 @@
                   <p class="card-text">Load index: <span class="load-index-value">{{car.model.load_index}}</span></p>
                 </div>
               </div>
-              <a class="btn btn-primary text-light" href="/edit_car?car_id={{car.car_id}}">Update</a>
-              <a class="btn btn-danger text-light" href="/report_car?car_id={{car.car_id}}">Report</a>
+              <hr>
+              <form class="mt-1" action="/remove_car?car_id={{car.car_id}}" method="POST">
+                  <a class="btn btn-primary text-light" href="/edit_car?car_id={{car.car_id}}">Update</a>
+                  <a class="btn btn-warning text-light" href="/report_car?car_id={{car.car_id}}">Report</a>
+                  <button type="submit" class="btn btn-danger text-light">Remove</button>
+              </form>
             </div>
           </div>
         {% endfor %}
@@ -288,6 +292,11 @@
         </div>
       </div>
     {% endif %}
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <a class="btn btn-secondary" type="submit" href="/create_vehicle">Create new vehicle</a>
+      </div>
+    </div>
   </div>
 </body>
 {% endblock %}

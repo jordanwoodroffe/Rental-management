@@ -55,7 +55,10 @@
               </p>
               <p class="card-text email">{{employee.email}}</p>
               <hr>
-              <a class="btn btn-primary" type="submit" href="/edit_employee?employee_id={{employee.username}}">Edit employee</a>
+              <form class="mt-1" action="/remove_employee?employee_id={{employee.username}}" method="POST">
+                <a class="btn btn-primary" type="submit" href="/edit_employee?employee_id={{employee.username}}">Edit employee</a>
+                <button type="submit" class="btn btn-danger text-light">Remove</button>
+              </form>
             </div>
           </div>
         {% endfor %}

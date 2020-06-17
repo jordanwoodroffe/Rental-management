@@ -6,18 +6,18 @@
   <div class="row">
     <div class="col">
       <div class="jumbotron">
-        <h1 class="display-4">Update Vehicle</h1>
-        <p class="lead">Update details by completing the form below.</p>
+        <h1 class="display-4">{{method}} Vehicle</h1>
+        <p class="lead">{{method}} details by completing the form below.</p>
         <hr class="my-4">
       </div>
     </div>
   </div>
   <div class="row">
     <div class="col">
-      <form class="form-signin" method="POST" action="/edit_car">
+      <form class="form-signin" method="POST">
         {{ form.hidden_tag() }}
         <div class="form-row">
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
             {{ wtf.form_field(form.car_id)}}
             <small id="carIDHelpBlock" class="form-text text-muted">
               {% for error in form.car_id.errors %}
@@ -25,7 +25,15 @@
               {% endfor %}
             </small>
           </div>
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
+            {{ wtf.form_field(form.name)}}
+            <small id="nameHelpBlock" class="form-text text-muted">
+              {% for error in form.name.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
             {{ wtf.form_field(form.lat)}}
             <small id="latHelpBlock" class="form-text text-muted">
               {% for error in form.lat.errors %}
@@ -33,7 +41,7 @@
               {% endfor %}
             </small>
           </div>
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
             {{ wtf.form_field(form.lng)}}
             <small id="lngHelpBlock" class="form-text text-muted">
               {% for error in form.lng.errors %}
@@ -86,7 +94,7 @@
         </div>
         <div class="form-row">
           <div class="form-group col-md-4">
-            <button type="submit" class="btn btn-primary">Update</button>
+            <button type="submit" class="btn btn-primary">{{method}}</button>
             <a class="btn btn-secondary text-light" href="/view_cars">Cancel</a>
           </div>
           <div class="col-md-4"></div>

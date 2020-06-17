@@ -382,6 +382,19 @@ def update_employee():
             return Response("Incorrect JSON format", status=400)
 
 
+@api.route("/employee", methods=['DELETE'])
+def remove_employee():
+    employee_id = request.args.get('employee_id')
+    if employee_id is not None:
+        employee = Employee.query.get(employee_id)
+        if employee is not None:
+            db.session.delete(employee)
+            db.session.commit()
+            return Response(status=200)
+        return Response("Invalid employee_id: not found in db", status=404)
+    return Response("Missing request param", status=400)
+
+
 @api.route("/reports", methods=['GET'])
 def get_reports():
     """Endpoint to retrieve multiple reports, optionally based on assignment to an engineer, or for a vehicle
@@ -552,7 +565,7 @@ def add_user():
                 user.email = data['email']
                 user.f_name = data['f_name']
                 user.l_name = data['l_name']
-                user.register_date = data['register_date']
+                user.register_date = datetime.now()
                 user.face_id = 0
                 user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.add(user)  # Add user to database
@@ -604,6 +617,19 @@ def user_authentication():
     return response
 
 
+@api.route("/user", methods=['DELETE'])
+def remove_user():
+    user_id = request.args.get('user_id')
+    if user_id is not None:
+        user = User.query.get(user_id)
+        if user is not None:
+            db.session.delete(user)
+            db.session.commit()
+            return Response(status=200)
+        return Response("Invalid user_id: not found in db", status=404)
+    return Response("Missing request param", status=400)
+
+
 @api.route("/user", methods=['PUT'])
 def update_user():
     """Updates an existing user details: face_id when register on MP
@@ -627,7 +653,6 @@ def update_user():
                 user.email = data["email"]
                 user.f_name = data["f_name"]
                 user.l_name = data["l_name"]
-                user.register_date = data["register_date"]
                 salt = get_random_alphaNumeric_string(10)  # Randomise salt
                 user.password = hash_password(data['password'], salt) + ':' + salt
                 db.session.commit()
@@ -693,6 +718,35 @@ def get_car():
             # in the database, return car object
         return Response("Car not found", status=404)
     return Response("car_id param was not found", status=400)
+
+
+@api.route("/car", methods=['POST'])
+def create_car():
+    car_data = request.get_json()
+    try:
+        if car_data is None:  # Check if user_data is provided or not
+            return Response(status=400)
+        else:
+            data = json.loads(car_data)
+            car = Car.query.get(data['car_id'])  # Check if username is already used
+            if car is None:
+                car = Car()  # Create user object and add user_data to it
+                car.car_id = data['car_id']
+                car.lat = data['lat']
+                car.lng = data['lng']
+                car.cph = data['cph']
+                car.model_id = data['model_id']
+                car.name = data['name']
+                car.locked = 1
+                db.session.add(car)  # Add user to database
+                db.session.commit()
+                return Response(status=200)
+            else:
+                return Response("Invalid car_id: already exists", status=404)
+    except JSONDecodeError as de:
+        return Response("Unable to decode car object", status=400)
+    except ValueError as ve:
+        return Response("Unable to access value", status=400)
 
 
 @api.route("/update_car", methods=['PUT'])
@@ -841,6 +895,19 @@ def update_location(car_id):
         return Response("Car not found, invalid id{}".format(car_id), status=404)
     else:
         return Response("Missing required params: lat, lng", status=400)
+
+
+@api.route("/car", methods=['DELETE'])
+def remove_car():
+    car_id = request.args.get('car_id')
+    if car_id is not None:
+        car = Car.query.get(car_id)
+        if car is not None:
+            db.session.delete(car)
+            db.session.commit()
+            return Response(status=200)
+        return Response("Invalid rego: not found in db", status=404)
+    return Response("Missing request parameter", status=400)
 
 
 @api.route("/cars/<start>/<end>", methods=['GET'])
