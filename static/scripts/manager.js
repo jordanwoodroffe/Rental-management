@@ -8,11 +8,20 @@ updateReportsNumber = function(chart) {
     xhr.onload = function () {
         if (xhr.readyState === xhr.DONE) {
             if (xhr.status === 200) {
+                result = JSON.parse(xhr.responseText);
+                cars = [];
+                for (i = 0; i < result.length; i++) {
+                    console.log(result[i]['car_id'])
+                    if (!cars.includes(result[i]['car_id'])) {
+                       cars.push(result[i]['car_id'])
+                    }
+                }
+                console.log(cars);
                 chart.data.datasets.forEach((dataset) => {
-                    dataset.data[0] = JSON.parse(xhr.responseText).length;
+                    dataset.data[0] = cars.length;
                 });
                 chart.update();
-//                updateCarsNumber(chart)
+                updateCarsNumber(chart)
             }
         }
     };
@@ -31,7 +40,7 @@ updateCarsNumber = function(chart) {
         if (xhr.readyState === xhr.DONE) {
             if (xhr.status === 200) {
                 chart.data.datasets.forEach((dataset) => {
-                    dataset.data[1] = JSON.parse(xhr.responseText).length;
+                    dataset.data[1] = JSON.parse(xhr.responseText).length - dataset.data[0];
                 });
                 chart.update();
             }
@@ -72,8 +81,19 @@ window.onload = function() {
         options: {
             scales: {
                 yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Weekly new customers'
+                    },
                     ticks: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        stepSize: 1
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Week'
                     }
                 }]
             },
@@ -109,7 +129,7 @@ window.onload = function() {
         }
     });
     updateReportsNumber(pieChart)
-    updateCarsNumber(pieChart)
+//    updateCarsNumber(pieChart)
 
     month_revenue = JSON.parse(document.getElementById("manager_script").getAttribute("month-revenue"));
     labels = new Array(month_revenue.length)
@@ -138,9 +158,17 @@ window.onload = function() {
         options: {
             scales: {
                 yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Daily revenue'
+                    },
                     stacked: true
                 }],
                 xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Date'
+                    },
                     ticks: {
                         autoSkip: true,
                         maxTicksLimit: 5
