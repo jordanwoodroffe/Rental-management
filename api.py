@@ -26,6 +26,7 @@ from json.decoder import JSONDecodeError
 from flask import Flask, Blueprint, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import DateTime, Integer, Float, ForeignKey, LargeBinary
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from flask_marshmallow import Marshmallow
@@ -384,6 +385,7 @@ def update_employee():
 @api.route("/reports", methods=['GET'])
 def get_reports():
     """Endpoint to retrieve multiple reports, optionally based on assignment to an engineer, or for a vehicle
+    TODO: fix resolved - able to specify for each if return all or only completed
 
     Args:
         car_id: rego of car reports to return
@@ -405,8 +407,8 @@ def get_reports():
             return Response("Incorrect resolved param value (must be 1 or 0)", status=400)
     elif engineer_id is not None:  # return reports assigned to an engineer
         reports = CarReport.query.join(Employee).filter(Employee.username == engineer_id)
-    elif car_id is not None:  # return all reports for a vehicle
-        reports = CarReport.query.join(Car).filter(Car.car_id == car_id)
+    elif car_id is not None:  # return all uncompleted reports for a vehicle
+        reports = CarReport.query.filter_by(resolved=0).join(Car).filter(Car.car_id == car_id)
     else:  # return all reports
         reports = CarReport.query.all()
     data = json.loads(ReportSchema(many=True).dumps(reports))
@@ -723,6 +725,26 @@ def update_car():
             )
     except (JSONDecodeError, ValueError, KeyError):
         return Response("Incorrect JSON format", status=400)
+
+
+@api.route("/engineer/unlock_car", methods=['PUT'])
+def engineer_unlock():
+    car_id = request.args.get('car_id')
+    engineer_id = request.args.get('engineer_id')
+    if None not in (car_id, engineer_id):
+        car = Car.query.get(car_id)
+        engineer = Employee.query.get(engineer_id)
+        if None not in (car, engineer) and engineer.type == "ENGINEER":
+            if car.locked == 1:
+                msg = "unlocked"
+                car.locked = 0
+            else:
+                msg = "locked"
+                car.locked = 1
+            db.session.commit()
+            return Response("Car {}".format(msg), status=200)
+        return Response("Invalid engineer or car id", status=404)
+    return Response("Missing request parameters", status=400)
 
 
 @api.route("/car", methods=['PUT'])
@@ -1062,11 +1084,27 @@ def populate():
                 user.email = row[1]
                 user.f_name = row[2]
                 user.l_name = row[3]
-                user.password = row[4]
+                salt = get_random_alphaNumeric_string(10)
+                user.password = hash_password(row[4], salt) + ':' + salt
                 user.register_date = row[5]
                 user.face_id = False
                 db.session.add(user)
             response['users'] = True
+    if Employee.query.first() is None:
+        with open("./test_data/employee.csv") as employees:
+            reader = csv.reader(employees, delimiter=',')
+            for row in reader:
+                print(row)
+                employee = Employee()
+                employee.username = row[0]
+                employee.email = row[1]
+                employee.f_name = row[2]
+                employee.l_name = row[3]
+                salt = get_random_alphaNumeric_string(10)
+                employee.password = hash_password(row[4], salt) + ':' + salt
+                employee.type = row[5]
+                db.session.add(employee)
+            response['employees'] = True
     if CarModel.query.first() is None:
         # cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour', 'transmission', 'weight (kg)',
         # 'length (m)', 'load_index', 'engine_capacity', 'ground_clearance (mm)']
@@ -1094,12 +1132,14 @@ def populate():
         # car_cols = ['car_id', 'name', 'cph', 'lat', 'lng']
         if Car.query.first() is not None:
             Car.query.delete()
+        car_ids = []
         with open('./test_data/car.csv') as cars:
             reader = csv.reader(cars, delimiter=',')
             i = 0
             for row in reader:
                 print(row)
                 car = Car()
+                car_ids.append(row[0])
                 car.car_id = row[0]
                 car.model_id = model_ids[i]
                 car.name = row[1]
@@ -1110,5 +1150,34 @@ def populate():
                 db.session.add(car)
                 i += 1
             response['cars'] = True
-        db.session.commit()
+        if CarReport.query.first() is not None:
+            CarReport.query.delete()
+        with open('./test_data/car_report.csv') as reports:
+            reader = csv.reader(reports, delimiter=',')
+            i = 0
+            for row in reader:
+                print(row)
+                report = CarReport()
+                report.car_id = car_ids[i]
+                report.details = row[1]
+                report.report_date = row[2]
+                report.priority = row[3]
+                db.session.add(report)
+                i += 1
+            response['reports'] = True
+        with open('./test_data/booking.csv') as bookings:
+            reader = csv.reader(bookings, delimiter=',')
+            for row in reader:
+                print(row)
+                booking = Booking()
+                booking.car_id = row[0]
+                booking.user_id = row[1]
+                booking.start = datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S")
+                booking.end = datetime.strptime(row[3], "%Y-%m-%d %H:%M:%S")
+                booking.booking_date = datetime.strptime(row[4], "%Y-%m-%d %H:%M:%S")
+                booking.cost = calc_cost(float(row[5]), booking.start, booking.end)
+                booking.completed = 1
+                db.session.add(booking)
+            response['bookings'] = True
+    db.session.commit()
     return response

@@ -256,7 +256,9 @@
         {% for car in cars %}
           <div class="card bg-light mb-4 car">
             <div class="card-body">
-              <h5 class="card-title make-value">{{car.model.make}} {{car.model.model}}, {{car.model.year}}</h5>
+              <h5 class="card-title make-value">{{car.model.make}}<br>{{car.model.model}}, {{car.model.year}}
+                {% if car.repairs %}<span style="position:absolute; top: 20px; right: 20px;" class="type badge badge-warning text-light">in repair</span>{% endif %}
+              </h5>
               <p class="card-text">Rego: <span class="rego-value">{{car.car_id}}</span></p>
               <p class="card-text capacity-value">Capacity: {{car.model.capacity}}</p>
               <p class="card-text colour-value">Colour: {{car.model.colour}}</p>
