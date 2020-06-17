@@ -86,12 +86,12 @@
                 / <span class="email">{{report.engineer.email}}</span>
               </p>
               {% endif %}
+              {% if (report.notified == 0) and (report.resolved == 0) %}
               <form class="form-inline" method="POST">
-                {% if (report.notified == 0) and (report.resolved == 0) %}
-                <a class="btn btn-primary mr-1" href="/alert_report?report_id={{report.report_id}}">Raise/Alert</a>
-                <a class="btn btn-secondary" href="/remove_report?report_id={{report.report_id}}">Remove</a>
-                {% endif %}
+                <a class="btn btn-primary mr-1" href="/alert_report?report_id={{report.report_id}}">Raise repair request</a>
+                <a class="btn btn-secondary" href="/remove_report?report_id={{report.report_id}}">Dismiss</a>
               </form>
+              {% endif %}
             </div>
           </div>
         {% endfor %}

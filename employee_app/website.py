@@ -411,24 +411,35 @@ def alert_report():
                 params={"report_id": report_id}
             )
             if result.status_code == 200:
-                session['messages'] = [(
-                    "success",
-                    {
-                        "message": "Car report successfully removed",
-                        "data": ""
-                    }
-                )]
                 data = result.json()
-                message = "Car Rego: " + data['car']['car_id'] + "\nPriority: " + data['priority'] + "\nReport date: " + \
-                          data['report_date'] + "\nDetails: " + data['details']
-                data_send = {"type": "note", "title": "New report requested", "body": message}
-
+                message = "Car: {} - {} {} {}\nDetails: {}\nReport date: {}".format(
+                    data['car']['car_id'], data['car']['model']['make'], data['car']['model']['model'],
+                    data['car']['model']['year'], data['details'], data['report_date'].replace("T", " ")
+                )
+                data_send = {
+                    "type": "note",
+                    "title": "New {} priority repair".format(data['priority']),
+                    "body": message
+                }
                 resp = requests.post('https://api.pushbullet.com/v2/pushes', data=json.dumps(data_send),
                                      headers={'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
                                               'Content-Type': 'application/json'})
                 if resp.status_code != 200:
-                    raise Exception('Something wrong')
+                    session['warning'] = [(
+                        "success",
+                        {
+                            "message": "Report created",
+                            "data": "no notification sent"
+                        }
+                    )]
                 else:
+                    session['messages'] = [(
+                        "success",
+                        {
+                            "message": "Report created",
+                            "data": "notification sent"
+                        }
+                    )]
                     print('complete sending')
                     requests.put(
                         "{}{}".format(URL, "/report_notification"),
