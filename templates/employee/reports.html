@@ -88,7 +88,7 @@
               {% endif %}
               <form class="form-inline" method="POST">
                 {% if (report.notified == 0) and (report.resolved == 0) %}
-                <button type="submit" class="btn btn-primary mr-1">Raise/Alert</button>
+                <a class="btn btn-primary mr-1" href="/alert_report?report_id={{report.report_id}}">Raise/Alert</a>
                 <a class="btn btn-secondary" href="/remove_report?report_id={{report.report_id}}">Remove</a>
                 {% endif %}
               </form>

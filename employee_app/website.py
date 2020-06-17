@@ -17,11 +17,16 @@ from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatF
 from wtforms.validators import InputRequired, Email, Length, ValidationError
 import datetime
 from dateutil.relativedelta import *
+from environs import Env
 
 site = Blueprint("site", __name__)
 
 URL = "http://127.0.0.1:5000"
 
+env = Env()
+env.read_env()
+
+PUSH_BULLET_TOKEN = env("PUSHBULLETTOKEN")
 
 def valid_lat(form, field):
     if float(field.data) < -90 or float(field.data) > 90:
@@ -81,6 +86,7 @@ class CreateCarForm(FlaskForm):
             self.model_id.choices = [
                 (model["model_id"], "{} {} {}".format(model["year"], model["make"], model["model"])) for model in models
             ]
+
 
 class UpdateCarForm(CreateCarForm):
     existing_car_id = HiddenField("Existing CarID")
@@ -211,6 +217,18 @@ def report_car():
                     "data": "Registration number: {}".format(form.car_id.data)
                 }
             )]
+            print(report)
+            message = "Car Rego: " + report['car']['car_id'] + "\nPriority: " + report['priority'] + "\nReport date: " + \
+                      report['report_date'] + "\nDetails: " + report['details']
+            data_send = {"type": "note", "title": "New report requested", "body": message}
+
+            resp = requests.post('https://api.pushbullet.com/v2/pushes', data=json.dumps(data_send),
+                                 headers={'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
+                                          'Content-Type': 'application/json'})
+            requests.put(
+                "{}{}".format(URL, "/report_notification"),
+                params={"report_id": report['report_id'], "notification": 1}
+            )
             return redirect(url_for("site.search_cars"))
         else:
             form.car_id.errors.append(result.text)
@@ -379,6 +397,53 @@ def remove_report():
                         "error": result.text
                     }
                 )]
+        return redirect(url_for('site.view_reports'))
+    return redirect(url_for('site.home'))
+
+
+@site.route("/alert_report", methods=['GET'])
+def alert_report():
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        report_id = request.args.get('report_id')
+        if report_id is not None:
+            result = requests.get(
+                "{}{}".format(URL, "/report"),
+                params={"report_id": report_id}
+            )
+            if result.status_code == 200:
+                session['messages'] = [(
+                    "success",
+                    {
+                        "message": "Car report successfully removed",
+                        "data": ""
+                    }
+                )]
+                data = result.json()
+                message = "Car Rego: " + data['car']['car_id'] + "\nPriority: " + data['priority'] + "\nReport date: " + \
+                          data['report_date'] + "\nDetails: " + data['details']
+                data_send = {"type": "note", "title": "New report requested", "body": message}
+
+                resp = requests.post('https://api.pushbullet.com/v2/pushes', data=json.dumps(data_send),
+                                     headers={'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
+                                              'Content-Type': 'application/json'})
+                if resp.status_code != 200:
+                    raise Exception('Something wrong')
+                else:
+                    print('complete sending')
+                    requests.put(
+                        "{}{}".format(URL, "/report_notification"),
+                        params={"report_id": report_id, "notification": 1}
+                    )
+            else:
+                session['messages'] = [(
+                    "warning",
+                    {
+                        "message": "Car report unable to be removed",
+                        "data": "",
+                        "error": result.text
+                    }
+                )]
+
         return redirect(url_for('site.view_reports'))
     return redirect(url_for('site.home'))
 
