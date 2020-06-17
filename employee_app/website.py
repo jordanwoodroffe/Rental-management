@@ -5,7 +5,7 @@ website.py renders html templates and handles page endpoints.
 Also handles input validation for login, register, booking, and cancel, along with processing forms.
 """
 from customer_app.website import LoginForm, make_attributes, valid_name, valid_username, valid_password, \
-    RegistrationForm
+    RegistrationForm, CreateReportForm
 import json
 from json.decoder import JSONDecodeError
 from flask import Blueprint, render_template, request, redirect, url_for, session
@@ -84,12 +84,6 @@ class CreateCarForm(FlaskForm):
 
 class UpdateCarForm(CreateCarForm):
     existing_car_id = HiddenField("Existing CarID")
-
-
-class CreateReportForm(FlaskForm):
-    car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
-    details = StringField('Details', validators=[InputRequired(), valid_name])
-    priority = SelectField('Priority', choices=[('HIGH', 'High'), ('MEDIUM', 'Medium'), ('LOW', 'Low')])
 
 
 @site.route("/", methods=['POST', 'GET'])
@@ -353,13 +347,13 @@ def view_reports():
                 reports = None
         else:
             reports = None
-        return render_template("employee/reports.html", reports=reports)
+        messages = session.pop('messages') if 'messages' in session else None
+        return render_template("employee/reports.html", reports=reports, messages=messages)
     return redirect(url_for('site.home'))
 
 
 @site.route("/remove_report", methods=['GET'])
 def remove_report():
-    """TODO: need to complete this"""
     if 'user' in session and session['user']['type'] == 'ADMIN':
         report_id = request.args.get('report_id')
         if report_id is not None:
@@ -368,7 +362,22 @@ def remove_report():
                 params={"report_id": report_id}
             )
             if result.status_code == 200:
-                print("success")
+                session['messages'] = [(
+                    "success",
+                    {
+                        "message": "Car report successfully removed",
+                        "data": ""
+                    }
+                )]
+            else:
+                session['messages'] = [(
+                    "warning",
+                    {
+                        "message": "Car report unable to be removed",
+                        "data": "",
+                        "error": result.text
+                    }
+                )]
         return redirect(url_for('site.view_reports'))
     return redirect(url_for('site.home'))
 

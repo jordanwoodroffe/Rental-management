@@ -98,13 +98,16 @@ function filterReports() {
     let carSearch = document.getElementById('car-search').value; // get rego input
     let priority = document.getElementById('priority-filter').value; // get rego input
     let reports = document.getElementsByClassName('report'); // get booking cards
+    let raised = document.getElementById('raised-filter').value;
     for (let i = 0; i < reports.length; i++) {
         let status = reports[i].querySelectorAll(".status-value")[0].innerHTML;
         let rego = reports[i].querySelectorAll('.car-rego')[0].innerHTML;
         let p_stat = reports[i].querySelectorAll('.priority-value')[0].innerHTML;
+        let raise_val = reports[i].querySelectorAll('.raised-value')[0].innerHTML;
         if ((!rego.toLowerCase().includes(carSearch.toLowerCase())) ||
             (!status.toLowerCase().includes(statusSearch.toLowerCase()) && !statusSearch.toLowerCase().includes("all")) ||
-            (!p_stat.toLowerCase().includes(priority.toLowerCase()) && !priority.toLowerCase().includes("all"))) {
+            (!p_stat.toLowerCase().includes(priority.toLowerCase()) && !priority.toLowerCase().includes("all")) ||
+            (!raise_val.toLowerCase().includes(raised.toLowerCase()) && !raised.toLowerCase().includes("all"))) {
             reports[i].style.display = "none"; // sets to none if does not match any current filter - rego or status
         } else {
             reports[i].style.display = "inline-block"; // otherwise displays booking card

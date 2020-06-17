@@ -11,7 +11,7 @@ import requests
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, DateTimeField
+from wtforms import StringField, PasswordField, DateTimeField, SelectField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
 from collections import defaultdict
 from datetime import datetime
@@ -135,6 +135,12 @@ class BookingQueryForm(FlaskForm):
                         default=datetime.now)
 
 
+class CreateReportForm(FlaskForm):
+    car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
+    details = StringField('Details', validators=[InputRequired(), valid_name])
+    priority = SelectField('Priority', choices=[('HIGH', 'High'), ('MEDIUM', 'Medium'), ('LOW', 'Low')])
+
+
 @site.route("/")
 def home():
     """Index page for site - user can choose to login or register
@@ -225,7 +231,8 @@ def main():
             test = result.json()
         except JSONDecodeError:
             test = []  # error - unable to load cars
-        return render_template("customer/main.html", user=session['user'], points=json.dumps(test))
+        messages = session.pop('messages') if 'messages' in session else None
+        return render_template("customer/main.html", user=session['user'], points=json.dumps(test), messages=messages)
     return redirect(url_for("site.home"))  # Else go to home page
 
 
@@ -628,7 +635,36 @@ def make_attributes(car_data: []) -> {set}:
     return attributes
 
 
-# TODO: add report issue form & check
+@site.route("/report_car", methods=['GET', 'POST'])
+def report_car():
+    form = CreateReportForm()
+    choices = ['High', 'Medium', 'Low']
+    if request.method == 'POST' and form.validate_on_submit():
+        report = {
+            'car_id': form.car_id.data,
+            'details': form.details.data,
+            'priority': form.priority.data,
+            'report_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        result = requests.post("{}{}".format(URL, "/report"), json=json.dumps(report))
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Report successfully created",
+                    "data": "Registration number: {}".format(form.car_id.data)
+                }
+            )]
+            return redirect(url_for("site.home"))
+        else:
+            form.car_id.errors.append(result.text)
+            return render_template("employee/report_car.html", form=form, choices=choices)
+    if 'user' in session:
+        car_id = request.args.get("car_id")
+        if car_id is not None:
+            form.car_id.data = car_id
+        return render_template("employee/report_car.html", form=form, choices=choices)
+    return redirect(url_for('site.home'))
 
 
 @site.route("/addevent")

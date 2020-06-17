@@ -8,6 +8,22 @@
 {% include "employee/nav.html" %}
 {% endwith %}
 <body style="padding-top: 4.5rem">
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0; z-index: 20;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>{{message.message}}</strong>
+        <div>
+          <small class="text-muted">{{message.data}}</small>
+          {% if message.error %}
+          <br><small class="text-muted"><i>{{message.error}}</i></small>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
   <div class="container">
     {% if reports != None and reports|length > 0 %}
     <h5>Reports - vehicle repair records</h5>
@@ -21,7 +37,15 @@
         </select>
       </div>
       <div class="col-md-3">
-        <label for="priority-filter">Report status</label>
+        <label for="status-filter">Notification status</label>
+        <select class="custom-select" name="status" id="raised-filter" onchange="filterReports()">
+          <option value="all" selected>All</option>
+          <option value="true">Sent</option>
+          <option value="false">Not Sent</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="priority-filter">Priority</label>
         <select class="custom-select" name="priority" id="priority-filter" onchange="filterReports()">
           <option value="All" selected>All</option>
           <option value="Low">Low</option>
@@ -43,6 +67,8 @@
               <hr>
               <h5 class="card-title">Report details</h5>
               {% set status = {0: "Requested", 1: "Resolved"}[ report.resolved]|default("Requested") -%}
+              {% set raised = {0: "false", 1: "true"}[ report.notified]|default("false") -%}
+              <p class="raised-value">{{raised}}</p>
               {% set badge_class = {0: "badge-dark", 1: "badge-light"}[ report.resolved]|default("badge-info") -%}
               {% set priority_badge_class = {'LOW': "badge-info", 'MEDIUM': "badge-warning text-light", 'HIGH': "badge-danger"}[ report.priority]|default("badge-info") -%}
               <p>Priority <span class="priority-value badge {{priority_badge_class}}">{{report.priority}}</span></p>
@@ -64,7 +90,7 @@
                 {% if report.notified == 0 %}
                 <button type="submit" class="btn btn-primary mr-1">Raise/Alert</button>
                 {% endif %}
-                <a class="btn btn-secondary" href="">Remove</a>
+                <a class="btn btn-secondary" href="/remove_report?report_id={{report.report_id}}">Remove</a>
               </form>
             </div>
           </div>
