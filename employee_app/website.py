@@ -15,7 +15,7 @@ import re
 import requests
 from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
-import datetime, calendar
+import datetime
 from dateutil.relativedelta import *
 
 site = Blueprint("site", __name__)
@@ -85,6 +85,11 @@ class CreateCarForm(FlaskForm):
 class UpdateCarForm(CreateCarForm):
     existing_car_id = HiddenField("Existing CarID")
 
+
+class CreateReportForm(FlaskForm):
+    car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
+    details = StringField('Details', validators=[InputRequired(), valid_name])
+    priority = SelectField('Priority', choices=[('HIGH', 'High'), ('MEDIUM', 'Medium'), ('LOW', 'Low')])
 
 
 @site.route("/", methods=['POST', 'GET'])
@@ -189,6 +194,38 @@ def append_reports(car_data, reports_data):
             if report['car']['car_id'] == car['car_id']:
                 car['repairs'] = True
                 break
+
+
+@site.route("/report_car", methods=['GET', 'POST'])
+def report_car():
+    form = CreateReportForm()
+    choices = ['High', 'Medium', 'Low']
+    if request.method == 'POST' and form.validate_on_submit():
+        report = {
+            'car_id': form.car_id.data,
+            'details': form.details.data,
+            'priority': form.priority.data,
+            'report_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        result = requests.post("{}{}".format(URL, "/report"), json=json.dumps(report))
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Report successfully created",
+                    "data": "Registration number: {}".format(form.car_id.data)
+                }
+            )]
+            return redirect(url_for("site.search_cars"))
+        else:
+            form.car_id.errors.append(result.text)
+            return render_template("employee/report_car.html", form=form, choices=choices)
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        car_id = request.args.get("car_id")
+        if car_id is not None:
+            form.car_id.data = car_id
+        return render_template("employee/report_car.html", form=form, choices=choices)
+    return redirect(url_for('site.home'))
 
 
 @site.route("/edit_car", methods=['GET', 'POST'])
