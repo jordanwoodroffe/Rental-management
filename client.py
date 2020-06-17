@@ -54,10 +54,10 @@ def bluelogin():
                         UDPClientSocket.sendto(lockCarRequestBytes, serverAddressPort)
                        
                         #Fetch reports
-                        reportResult = requests.get("{}{}".format(URL, "/reports"),params={"car_id": car_id, "engineer_id": eng_id})
+                        reportResult = requests.get("{}{}".format(URL, "/reports"),params={"car_id": car_id})
                         reports = reportResult.json()
                         if (reportResult.status_code == 200):
-                            if 'report_id' in reports:
+                            if reports is not None:
                                 print (reports)
                                 print ("please select report to complete")     
                                 choice = input()
