@@ -11,8 +11,7 @@ updateReportsNumber = function(chart) {
                 result = JSON.parse(xhr.responseText);
                 cars = [];
                 for (i = 0; i < result.length; i++) {
-                    console.log(result[i]['car_id'])
-                    if (!cars.includes(result[i]['car_id'])) {
+                    if (!cars.includes(result[i]['car_id']) && result[i]['resolved']==0) {
                        cars.push(result[i]['car_id'])
                     }
                 }
