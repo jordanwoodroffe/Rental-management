@@ -26,7 +26,7 @@ URL = "http://127.0.0.1:5000"
 env = Env()
 env.read_env()
 
-PUSH_BULLET_TOKEN = env("PUSHBULLETTOKEN")
+PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")
 
 def valid_lat(form, field):
     if float(field.data) < -90 or float(field.data) > 90:
