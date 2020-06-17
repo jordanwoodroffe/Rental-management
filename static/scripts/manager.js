@@ -57,7 +57,7 @@ window.onload = function() {
     var barChart = new Chart(barctx, {
         type: 'bar',
         data: {
-            labels: ['-4', '-3', '-2', '-1', 'This week'],
+            labels: ['-4 weeks', '-3 weeks', '-2 weeks', '-1 week', 'This week'],
             datasets: [{
                 label: 'New customers per week',
                 data: last_five_week_users,
