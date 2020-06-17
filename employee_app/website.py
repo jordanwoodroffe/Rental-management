@@ -203,6 +203,7 @@ def report_car():
         }
         result = requests.post("{}{}".format(URL, "/report"), json=json.dumps(report))
         if result.status_code == 200:
+            report = result.json()
             session['messages'] = [(
                 "success",
                 {

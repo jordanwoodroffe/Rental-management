@@ -475,7 +475,7 @@ def create_report():
         report.details = data["details"]
         db.session.add(report)
         db.session.commit()
-        return Response("Created new report", status=200)
+        return Response(ReportSchema().dumps(report), status=200, mimetype="application/json")
     except (JSONDecodeError, ValueError, KeyError):
         return Response("Unable to decode report object", status=400)
 
@@ -509,7 +509,7 @@ def update_report():
     report_id = request.args.get("report_id")
     engineer_id = request.args.get("engineer_id")
     complete_date = request.args.get("complete_date")
-    if None in (report_id, engineer_id, complete_date, notification):
+    if None in (report_id, engineer_id, complete_date):
         return Response("Missing request params", status=400)
     report = CarReport.query.get(report_id)
     if report is None:
@@ -520,6 +520,7 @@ def update_report():
     report.engineer_id = engineer_id
     report.complete_date = datetime.strptime(complete_date, "%Y-%m-%d %H:%M:%S")
     report.resolved = 1
+    report.notified = 1
     db.session.commit()
     return Response(ReportSchema().dumps(CarReport.query.get(report_id)), status=200)
 
