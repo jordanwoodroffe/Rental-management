@@ -6,7 +6,7 @@
 
 {% block content %}
 {% block javascript %}
-  <script src="{{url_for('static', filename='scripts/manager.js')}}" id="manager_script" car-status="customer" month-revenue="{{month_revenue}}"></script>
+  <script src="{{url_for('static', filename='scripts/manager.js')}}" id="manager_script" last_five_week_users="{{last_five_week_users}}" month-revenue="{{month_revenue}}"></script>
   <script src="{{url_for('static', filename='scripts/Chart.js')}}"></script>
   <script src="{{url_for('static', filename='css/Chart.css')}}"></script>
 {% endblock %}
@@ -56,7 +56,7 @@
           <div class="col-md-4">
             <div class="card text-white bg-success mt-3 mt-md-0">
               <div class="card-body">
-                <h5 class="card-title"><span>25</span>%</h5>
+                <h5 class="card-title"><span>{{user_grow}}</span>%</h5>
                 <p class="card-text">New users compared to the previous month</p>
               </div>
             </div>

@@ -125,6 +125,7 @@ class Booking(db.Model):
     cost = db.Column('cost', Float())
     completed = db.Column('completed', Integer(), nullable=False)
     event_id = db.Column('event_id', VARCHAR(45))
+    booking_date = db.Column('booking_date', DateTime(), nullable=False)
 
 
 class CarReport(db.Model):
@@ -195,7 +196,7 @@ class BookingSchema(ma.Schema):
 
     class Meta:
         model = Booking
-        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id")
+        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id", "booking_date")
 
     user = fields.Nested(UserSchema)
     car = fields.Nested(CarSchema)
@@ -925,6 +926,7 @@ def add_booking():
         booking.car_id = data['car_id']
         booking.completed = 0
         booking.cost = calc_cost(float(data['cph']), booking.start, booking.end)
+        booking.booking_date = datetime.datetime.now()
         if data['event_id'] is not None:  # If event_id is provided, add event_id to booking
             booking.event_id = data['event_id']
         if valid_booking(booking):  # Check if booking is valid

@@ -43,6 +43,7 @@ updateCarsNumber = function(chart) {
 
 window.onload = function() {
     // Bar chart
+    last_five_week_users = JSON.parse(document.getElementById("manager_script").getAttribute("last_five_week_users"));
     var barctx = document.getElementById('barChart').getContext('2d');
     var barChart = new Chart(barctx, {
         type: 'bar',
@@ -50,7 +51,7 @@ window.onload = function() {
             labels: ['-4', '-3', '-2', '-1', 'This week'],
             datasets: [{
                 label: 'New customers per week',
-                data: [12, 19, 3, 5, 2, 3],
+                data: last_five_week_users,
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',

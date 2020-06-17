@@ -408,6 +408,7 @@ def manager_dashboard():
                 elif date.year == today.year and (date + relativedelta(months=1)).month == today.month:
                     last_month_revenue += int(booking["cost"])
                     last_bookings_num += 1
+
         if last_month_revenue is not 0:
             revenue_grow = (revenue / last_month_revenue) * 100 - 100
             booking_grow = (bookings_num / last_bookings_num) * 100 - 100
@@ -416,6 +417,7 @@ def manager_dashboard():
             booking_grow = 100
 
         # Users related queries
+        today_year, today_week_num, today_DOW = today.isocalendar()
         last_five_week_users = [0, 0, 0, 0, 0]
         current_month_users = 0
         last_month_users = 0
@@ -431,9 +433,25 @@ def manager_dashboard():
                     current_month_users += 1
                 elif reg_date.year == today.year and (reg_date + relativedelta(months=1)).month == today.month:
                     last_month_users += 1
+                year, week_num, DOW = reg_date.isocalendar()
+                if year == today_year and week_num == today_week_num:
+                    last_five_week_users[4] += 1
+                elif year == today_year and week_num == today_week_num - 1:
+                    last_five_week_users[3] += 1
+                elif year == today_year and week_num == today_week_num - 2:
+                    last_five_week_users[2] += 1
+                elif year == today_year and week_num == today_week_num - 3:
+                    last_five_week_users[1] += 1
+                elif year == today_year and week_num == today_week_num - 4:
+                    last_five_week_users[0] += 1
 
+        if last_month_users is not 0:
+            user_grow = (current_month_users / last_month_users) * 100 - 100
+        else:
+            user_grow = 100
         return render_template("employee/manager.html", user=session['user'], revenue=revenue,
-                               month_revenue=month_revenue, revenue_grow=revenue_grow, booking_grow=booking_grow)
+                               month_revenue=month_revenue, revenue_grow=revenue_grow, booking_grow=booking_grow,
+                               user_grow=user_grow, last_five_week_users=last_five_week_users)
     return redirect(url_for("site.home"))
 
 
