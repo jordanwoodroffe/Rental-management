@@ -39,6 +39,8 @@
               </p>
               {% set status = {0: "Booked", 1: "Completed", 2: "Cancelled"}[ booking.completed]|default("Missing") -%}
               <p class="card-text status-value">Status: {{status}}</p>
+              <hr>
+              <a class="btn btn-danger" href="/report_issue?car_id={{booking.car.car_id}}">Report issue with vehicle</a>
             </div>
           </div>
         {% endfor %}

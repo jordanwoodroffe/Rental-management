@@ -320,6 +320,22 @@ def view_reports():
     return redirect(url_for('site.home'))
 
 
+@site.route("/remove_report", methods=['GET'])
+def remove_report():
+    """TODO: need to complete this"""
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        report_id = request.args.get('report_id')
+        if report_id is not None:
+            result = requests.delete(
+                "{}{}".format(URL, "/report"),
+                params={"report_id": report_id}
+            )
+            if result.status_code == 200:
+                print("success")
+        return redirect(url_for('site.view_reports'))
+    return redirect(url_for('site.home'))
+
+
 @site.route("/view_users")
 def view_users():
     if 'user' in session and session['user']['type'] == 'ADMIN':

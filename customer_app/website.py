@@ -628,6 +628,9 @@ def make_attributes(car_data: []) -> {set}:
     return attributes
 
 
+# TODO: add report issue form & check
+
+
 @site.route("/addevent")
 def add_event():
     """Adds an event for a booking to the users Google Calendar

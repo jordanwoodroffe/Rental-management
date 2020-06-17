@@ -42,6 +42,11 @@
               <p class="card-text">{{report.car.model.make}} {{report.car.model.model}}, {{report.car.model.year}}</p>
               <hr>
               <h5 class="card-title">Report details</h5>
+              {% set status = {0: "Requested", 1: "Resolved"}[ report.resolved]|default("Requested") -%}
+              {% set badge_class = {0: "badge-dark", 1: "badge-light"}[ report.resolved]|default("badge-info") -%}
+              {% set priority_badge_class = {'LOW': "badge-info", 'MEDIUM': "badge-warning text-light", 'HIGH': "badge-danger"}[ report.priority]|default("badge-info") -%}
+              <p>Priority <span class="priority-value badge {{priority_badge_class}}">{{report.priority}}</span></p>
+              <h5><span style="position:absolute; top: 20px; right: 20px;" class="status-value badge {{badge_class}}">{{status}}</span></h5>
               <p class="card-text font-italic">"{{report.details}}"</p>
               <p class="card-text">Requested on {{report.report_date}}</p>
               {% if report.resolved == 1 %}
@@ -55,11 +60,12 @@
                 / <span class="email">{{report.engineer.email}}</span>
               </p>
               {% endif %}
-              {% set status = {0: "Requested", 1: "Resolved"}[ report.resolved]|default("Requested") -%}
-              {% set badge_class = {0: "badge-dark", 1: "badge-light"}[ report.resolved]|default("badge-info") -%}
-              {% set priority_badge_class = {'LOW': "badge-info", 'MEDIUM': "badge-warning text-light", 'HIGH': "badge-danger"}[ report.priority]|default("badge-info") -%}
-              <p>Priority <span class="priority-value badge {{priority_badge_class}}">{{report.priority}}</span></p>
-              <h5><span style="position:absolute; top: 20px; right: 20px;" class="status-value badge {{badge_class}}">{{status}}</span></h5>
+              <form class="form-inline" method="POST">
+                {% if report.notified == 0 %}
+                <button type="submit" class="btn btn-primary mr-1">Raise/Alert</button>
+                {% endif %}
+                <a class="btn btn-secondary" href="">Remove</a>
+              </form>
             </div>
           </div>
         {% endfor %}

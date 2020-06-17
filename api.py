@@ -142,6 +142,7 @@ class CarReport(db.Model):
     complete_date = db.Column('complete_date', DateTime(), nullable=True)
     resolved = db.Column('resolved', TINYINT(1), default=0)
     priority = db.Column('priority', VARCHAR(6), default='LOW')
+    notified = db.Column('notified', TINYINT(1), default=0, nullable=False)
 
 
 class Encoding(db.Model):
@@ -209,7 +210,7 @@ class ReportSchema(ma.Schema):
     class Meta:
         model = CarReport
         fields = ("report_id", "car_id", "car", "engineer_id", "engineer", "details", "report_date", "complete_date",
-                  "resolved", "priority")
+                  "resolved", "priority", "notified")
 
     car = fields.Nested(CarSchema)
     engineer = fields.Nested(EmployeeSchema)
@@ -466,7 +467,7 @@ def create_report():
         data = json.loads(request.get_json())
         report = CarReport()
         try:
-            report.priority = data["priority"]
+            report.priority = data["priority"].upper()
         except KeyError:
             print("no priority in received data - applying default (LOW)")
         report.car_id = data["car_id"]
@@ -477,6 +478,19 @@ def create_report():
         return Response("Created new report", status=200)
     except (JSONDecodeError, ValueError, KeyError):
         return Response("Unable to decode report object", status=400)
+
+
+@api.route("/report", methods=['DELETE'])
+def remove_report():
+    report_id = request.args.get('report_id')
+    if report_id is not None:
+        report = CarReport.query.get(report_id)
+        if report is not None:
+            db.session.delete(report)
+            db.session.commit()
+            return Response(status=200)
+        return Response("Invalid report_id: not found in database", status=404)
+    return Response("Missing request parameter", status=400)
 
 
 @api.route("/report", methods=["PUT"])
