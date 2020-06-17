@@ -409,14 +409,12 @@ def manager_dashboard():
         except JSONDecodeError as je:
             bookings_data = None
         if bookings_data is not None:
-            num_days = calendar.monthrange(today.year, today.month)[1]
-            # days = [datetime.date(today.year, today.month, day) for day in range(1, num_days + 1)]
-            month_revenue = [0 for i in range(num_days)]
+            month_revenue = [0 for i in range(today.day)]
             for booking in bookings_data:
-                date = datetime.datetime.strptime(booking["start"], "%Y-%m-%d %H:%M:%S")
+                date = datetime.datetime.strptime(booking["booking_date"], "%Y-%m-%dT%H:%M:%S")
                 if date.year == today.year and date.month == today.month:
                     revenue += int(booking["cost"])
-                    month_revenue[date.day - 1] = int(booking["cost"])
+                    month_revenue[date.day - 1] += int(booking["cost"])
                     bookings_num += 1
                 elif date.year == today.year and (date + relativedelta(months=1)).month == today.month:
                     last_month_revenue += int(booking["cost"])
