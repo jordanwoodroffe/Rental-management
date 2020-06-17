@@ -72,8 +72,19 @@ window.onload = function() {
         options: {
             scales: {
                 yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Weekly new customers'
+                    },
                     ticks: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        stepSize: 1
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Week'
                     }
                 }]
             },
@@ -138,9 +149,17 @@ window.onload = function() {
         options: {
             scales: {
                 yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Daily revenue'
+                    },
                     stacked: true
                 }],
                 xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Date'
+                    },
                     ticks: {
                         autoSkip: true,
                         maxTicksLimit: 5
