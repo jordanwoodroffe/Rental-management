@@ -628,22 +628,20 @@ def manager_dashboard():
         except JSONDecodeError as je:
             bookings_data = None
         if bookings_data is not None:
-            num_days = calendar.monthrange(today.year, today.month)[1]
-            # days = [datetime.date(today.year, today.month, day) for day in range(1, num_days + 1)]
-            month_revenue = [0 for i in range(num_days)]
+            month_revenue = [0 for i in range(today.day)]
             for booking in bookings_data:
-                date = datetime.datetime.strptime(booking["start"], "%Y-%m-%d %H:%M:%S")
+                date = datetime.datetime.strptime(booking["booking_date"], "%Y-%m-%dT%H:%M:%S")
                 if date.year == today.year and date.month == today.month:
                     revenue += int(booking["cost"])
-                    month_revenue[date.day - 1] = int(booking["cost"])
+                    month_revenue[date.day - 1] += int(booking["cost"])
                     bookings_num += 1
                 elif date.year == today.year and (date + relativedelta(months=1)).month == today.month:
                     last_month_revenue += int(booking["cost"])
                     last_bookings_num += 1
 
         if last_month_revenue is not 0:
-            revenue_grow = (revenue / last_month_revenue) * 100 - 100
-            booking_grow = (bookings_num / last_bookings_num) * 100 - 100
+            revenue_grow = int((revenue / last_month_revenue) * 100 - 100)
+            booking_grow = int((bookings_num / last_bookings_num) * 100 - 100)
         else:
             revenue_grow = 100
             booking_grow = 100
@@ -660,7 +658,7 @@ def manager_dashboard():
             users_data = None
         if users_data is not None:
             for user in users_data:
-                reg_date = datetime.datetime.strptime(user["register_date"], "%Y-%m-%d %H:%M:%S")
+                reg_date = datetime.datetime.strptime(user["register_date"], "%Y-%m-%dT%H:%M:%S")
                 if reg_date.year == today.year and reg_date.month == today.month:
                     current_month_users += 1
                 elif reg_date.year == today.year and (reg_date + relativedelta(months=1)).month == today.month:
@@ -678,7 +676,7 @@ def manager_dashboard():
                     last_five_week_users[0] += 1
 
         if last_month_users is not 0:
-            user_grow = (current_month_users / last_month_users) * 100 - 100
+            user_grow = int((current_month_users / last_month_users) * 100 - 100)
         else:
             user_grow = 100
         return render_template("employee/manager.html", user=session['user'], revenue=revenue,
