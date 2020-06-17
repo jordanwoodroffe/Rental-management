@@ -509,7 +509,7 @@ def update_report():
     report_id = request.args.get("report_id")
     engineer_id = request.args.get("engineer_id")
     complete_date = request.args.get("complete_date")
-    if None in (report_id, engineer_id, complete_date):
+    if None in (report_id, engineer_id, complete_date, notification):
         return Response("Missing request params", status=400)
     report = CarReport.query.get(report_id)
     if report is None:
@@ -522,6 +522,26 @@ def update_report():
     report.resolved = 1
     db.session.commit()
     return Response(ReportSchema().dumps(CarReport.query.get(report_id)), status=200)
+
+
+@api.route("/report_notification", methods=['PUT'])
+def update_report_notification():
+    notification = request.args.get("notification")
+    report_id = request.args.get("report_id")
+    if None not in (report_id, notification):
+        report = CarReport.query.get(report_id)
+        if report is not None:
+            try:
+                notif_val = int(notification)
+                if notif_val not in (0, 1):
+                    raise ValueError
+            except ValueError as ve:
+                return Response("Invalid notification value: must be 0 or 1", status=400)
+            report.notified = notif_val
+            db.session.commit()
+            return Response("Updated report: notified = {}".format(notif_val), status=200)
+        return Response("Invalid report_id: not found in database", status=404)
+    return Response("Missing request parameters", status=400)
 
 
 @api.route("/users", methods=['GET'])
