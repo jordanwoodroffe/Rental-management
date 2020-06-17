@@ -4,7 +4,8 @@ MP Employee Web App
 website.py renders html templates and handles page endpoints.
 Also handles input validation for login, register, booking, and cancel, along with processing forms.
 """
-from customer_app.website import LoginForm, make_attributes, valid_name, valid_username, valid_password
+from customer_app.website import LoginForm, make_attributes, valid_name, valid_username, valid_password, \
+    RegistrationForm
 import json
 from json.decoder import JSONDecodeError
 from flask import Blueprint, render_template, request, redirect, url_for, session
@@ -48,32 +49,20 @@ def valid_mac_address(form, field):
                               " for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
 
 
-class UpdateUserForm(FlaskForm):
+class UpdateUserForm(RegistrationForm):
     """UpdateUserForm form to update user details"""
-    first_name = StringField('First Name', validators=[InputRequired(), valid_name])
-    last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
     existing_username = HiddenField("Existing Username")
-    username = StringField('Username', validators=[InputRequired(), Length(6, 12), valid_username])
-    email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
 
 
 class UpdateEmployeeForm(UpdateUserForm):
     """UpdateEmployeeForm form to update employee details"""
-    # first_name = StringField('First Name', validators=[InputRequired(), valid_name])
-    # last_name = StringField('Last Name', validators=[InputRequired(), valid_name])
-    # existing_username = HiddenField("Existing Username")
-    # username = StringField('Username', validators=[InputRequired(), Length(6, 12), valid_username])
-    # email = StringField('Email', validators=[InputRequired(), Email(message="Invalid email.")])
-    # password = PasswordField('Password', validators=[InputRequired(), Length(6, 12), valid_password])
     type = SelectField('Type', choices=[('ADMIN', 'Admin'), ('ENGINEER', 'Engineer'), ('MANAGER', 'Manager')])
     mac_address = StringField('Mac Address (Bluetooth ID)', validators=[
         Length(17, message="mac address must be 17 characters long"), valid_mac_address
     ], render_kw={"placeholder": "No mac address"})
 
 
-class UpdateCarForm(FlaskForm):
-    existing_car_id = HiddenField("Existing CarID")
+class CreateCarForm(FlaskForm):
     car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
     cph = FloatField('Cost per hour', validators=[InputRequired(), valid_cph])
     lat = FloatField('Latitude', validators=[InputRequired(), valid_lat])
@@ -81,11 +70,15 @@ class UpdateCarForm(FlaskForm):
     model_id = SelectField('Model', validators=[InputRequired()], id="model_id", coerce=int)
 
     def __init__(self, models: [], *args, **kwargs):
-        super(UpdateCarForm, self).__init__(*args, **kwargs)
+        super(CreateCarForm, self).__init__(*args, **kwargs)
         if models is not None:
             self.model_id.choices = [
                 (model["model_id"], "{} {} {}".format(model["year"], model["make"], model["model"])) for model in models
             ]
+
+class UpdateCarForm(CreateCarForm):
+    existing_car_id = HiddenField("Existing CarID")
+
 
 
 @site.route("/", methods=['POST', 'GET'])
@@ -393,6 +386,11 @@ def render_edit_employee():
         print(employee)
         return render_template("employee/update_employee.html", form=form)
     return redirect(url_for('site.home'))
+
+
+@site.route("/create_employee", methods=['GET', 'POST'])
+def create_employee():
+    pass
 
 
 @site.route("/manager")

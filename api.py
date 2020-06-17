@@ -727,6 +727,26 @@ def update_car():
         return Response("Incorrect JSON format", status=400)
 
 
+@api.route("/engineer/unlock_car", methods=['PUT'])
+def engineer_unlock():
+    car_id = request.args.get('car_id')
+    engineer_id = request.args.get('engineer_id')
+    if None not in (car_id, engineer_id):
+        car = Car.query.get(car_id)
+        engineer = Employee.query.get(engineer_id)
+        if None not in (car, engineer) and engineer.type == "ENGINEER":
+            if car.locked == 1:
+                msg = "unlocked"
+                car.locked = 0
+            else:
+                msg = "locked"
+                car.locked = 1
+            db.session.commit()
+            return Response("Car {}".format(msg), status=200)
+        return Response("Invalid engineer or car id", status=404)
+    return Response("Missing request parameters", status=400)
+
+
 @api.route("/car", methods=['PUT'])
 def unlock_car():
     """Endpoint to update a car called from MP after it receives login information from AP. First, bookings matching
