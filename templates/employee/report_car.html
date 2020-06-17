@@ -1,10 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
-</body>
-</html>
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="jumbotron">
+        <h1 class="display-4">Create Report</h1>
+        <p class="lead">Report car by completing the form below.</p>
+        <hr class="my-4">
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <form class="form-signin" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            {{ wtf.form_field(form.car_id)}}
+            <small class="form-text text-muted">
+              {% for error in form.car_id.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-2">
+              {{ wtf.form_field(form.priority)}}
+            <small class="form-text text-muted">
+              {% for error in form.priority.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+         <div class="form-group col-md-5">
+            {{ wtf.form_field(form.details)}}
+            <small class="form-text text-muted">
+              {% for error in form.details.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <button type="submit" class="btn btn-primary">Send Report</button>
+            <a class="btn btn-secondary text-light" href="/view_cars">Cancel</a>
+          </div>
+          <div class="col-md-4"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
