@@ -159,11 +159,18 @@ def search_cars():
     """
     if 'user' in session and session['user']['type'] == 'ADMIN':  # Check if user is logged in & is an admin
         cars = requests.get(
-            "{}{}".format(URL, "/cars")
+            "{}{}".format(URL, "/cars"),
+            params={"car_reports": True}
         )  # Retrieve all cars in car table
+        reports = requests.get(
+            "{}{}".format(URL, "/reports")
+        )
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
+                reports_data = reports.json()
+                append_reports(car_data, reports_data)
+                print(car_data)
             except JSONDecodeError as je:
                 attributes = None
                 car_data = None
@@ -175,6 +182,14 @@ def search_cars():
         messages = session.pop('messages') if 'messages' in session else None
         return render_template("employee/vehicles.html", cars=car_data, attributes=attributes, messages=messages)
     return redirect(url_for('site.home'))
+
+
+def append_reports(car_data, reports_data):
+    for car in car_data:
+        for report in reports_data:
+            if report['car']['car_id'] == car['car_id']:
+                car['repairs'] = True
+                break
 
 
 @site.route("/edit_car", methods=['GET', 'POST'])

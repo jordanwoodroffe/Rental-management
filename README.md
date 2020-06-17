@@ -10,7 +10,7 @@ This is an university project attempting to develop a Internet of Things applica
 - [Jinja](https://jinja.palletsprojects.com/en/2.11.x/)
 - [Google Cloud Platform](https://cloud.google.com/)
 - [Bootstrap](https://getbootstrap.com/)
-- [OpenCV Face Recognition](https://pypi.org/project/opencv-python/)
+- [OpenCV](https://pypi.org/project/opencv-python/)
 - [Pip FaceRecognition](https://pypi.org/project/face-recognition/)
 - [Mockaroo](https://mockaroo.com/)
 
@@ -19,7 +19,7 @@ This is an university project attempting to develop a Internet of Things applica
   - DB_NAME: name of your database in Google Cloud SQL instance
   - DB_USER: user name for Google Cloud SQL instance (default is root)
   - DB_PASS: user password for Google Cloud SQL instance
-  - LOCAL_IP: IP of device - web-app accessible over local network
+  - DB_IP: IP of database instance - web-app accessible over local network
 
 - setup port-forwarding on master network if operating across multiple networks
 
@@ -32,16 +32,25 @@ This is an university project attempting to develop a Internet of Things applica
 $ cd IOTA2
 $ flask run
 ```
-The website will run at ***LOCAL_IP:5000***
+The website will run at ***127.0.0.0:5000***
 
 In order to enable Google Calendar for private IP addresses, access site though ***LOCAL_IP.xip.io:5000***
 > xip.io is a magic domain name that provides wildcard DNS for any IP address.
 
-## How to use
-- populate the database with data if empty:
-  - ```/populate``` endpoint provides auto-load function for sample data [```test_data/*.csv```](https://github.com/jordanwoodroffe/IOTA2/test_data)
-- the master pi web app is used to register, and once logged in a user can book vehicles, cancel bookings, search cars, view locations, and register for facial unlock of vehicles
-- the agent console app is used to authenticate users, where they can login with credentials or by face, and then unlock or return a vehicle
+populate the database with data if empty:
+```/populate``` endpoint provides auto-load function for sample data [```test_data/*.csv```](https://github.com/jordanwoodroffe/IOTA2/test_data)
+
+
+## How to use: Assignment 3
+employee_app
+- the employee master pi web app is accessible only by employees. Engineers may login to view repair requests and locations, Managers may log in to view an analytics dashbaord, and 
+Admin staff may log in to view/manage/update users employees and cars, and to file repair requests for vehicles.
+- the employee agent pi app is used by engineers to login to vehicles and perform repairs. it includes object recognition to retrieve an employees details via a QR code, along with automatic bluetooth recognition for convenient vehicle unlocking.
+
+## How to use: Assignment 2
+customer_app
+- the customer master pi web app is used to register, and once logged in a user can book vehicles, cancel bookings, search cars, view locations, and register for facial unlock of vehicles
+- the customer agent console app is used to authenticate users, where they can login with credentials or by face, and then unlock or return a vehicle
 
 ## Requirements
 - You need at least 2 x Raspberry Pi 3 Model B
