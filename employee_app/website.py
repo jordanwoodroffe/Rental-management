@@ -29,26 +29,33 @@ env.read_env()
 PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")
 
 def valid_lat(form, field):
+    """form validation method for a cars lat value (in range -90 and +90)"""
     if float(field.data) < -90 or float(field.data) > 90:
         raise ValidationError("Latitude value must be between -90 and +90")
 
 
 def valid_lng(form, field):
+    """form validation method for a cars lng value (in range -180 and +180)"""
     if float(field.data) < -180 or float(field.data) > 180:
         raise ValidationError("Longitude value must be between -180 and +180")
 
 
 def valid_cph(form, field):
+    """form validation method for verifying a cars cph value (is > 0)"""
     if float(field.data) <= 0:
         raise ValidationError("Cph value must be > 0")
 
 
 def valid_rego(form, field):
+    """form validation method for verifying a car_id/rego against a regex pattern (alphanumeric)"""
     if not re.match("[A-Za-z0-9]", field.data):
         raise ValidationError("Rego value must be alphanumeric")
 
 
 def valid_mac_address(form, field):
+    """form validation method for verifying a mac address against a regex pattern
+    (12 hexadecimal chars separated by : or -)
+    """
     if len(field.data) > 0 and not re.match("^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$", field.data):
         raise ValidationError("Invalid mac address: must be 12 hexadecimal charaters separated by : or -"
                               "<br>for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
@@ -60,7 +67,7 @@ class UpdateUserForm(RegistrationForm):
 
 
 class CreateEmployeeForm(RegistrationForm):
-    """CreateEmployeeForm form to create a new employee"""
+    """Form to create a new employee"""
     type = SelectField('Type', choices=[('ADMIN', 'Admin'), ('ENGINEER', 'Engineer'), ('MANAGER', 'Manager')])
     mac_address = StringField('Mac Address (Bluetooth ID)', validators=[
         Length(0, 17, message="mac address must be 17 characters long"), valid_mac_address
@@ -68,11 +75,12 @@ class CreateEmployeeForm(RegistrationForm):
 
 
 class UpdateEmployeeForm(CreateEmployeeForm):
-    """UpdateEmployeeForm form to update employee details"""
+    """Form to update employee details - inherits attributes from :class:`CreateEmployeeForm`"""
     existing_username = HiddenField("Existing Username")
 
 
 class CreateCarForm(FlaskForm):
+    """Form for creating a new vehicle"""
     car_id = StringField('Rego', validators=[InputRequired(), Length(6, 6, message="Rego must be 6 characters")])
     name = StringField('Name', validators=[InputRequired(), valid_name])
     cph = FloatField('Cost per hour', validators=[InputRequired(), valid_cph])
@@ -89,6 +97,7 @@ class CreateCarForm(FlaskForm):
 
 
 class UpdateCarForm(CreateCarForm):
+    """Form for updating a vehicle, inherits attributes from :class:`CreateCarForm`"""
     existing_car_id = HiddenField("Existing CarID")
 
 
@@ -102,7 +111,6 @@ def home():
     """
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-        # TODO: employee authentication - same process as customer but different table
         result = requests.get(
             "{}{}".format(URL, "/employee/authenticate"),
             params={"employee_id": form.username.data, "password": form.password.data}
@@ -142,6 +150,11 @@ def main():
 
 @site.route("/history", methods=['GET'])
 def rental_history():
+    """Renders the rental history page - Admin can browse all bookings
+
+    Returns:
+        renders history.html with a list of bookings and search fields (status, user, car)
+    """
     if 'user' in session and session['user']['type'] == "ADMIN":
         result = requests.get("{}{}".format(URL, "/bookings"))
         try:
@@ -189,6 +202,15 @@ def search_cars():
 
 
 def append_reports(car_data, reports_data):
+    """Append repair records to vehicles in order to display repair status to the admin while browsing vehicles.html
+
+    Args:
+        car_data: list of cars from cloud database
+        reports_data: list of repairs from cloud database
+
+    Returns:
+        list: cars matched with corresponding repair status (True if a repair exists for a vehicle)
+    """
     for car in car_data:
         for report in reports_data:
             if report['car']['car_id'] == car['car_id']:
@@ -198,6 +220,14 @@ def append_reports(car_data, reports_data):
 
 @site.route("/report_car", methods=['GET', 'POST'])
 def report_car():
+    """Report a car: renders a form for an admin to create a repair request
+
+    Args:
+        car_id: id of selected car (repair request is for this vehicle)
+
+    Returns:
+        renders report_car.html with car id/rego preset
+    """
     form = CreateReportForm()
     choices = ['High', 'Medium', 'Low']
     if request.method == 'POST' and form.validate_on_submit():
@@ -243,6 +273,14 @@ def report_car():
 
 @site.route("/edit_car", methods=['GET', 'POST'])
 def render_edit_car():
+    """Renders the edit car form - Admin may update any car details, including the model
+
+    Args:
+        car_id: id of car to preload form with (attributes are set to existing values)
+
+    Returns:
+        renders update_car.html with attributes set to existing values for a vehicle
+    """
     models = requests.get("{}{}".format(URL, "/car_models"))
     models = models.json()
     form = UpdateCarForm(models=models)
@@ -289,6 +327,12 @@ def render_edit_car():
 
 @site.route("/create_vehicle", methods=['GET', 'POST'])
 def render_create_vehicle():
+    """Renders the create vehicle form - Admin may create a new vehicle, entering any valid attributes/exsiting model.
+    Upon validation, it submits the data to the database :class:`api`
+
+    Returns:
+        renders update_car.html form for Admin to create new vehicle
+    """
     models = requests.get("{}{}".format(URL, "/car_models"))
     models = models.json()
     form = CreateCarForm(models=models)
@@ -324,6 +368,11 @@ def render_create_vehicle():
 
 @site.route("/remove_car", methods=['POST'])
 def remove_car():
+    """Removes a car from the database: Admin can select 'remove' for any vehicle, and remove from database via :class:`api`
+
+    Returns:
+        presents alert message for corresponding success/error
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         car_id = request.args.get('car_id')
         err = "Missing car_id parameter"
@@ -357,6 +406,11 @@ def remove_car():
 
 @site.route("/view_reports", methods=['GET'])
 def view_reports():
+    """Renders a list of repair reports on the Admin MP app
+
+    Returns:
+        renders reports.html, displaying a list of repair reports and filters (status, notification, car_id)
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         result = requests.get("{}{}".format(URL, "/reports"))
         if result.status_code == 200:
@@ -373,6 +427,11 @@ def view_reports():
 
 @site.route("/remove_report", methods=['GET'])
 def remove_report():
+    """Allows an Admin user to dismiss a report
+
+    Returns:
+        corresponding success/error message after calling :class:`api` endpoint
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         report_id = request.args.get('report_id')
         if report_id is not None:
@@ -403,6 +462,15 @@ def remove_report():
 
 @site.route("/alert_report", methods=['GET'])
 def alert_report():
+    """Sends a Pushbullet notification alert upon a repair being raised. This can be actioned by an Admin user creating
+    a new report, or by an Admin user approving/raising a User generated report.
+
+    Args:
+        report_id: id of report to notify
+
+    Returns:
+        Sends Pushbullet notification, and presents corresponding success/error message on web app
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         report_id = request.args.get('report_id')
         if report_id is not None:
@@ -461,6 +529,12 @@ def alert_report():
 
 @site.route("/view_users")
 def view_users():
+    """Presents a list of customers to the Admin, along with a search field (any customer attributes). Optionally, the
+    Admin can select to remove or update a user, or manually create a new user.
+
+    Returns:
+        renders users.html (list of customers)
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         result = requests.get("{}{}".format(URL, "/users"))
         if result.status_code == 200:
@@ -477,6 +551,14 @@ def view_users():
 
 @site.route("/edit_user", methods=['GET', 'POST'])
 def render_edit_user():
+    """Renders the edit user page - Admin can change any customer attributes
+
+    Args:
+        user_id: id of user to edit
+
+    Returns:
+        renders update_user.html, with existing attributes
+    """
     form = UpdateUserForm()
     if request.method == 'POST' and form.validate_on_submit():
         user = {
@@ -530,6 +612,13 @@ def render_edit_user():
 
 @site.route("/create_user", methods=['GET', 'POST'])
 def create_user():
+    """Renders the create user page - Admin can generate a new customer (fallback for A2 Registration - i.e. if errors/
+    customer issues when registering)
+
+    Returns:
+        renders update_user.html with no prefilled attributes, and submits data to :class:`api` upon validation. After
+        response received from API, MP app displays a corresponding alert message (success/error)
+    """
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         user = {
@@ -571,6 +660,14 @@ def create_user():
 
 @site.route("/remove_user", methods=['POST'])
 def remove_user():
+    """Allows admin to remove a user
+
+    Args:
+        user_id: id of user to remove
+
+    Returns:
+        corresponding success/error message after response receveied from :class:`api`
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         user_id = request.args.get('user_id')
         err = "Missing user_id parameter"
@@ -604,6 +701,12 @@ def remove_user():
 
 @site.route("/view_employees", methods=['GET'])
 def render_view_employees():
+    """Displays a list of employees to the Admin. Optionally, the Admin can select to remove or update an existing
+    employee, or generate a new employee.
+
+    Returns:
+        renders employees.html (list of employees)
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         result = requests.get("{}{}".format(URL, "/employees"))
         if result.status_code == 200:
@@ -620,6 +723,14 @@ def render_view_employees():
 
 @site.route("/edit_employee", methods=['GET', 'POST'])
 def render_edit_employee():
+    """Renders the edit employee page for Admin to update any attributes
+
+    Args:
+        employee_id: id of employee to update
+
+    Returns:
+        renders update_employee.html with attributes set to existing values
+    """
     form = UpdateEmployeeForm()
     if request.method == 'POST' and form.validate_on_submit():
         employee = {
@@ -677,6 +788,12 @@ def render_edit_employee():
 
 @site.route("/create_employee", methods=['GET', 'POST'])
 def create_employee():
+    """Allows Admin to create a new employee
+
+    Returns:
+        renders the update_employee.html page without any attributes set. Upon validaation, submits data to :class:`api`
+        and upon api response the web app displays a success/error message
+    """
     form = CreateEmployeeForm()
     if request.method == 'POST' and form.validate_on_submit():
         employee = {
@@ -718,6 +835,14 @@ def create_employee():
 
 @site.route("/remove_employee", methods=['POST'])
 def remove_employee():
+    """Allows Admin user to remove employee from the database
+
+    Args:
+        employee_id: id of employee to remove
+
+    Returns:
+        corresponding success/error message upon response from :class:`api`
+    """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         employee_id = request.args.get('employee_id')
         err = "Missing employee_id parameter"
@@ -753,6 +878,12 @@ def remove_employee():
 
 @site.route("/manager")
 def manager_dashboard():
+    """Renders the Company Manager Visualisations dashboard - displays key business metrics indicating current revenue,
+    new users, and status of the vehicle fleet.
+
+    Returns:
+        renders manager.html, with updated data fetched via REST api from :class:`api`
+    """
     if 'user' in session and session['user']['type'] == 'MANAGER':
         today = datetime.datetime.today()
         # Bookings related queries
@@ -826,6 +957,11 @@ def manager_dashboard():
 
 @site.route("/engineer")
 def engineer_dashboard():
+    """Renders the Engineer dashboard - displays a list of current repair requests, and displays repairs pinned to a map
+
+    Returns:
+        renders engineer.html with current repairs (as a list and map), and the engineer's details
+    """
     if 'user' in session and session['user']['type'] == 'ENGINEER':
         result = requests.get("{}{}".format(URL, "/reports"), params={"resolved": 0})
         if result.status_code == 200:
@@ -872,7 +1008,7 @@ def logout():
     """Logs the user out of MP web app
 
     Returns:
-        redirects to site.login
+        redirects to site.home
     """
     session.pop('user', None)  # Remove user from session
     return redirect(url_for('site.home'))

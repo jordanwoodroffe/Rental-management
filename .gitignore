@@ -61,7 +61,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+customer_docs/_build/
 
 # PyBuilder
 target/
@@ -111,3 +111,5 @@ user_data
 .vscode
 .vs
 customer_app/face.jpg
+/employee_docs/_build/
+/docs/
