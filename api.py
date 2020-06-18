@@ -26,7 +26,6 @@ from json.decoder import JSONDecodeError
 from flask import Flask, Blueprint, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import DateTime, Integer, Float, ForeignKey, LargeBinary
-
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from flask_marshmallow import Marshmallow

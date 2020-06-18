@@ -4,7 +4,7 @@ MP Flask Employee Web App
 Creates Flask app and registers database :class:`api` and :class:`employee_app.website` endpoints.
 
 """
-
+from environs import Env
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 from flask_googlemaps import GoogleMaps
@@ -12,11 +12,17 @@ from api import api, db, DB_URI
 from employee_app.website import site
 from datetime import timedelta
 
+env = Env()
+env.read_env()
+
+GOOGLE_MAPS_KEY = env("GOOGLE_MAPS_KEY")
+SECRET_KEY = env('SECRET_KEY')
+
 app = Flask(__name__, template_folder="../templates", static_folder='../static')
-app.config['SECRET_KEY'] = 'temp'
+app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
-app.config["GOOGLEMAPS_KEY"] = "AIzaSyDbaBxoVyou5qJyvH1bhpQQb4aw6tqiGsQ"
+app.config["GOOGLEMAPS_KEY"] = GOOGLE_MAPS_KEY
 
 app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(api)
