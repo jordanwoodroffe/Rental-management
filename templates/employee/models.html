@@ -27,6 +27,11 @@
 {% endif %}
   <div class="container">
     <h5>Vehicle Models</h5>
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <a class="btn btn-secondary" type="submit" href="/create_model">Create new vehicle model</a>
+      </div>
+    </div>
     {% if models != None %}
       <div class="card-columns">
         {% for model in models %}
@@ -55,11 +60,6 @@
         </div>
       </div>
     {% endif %}
-    <div class="row mb-3">
-      <div class="col-md-3">
-        <a class="btn btn-secondary" type="submit" href="/create_model">Create new vehicle model</a>
-      </div>
-    </div>
   </div>
 </body>
 {% endblock %}

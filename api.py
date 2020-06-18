@@ -281,17 +281,7 @@ def create_employee():
         else:
             data = json.loads(employee_data)
             employee = Employee.query.get(data['username'])  # Check if username is already used
-            if employee is None:
-                salt = get_random_alphaNumeric_string(10)  # Randomise salt
-                employee = Employee()  # Create user object and add user_data to it
-                employee.username = data['username']
-                employee.email = data['email']
-                employee.f_name = data['f_name']
-                employee.l_name = data['l_name']
-                employee.type = data['type']
-                employee.password = hash_password(data['password'], salt) + ':' + salt
-                db.session.add(employee)  # Add user to database
-                db.session.commit()
+            if employee is None and update_employee_attributes(Employee(), data, create=True):
                 response = Response(status=200)
             else:
                 response = Response("Invalid employee_id: already exists", status=404)
@@ -301,6 +291,35 @@ def create_employee():
         response = Response("Unable to access value", status=400)
     finally:
         return response
+
+
+def update_employee_attributes(employee: Employee, data: [], create: bool) -> bool:
+    """Helper method to update/create employee record
+
+    Args:
+        employee: employee to update
+        data: data to add
+        create: boolean value indicating if create or update operation
+
+    Returns:
+        boolean value indicating if success/errors
+    """
+    try:
+        salt = get_random_alphaNumeric_string(10)  # Randomise salt
+        employee.username = data['username']
+        employee.email = data['email']
+        employee.f_name = data['f_name']
+        employee.l_name = data['l_name']
+        employee.type = data['type']
+        employee.mac_address = data['mac_address']
+        employee.password = hash_password(data['password'], salt) + ':' + salt
+        if create:
+            db.session.add(employee)  # Add employee to database
+        db.session.commit()
+        return True
+    except (IntegrityError, InvalidRequestError, ValueError) as e:
+        print(e)
+        return False
 
 
 @api.route("/employee/authenticate", methods=['GET', 'POST'])
@@ -317,18 +336,17 @@ def employee_authentication():
     """
     employee_id = request.args.get('employee_id')
     password = request.args.get('password')
-    if employee_id is None:  # Check if user_id is provided
+    if employee_id is None:  # Check if employee_id is provided
         response = Response("No username parameter found", status=400)
     elif password is None:  # Check if password is provided
         response = Response("No password parameter found", status=400)
     else:
-        employee = Employee.query.get(employee_id)  # Retrieve user with user_id from database
+        employee = Employee.query.get(employee_id)  # Retrieve employee with employee_id from database
         if employee is not None:
             stored_password = employee.password.split(':')[0]  # Retrieve hashed password from password string
             salt = employee.password.split(':')[1]  # Retrieve salt from password string
             if verify_password(stored_password, password, salt):  # Verify provided password using hashed password
-                # and salt
-                data = json.loads(EmployeeSchema().dumps(employee))  # Return user detail for session
+                data = json.loads(EmployeeSchema().dumps(employee))  # Return employee detail for session
                 response = Response(
                     json.dumps(data), status=200, content_type="application/json"
                 )
@@ -354,27 +372,15 @@ def update_employee():
         try:
             data = json.loads(request.get_json())
             employee = Employee.query.get(data["existing_username"])
-            if employee is not None:
-                try:
-                    employee.username = data["username"]
-                    employee.email = data["email"]
-                    employee.f_name = data["f_name"]
-                    employee.l_name = data["l_name"]
-                    employee.type = data["type"]
-                    employee.mac_address = data["mac_address"]
-                    salt = get_random_alphaNumeric_string(10)  # Randomise salt
-                    employee.password = hash_password(data['password'], salt) + ':' + salt
-                    db.session.commit()
-                except (IntegrityError, InvalidRequestError):
-                    return Response(
-                        json.dumps({'error': 'USER', 'message': 'Employee username already exists'}),
-                        status=400
-                    )
+            if employee is not None and update_employee_attributes(employee, data, create=False):
                 return Response(
                     UserSchema().dumps(Employee.query.get(data["username"])),
                     status=200
                 )
-            return Response("Employee not found in database", status=404)
+            return Response(
+                json.dumps({'error': 'USER', 'message': 'Employee username already associated with another employee'}),
+                status=400
+            )
         except JSONDecodeError:
             return Response("Incorrect JSON format", status=400)
         except ValueError:
@@ -624,18 +630,7 @@ def add_user():
         else:
             data = json.loads(user_data)
             user = User.query.get(data['username'])  # Check if username is already used
-            if user is None:
-                salt = get_random_alphaNumeric_string(10)  # Randomise salt
-                user = User()  # Create user object and add user_data to it
-                user.username = data['username']
-                user.email = data['email']
-                user.f_name = data['f_name']
-                user.l_name = data['l_name']
-                user.register_date = datetime.now()
-                user.face_id = 0
-                user.password = hash_password(data['password'], salt) + ':' + salt
-                db.session.add(user)  # Add user to database
-                db.session.commit()
+            if user is None and update_user_attributes(User(), data, create=True):
                 response = Response(status=200)
             else:
                 response = Response("Invalid user_id: already exists", status=404)
@@ -645,6 +640,34 @@ def add_user():
         response = Response("Unable to access value", status=400)
     finally:
         return response
+
+
+def update_user_attributes(user: User, data: [], create: bool) -> bool:
+    """Helper method to create/update user attributes
+
+    Args:
+        user: user to update
+        data: data to add
+        create: boolean indicating if create/update operation
+
+    Returns:
+        boolean value indicating success/errors
+    """
+    try:
+        salt = get_random_alphaNumeric_string(10)  # Randomise salt
+        user.username = data['username']
+        user.email = data['email']
+        user.f_name = data['f_name']
+        user.l_name = data['l_name']
+        user.password = hash_password(data['password'], salt) + ':' + salt
+        if create:
+            user.register_date = datetime.now()
+            user.face_id = 0
+            db.session.add(user)  # Add user to database
+        db.session.commit()
+        return True
+    except (IntegrityError, InvalidRequestError, ValueError):
+        return False
 
 
 @api.route("/users/authenticate", methods=['GET', 'POST'])
@@ -722,18 +745,9 @@ def update_user():
             username = data["existing_username"]
             print("API " + username)
             user = User.query.get(username)
-            if user is not None:
-                user.username = data["username"]
-                user.email = data["email"]
-                user.f_name = data["f_name"]
-                user.l_name = data["l_name"]
-                salt = get_random_alphaNumeric_string(10)  # Randomise salt
-                user.password = hash_password(data['password'], salt) + ':' + salt
-                db.session.commit()
-                return Response(
-                    UserSchema().dumps(User.query.get(data["username"])),
-                    status=200
-                )
+            if user is not None and update_user_attributes(user, data, create=False):
+                return Response(UserSchema().dumps(User.query.get(data["username"])), status=200)
+            return Response("Invalid user_id: not found in database", status=404)
         except JSONDecodeError as je:
             return Response("Received json data in improper format", status=400)
         except ValueError as ve:
@@ -812,17 +826,7 @@ def create_car():
         else:
             data = json.loads(car_data)
             car = Car.query.get(data['car_id'])  # Check if username is already used
-            if car is None:
-                car = Car()  # Create user object and add user_data to it
-                car.car_id = data['car_id']
-                car.lat = data['lat']
-                car.lng = data['lng']
-                car.cph = data['cph']
-                car.model_id = data['model_id']
-                car.name = data['name']
-                car.locked = 1
-                db.session.add(car)  # Add user to database
-                db.session.commit()
+            if car is None and update_car_attributes(Car(), data, create=True):
                 return Response(status=200)
             else:
                 return Response("Invalid car_id: already exists", status=404)
@@ -847,21 +851,42 @@ def update_car():
         data = json.loads(request.get_json())
         car = Car.query.get(data['existing_car_id'])
         if car is not None:
-            try:
-                car.car_id = data["car_id"]
-                car.cph = float(data["cph"])
-                car.lat = float(data["lat"])
-                car.lng = float(data["lng"])
-                car.model_id = data["model_id"]
-                db.session.commit()
-            except (IntegrityError, InvalidRequestError):
-                return Response('Car rego already exists', status=400)
-            return Response(
-                UserSchema().dumps(Car.query.get(data['car_id'])),
-                status=200
-            )
+            if update_car_attributes(car, data, create=False):
+                return Response(
+                    UserSchema().dumps(Car.query.get(data['car_id'])),
+                    status=200
+                )
+            return Response('Car rego already exists', status=400)
     except (JSONDecodeError, ValueError, KeyError):
         return Response("Incorrect JSON format", status=400)
+
+
+def update_car_attributes(car: Car, data: [], create: bool) -> bool:
+    """Helper method to update a car item attributes (update or create
+
+    Args:
+        car: car to update
+        data: data to add
+        create: boolean value indicating if creating new row or updating existing
+
+    Returns:
+        boolean value indicating if successful/errors occured
+    """
+    try:
+        car.car_id = data["car_id"]
+        car.cph = float(data["cph"])
+        car.lat = float(data["lat"])
+        car.lng = float(data["lng"])
+        car.name = data['name']
+        car.model_id = data["model_id"]
+        if create:
+            car.locked = 1
+            db.session.add(car)
+        db.session.commit()
+        return True
+    except (IntegrityError, InvalidRequestError, ValueError) as e:
+        print(e)
+        return False
 
 
 @api.route("/engineer/unlock_car", methods=['PUT'])

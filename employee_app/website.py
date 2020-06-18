@@ -895,7 +895,7 @@ def create_employee():
             )]
         else:
             session['messages'] = [(
-                "success",
+                "warning",
                 {
                     "message": "Unable to create new employee",
                     "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data),
