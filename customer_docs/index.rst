@@ -10,11 +10,11 @@ Welcome to Car Share Application's documentation!
    :maxdepth: 3
    :caption: Contents:
 
-   about
-   mp-code
-   ap-code
-   facial-recognition
-   unit-tests
+   a2-about
+   a2-mp-code
+   a2-ap-code
+   a2-facial-recognition
+   a2-unit-tests
 
 Indices and tables
 ==================
