@@ -231,9 +231,9 @@ def get_employees():
     Returns:
         :class:`flask.Response`: 200 if successful along with employees as a json object, or 500 if no employees found
     """
-    if request.args.get("type") is not None:
+    if request.args.get("type") is not None:  # get all employees by selected type
         employees = Employee.query.filter_by(type=request.args.get("type"))
-    else:
+    else:  # get all employees
         employees = Employee.query.all()
     if employees is not None:
         return Response(
@@ -256,7 +256,7 @@ def get_employee():
     employee_id = request.args.get("employee_id")
     if employee_id is not None:
         employee = Employee.query.get(employee_id)
-        if employee is not None:
+        if employee is not None:  # check if employee id is valid (employee exists)
             return Response(EmployeeSchema().dumps(employee), status=200, mimetype="application/json")
         return Response("Employee {} not found".format(employee_id), status=404)
     return Response("user_id param not found", status=400)
@@ -285,9 +285,9 @@ def create_employee():
                 response = Response(status=200)
             else:
                 response = Response("Invalid employee_id: already exists", status=404)
-    except JSONDecodeError as de:
+    except JSONDecodeError:
         response = Response("Unable to decode employee object", status=400)
-    except ValueError as ve:
+    except ValueError:
         response = Response("Unable to access value", status=400)
     finally:
         return response
@@ -372,15 +372,14 @@ def update_employee():
         try:
             data = json.loads(request.get_json())
             employee = Employee.query.get(data["existing_username"])
-            if employee is not None and update_employee_attributes(employee, data, create=False):
-                return Response(
-                    UserSchema().dumps(Employee.query.get(data["username"])),
-                    status=200
-                )
-            return Response(
-                json.dumps({'error': 'USER', 'message': 'Employee username already associated with another employee'}),
-                status=400
-            )
+            if employee is not None: # check if existing employee_id is valid (exists)
+                if update_employee_attributes(employee, data, create=False):
+                    return Response(
+                        UserSchema().dumps(Employee.query.get(data["username"])),
+                        status=200
+                    )
+                return Response("Employee id already in use", status=400)  # new employee id already in use
+            return Response("Invalid employee id (does not exist)", status=404)
         except JSONDecodeError:
             return Response("Incorrect JSON format", status=400)
         except ValueError:
@@ -400,7 +399,7 @@ def remove_employee():
     employee_id = request.args.get('employee_id')
     if employee_id is not None:
         employee = Employee.query.get(employee_id)
-        if employee is not None:
+        if employee is not None:  # check if employee id is valid (exists)
             db.session.delete(employee)
             db.session.commit()
             return Response(status=200)
@@ -488,7 +487,7 @@ def create_report():
         report = CarReport()
         try:
             report.priority = data["priority"].upper()
-        except KeyError:
+        except KeyError:  # enable optional key - set to default value if not present
             print("no priority in received data - applying default (LOW)")
         report.car_id = data["car_id"]
         report.report_date = data["report_date"]
@@ -513,7 +512,7 @@ def remove_report():
     report_id = request.args.get('report_id')
     if report_id is not None:
         report = CarReport.query.get(report_id)
-        if report is not None:
+        if report is not None:  # check if report_id is valid (report exists)
             db.session.delete(report)
             db.session.commit()
             return Response(status=200)
@@ -541,7 +540,7 @@ def update_report():
         return Response("Missing request params", status=400)
     report = CarReport.query.get(report_id)
     if report is None:
-        return Response("Invalid report id", status=404)
+        return Response("Invalid report id: not found in database", status=404)
     engineer = Employee.query.get(engineer_id)
     if engineer is None or engineer.type != "ENGINEER":
         return Response("Invalid engineer id", status=404)
@@ -571,9 +570,9 @@ def update_report_notification():
         if report is not None:
             try:
                 notif_val = int(notification)
-                if notif_val not in (0, 1):
+                if notif_val not in (0, 1):  # notifed must be 0 or 1
                     raise ValueError
-            except ValueError as ve:
+            except ValueError:
                 return Response("Invalid notification value: must be 0 or 1", status=400)
             report.notified = notif_val
             db.session.commit()
@@ -634,9 +633,9 @@ def add_user():
                 response = Response(status=200)
             else:
                 response = Response("Invalid user_id: already exists", status=404)
-    except JSONDecodeError as de:
+    except JSONDecodeError:
         response = Response("Unable to decode user object", status=400)
-    except ValueError as ve:
+    except ValueError:
         response = Response("Unable to access value", status=400)
     finally:
         return response
@@ -719,7 +718,7 @@ def remove_user():
     user_id = request.args.get('user_id')
     if user_id is not None:
         user = User.query.get(user_id)
-        if user is not None:
+        if user is not None:  # check if user is valid (exists in database)
             db.session.delete(user)
             db.session.commit()
             return Response(status=200)
@@ -739,18 +738,17 @@ def update_user():
         :class:`flask.Response`: 200 if successful, along with user data as json object, 400 if invalid encoding, or if
         missing parameters, 404 if user idv invalid
     """
-    if request.args.get("update"):
+    if request.args.get("update"):  # update request: update all user attributes
         try:
             data = json.loads(request.get_json())
             username = data["existing_username"]
-            print("API " + username)
             user = User.query.get(username)
             if user is not None and update_user_attributes(user, data, create=False):
                 return Response(UserSchema().dumps(User.query.get(data["username"])), status=200)
             return Response("Invalid user_id: not found in database", status=404)
-        except JSONDecodeError as je:
+        except JSONDecodeError:
             return Response("Received json data in improper format", status=400)
-        except ValueError as ve:
+        except ValueError:
             return Response("Received json data in improper format", status=400)
     else:
         user_id = request.args.get("user_id")
@@ -830,9 +828,9 @@ def create_car():
                 return Response(status=200)
             else:
                 return Response("Invalid car_id: already exists", status=404)
-    except JSONDecodeError as de:
+    except JSONDecodeError:
         return Response("Unable to decode car object", status=400)
-    except ValueError as ve:
+    except ValueError:
         return Response("Unable to access value", status=400)
 
 
@@ -851,7 +849,7 @@ def update_car():
         data = json.loads(request.get_json())
         car = Car.query.get(data['existing_car_id'])
         if car is not None:
-            if update_car_attributes(car, data, create=False):
+            if update_car_attributes(car, data, create=False):  # update car attributes and check if rego already exists
                 return Response(
                     UserSchema().dumps(Car.query.get(data['car_id'])),
                     status=200
@@ -906,7 +904,7 @@ def engineer_unlock():
     if None not in (car_id, engineer_id):
         car = Car.query.get(car_id)
         engineer = Employee.query.get(engineer_id)
-        if None not in (car, engineer) and engineer.type == "ENGINEER":
+        if None not in (car, engineer) and engineer.type == "ENGINEER":  # must be engineer to unlock for repair
             if car.locked == 1:
                 msg = "unlocked"
                 car.locked = 0
@@ -1050,7 +1048,6 @@ def get_valid_cars(start, end):
     bookings = Booking.query.filter_by(completed=0)
     booked_cars = []
     for booking in bookings:
-        # TODO - check for conversion/datatype error
         start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S")
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
         if compare_dates(d_start=start_dt, d_end=end_dt, b_start=booking.start, b_end=booking.end):  # overlap found
@@ -1103,7 +1100,7 @@ def update_car_model():
     """
     model_data = request.get_json()
     try:
-        if model_data is None:  # Check if data is provided or not
+        if model_data is None:  # check if data is provided or not
             return Response("Missing json post data", status=400)
         else:
             data = json.loads(model_data)
@@ -1112,9 +1109,9 @@ def update_car_model():
                 return Response(status=200)
             else:
                 return Response("Invalid model_id: does not exist", status=404)
-    except JSONDecodeError as de:
+    except JSONDecodeError:
         return Response("Unable to decode model object", status=400)
-    except ValueError as ve:
+    except ValueError:
         return Response("Unable to access value", status=400)
 
 
@@ -1137,7 +1134,7 @@ def create_car_model():
             if update_model(CarModel(), data, create=True):
                 return Response(status=200)
             return Response("error in accessing json data", status=400)
-    except JSONDecodeError as de:
+    except JSONDecodeError:
         return Response("Unable to decode model object", status=400)
 
 
@@ -1375,7 +1372,6 @@ def populate():
     """
     response = {}
     if User.query.first() is None:
-        # user_cols = ['email', 'f_name', 'l_name', 'password']
         with open('./test_data/user.csv') as users:
             reader = csv.reader(users, delimiter=',')
             for row in reader:
@@ -1407,8 +1403,6 @@ def populate():
                 db.session.add(employee)
             response['employees'] = True
     if CarModel.query.first() is None:
-        # cm_cols = ['model_id', 'make', 'model', 'year', 'capacity', 'colour', 'transmission', 'weight (kg)',
-        # 'length (m)', 'load_index', 'engine_capacity', 'ground_clearance (mm)']
         model_ids = []
         with open('./test_data/car_model.csv') as models:
             reader = csv.reader(models, delimiter=',')

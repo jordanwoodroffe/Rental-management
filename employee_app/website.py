@@ -13,7 +13,7 @@ from flask_wtf import FlaskForm
 from flask_googlemaps import Map
 import re
 import requests
-from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField, IntegerField
+from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField, IntegerField, Field
 from wtforms.validators import InputRequired, Email, Length, ValidationError
 import datetime
 from dateutil.relativedelta import *
@@ -29,31 +29,31 @@ env.read_env()
 PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")
 
 
-def valid_lat(form, field):
+def valid_lat(form, field: Field):
     """form validation method for a cars lat value (in range -90 and +90)"""
     if float(field.data) < -90 or float(field.data) > 90:
         raise ValidationError("Latitude value must be between -90 and +90")
 
 
-def valid_lng(form, field):
+def valid_lng(form, field: Field):
     """form validation method for a cars lng value (in range -180 and +180)"""
     if float(field.data) < -180 or float(field.data) > 180:
         raise ValidationError("Longitude value must be between -180 and +180")
 
 
-def valid_cph(form, field):
+def valid_cph(form, field: Field):
     """form validation method for verifying a cars cph value (is > 0)"""
     if float(field.data) <= 0:
         raise ValidationError("Cph value must be > 0")
 
 
-def valid_rego(form, field):
+def valid_rego(form, field: Field):
     """form validation method for verifying a car_id/rego against a regex pattern (alphanumeric)"""
     if not re.match("[A-Za-z0-9]", field.data):
         raise ValidationError("Rego value must be alphanumeric")
 
 
-def valid_mac_address(form, field):
+def valid_mac_address(form, field: Field):
     """form validation method for verifying a mac address against a regex pattern
     (12 hexadecimal chars separated by : or -)
     """
@@ -62,49 +62,49 @@ def valid_mac_address(form, field):
                               "<br>for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
 
 
-def valid_make_model(form, field):
+def valid_make_model(form, field: Field):
     """form validation method for car model make/model attributes: alphanumeric and some special chars"""
     if not re.match("[0-9A-Za-z\-]", field.data):
         raise ValidationError("Invalid value - must contain alphanumeric characters")
 
 
-def valid_year(form, field):
+def valid_year(form, field: Field):
     """form validation method for car model year attribute: 1900 or 2000's only"""
     if not (1900 <= int(field.data) <= 2999):
         raise ValidationError("Year must be within 1900-2999")
 
 
-def valid_capacity(form, field):
+def valid_capacity(form, field: Field):
     """form validation method for car model capacity: must be between 2 and 6"""
     if not (2 <= int(field.data) <= 6):
         raise ValidationError("Capcity must be between 2 and 6")
 
 
-def valid_weight(form, field):
+def valid_weight(form, field: Field):
     """form validation method for car model weight: must be between 950 and 2300kg"""
     if not (950 <= int(field.data) <= 2300):
         raise ValidationError("Weight must be between 950 and 2300 kg")
 
 
-def valid_length(form, field):
+def valid_length(form, field: Field):
     """form validation method for car model length: must be between 3 and 5 metres"""
     if not (3 <= int(field.data) <= 5):
         raise ValidationError("Length must be between 3 and 5 metres")
 
 
-def valid_load_index(form, field):
+def valid_load_index(form, field: Field):
     """form validation method for car model load index: must be between 75 and 100"""
-    if not (75 <= int(field.data) <=100):
+    if not (75 <= int(field.data) <= 100):
         raise ValidationError("Load index must be between 75 and 100")
 
 
-def valid_engine_capacity(form, field):
+def valid_engine_capacity(form, field: Field):
     """form validation method for car model engine capacity: must be between 1 and 4 litres"""
     if not (1 <= int(field.data) <= 4):
         raise ValidationError("Engine capacity must be between 1 and 4 litres")
 
 
-def valid_ground_clearance(form, field):
+def valid_ground_clearance(form, field: Field):
     """form validation method for car model ground clearance: must be between 100 and 250mm"""
     if not (100 <= int(field.data) <= 250):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
@@ -151,6 +151,7 @@ class UpdateCarForm(CreateCarForm):
 
 
 class CarModelForm(FlaskForm):
+    """Form for"""
     make = StringField('Make', validators=[InputRequired(), valid_make_model])
     model = StringField('Model', validators=[InputRequired(), valid_make_model])
     year = IntegerField('Year', validators=[InputRequired(), valid_year])
@@ -227,7 +228,7 @@ def rental_history():
         result = requests.get("{}{}".format(URL, "/bookings"))
         try:
             bookings_data = result.json()
-        except JSONDecodeError as je:
+        except JSONDecodeError:
             bookings_data = None
         return render_template("employee/history.html", bookings=bookings_data)
     return redirect(url_for("site.home"))

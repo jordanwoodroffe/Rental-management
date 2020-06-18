@@ -53,7 +53,7 @@ class TestApi(unittest.TestCase):
     def test_add_user(self): ## adds this user, tries to add the same user twice, then checks if they got added. Will cause error if person isn't deleted afterward.
 
         user = {'user_id': 'anotherrran',
-                'email': 'anotherran22@gmail.com', 
+                'email': 'anotherran22@gmail.com',
                 'l_name': 'steve',
                 'f_name': 'jawbs',
                 'password': 'applelover69',
@@ -203,7 +203,7 @@ class TestApi(unittest.TestCase):
 
         self.assertEqual(result_wrong_lat.status_code, 400)
 
-        
+
         result_wrong_long = requests.put(
             "{}{}".format(URL, "car"),
                 params={"long": 188, "lat" : 55},
