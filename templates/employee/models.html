@@ -1,0 +1,65 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% block javascript %}
+  <script src="{{ url_for('static', filename='scripts/booking.js')}}"></script>
+{% endblock %}
+{% with page="model", type="ADMIN"%}
+{% include "employee/nav.html" %}
+{% endwith %}
+<body style="padding-top: 4.5rem">
+{% if messages %}
+  {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible" role="alert" style="position: absolute; top: 4.5rem; right: 0; z-index: 20;">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <strong>{{message.message}}</strong>
+      <div>
+        <small class="text-muted">{{message.data}}</small>
+        {% if message.error %}
+        <br><small class="text-muted"><i>{{message.error}}</i></small>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+  <div class="container">
+    <h5>Vehicle Models</h5>
+    {% if models != None %}
+      <div class="card-columns">
+        {% for model in models %}
+          <div class="card bg-light mb-4 car">
+            <div class="card-body">
+              <h5 class="card-title make-value">{{model.make}}<br>{{model.model}}, {{model.year}}</h5>
+              <p class="card-text capacity-value">Capacity: {{model.capacity}}</p>
+              <p class="card-text colour-value">Colour: {{model.colour}}</p>
+              <p class="card-text">Transmission: {{model.transmission}}</p>
+              <p class="card-text">Engine capacity: {{model.engine_capacity}} litres</p>
+              <p class="card-text">Length: {{model.length}}m</p>
+              <p class="card-text">Weight: {{model.weight}}kg</p>
+              <p class="card-text">Clearance: {{model.ground_clearance}}mm</p>
+              <p class="card-text">Load index: {{model.load_index}}</p>
+              <hr>
+              <a class="btn btn-primary text-light" href="/edit_model?model_id={{model.model_id}}">Update model</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title text-center font-italic align-middle">No vehicle models found</h5>
+          <p class="card-text text-center"><small>No available car models found in database</small></p>
+        </div>
+      </div>
+    {% endif %}
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <a class="btn btn-secondary" type="submit" href="/create_model">Create new vehicle model</a>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock %}

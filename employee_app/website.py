@@ -13,7 +13,7 @@ from flask_wtf import FlaskForm
 from flask_googlemaps import Map
 import re
 import requests
-from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField
+from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField, IntegerField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
 import datetime
 from dateutil.relativedelta import *
@@ -27,6 +27,7 @@ env = Env()
 env.read_env()
 
 PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")
+
 
 def valid_lat(form, field):
     """form validation method for a cars lat value (in range -90 and +90)"""
@@ -59,6 +60,54 @@ def valid_mac_address(form, field):
     if len(field.data) > 0 and not re.match("^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$", field.data):
         raise ValidationError("Invalid mac address: must be 12 hexadecimal charaters separated by : or -"
                               "<br>for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
+
+
+def valid_make_model(form, field):
+    """form validation method for car model make/model attributes: alphanumeric and some special chars"""
+    if not re.match("[0-9A-Za-z\-]", field.data):
+        raise ValidationError("Invalid value - must contain alphanumeric characters")
+
+
+def valid_year(form, field):
+    """form validation method for car model year attribute: 1900 or 2000's only"""
+    if not (1900 <= int(field.data) <= 2999):
+        raise ValidationError("Year must be within 1900-2999")
+
+
+def valid_capacity(form, field):
+    """form validation method for car model capacity: must be between 2 and 6"""
+    if not (2 <= int(field.data) <= 6):
+        raise ValidationError("Capcity must be between 2 and 6")
+
+
+def valid_weight(form, field):
+    """form validation method for car model weight: must be between 950 and 2300kg"""
+    if not (950 <= int(field.data) <= 2300):
+        raise ValidationError("Weight must be between 950 and 2300 kg")
+
+
+def valid_length(form, field):
+    """form validation method for car model length: must be between 3 and 5 metres"""
+    if not (3 <= int(field.data) <= 5):
+        raise ValidationError("Length must be between 3 and 5 metres")
+
+
+def valid_load_index(form, field):
+    """form validation method for car model load index: must be between 75 and 100"""
+    if not (75 <= int(field.data) <=100):
+        raise ValidationError("Load index must be between 75 and 100")
+
+
+def valid_engine_capacity(form, field):
+    """form validation method for car model engine capacity: must be between 1 and 4 litres"""
+    if not (1 <= int(field.data) <= 4):
+        raise ValidationError("Engine capacity must be between 1 and 4 litres")
+
+
+def valid_ground_clearance(form, field):
+    """form validation method for car model ground clearance: must be between 100 and 250mm"""
+    if not (100 <= int(field.data) <= 250):
+        raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
 class UpdateUserForm(RegistrationForm):
@@ -99,6 +148,25 @@ class CreateCarForm(FlaskForm):
 class UpdateCarForm(CreateCarForm):
     """Form for updating a vehicle, inherits attributes from :class:`CreateCarForm`"""
     existing_car_id = HiddenField("Existing CarID")
+
+
+class CarModelForm(FlaskForm):
+    make = StringField('Make', validators=[InputRequired(), valid_make_model])
+    model = StringField('Model', validators=[InputRequired(), valid_make_model])
+    year = IntegerField('Year', validators=[InputRequired(), valid_year])
+    capacity = IntegerField('Capacity', validators=[InputRequired(), valid_capacity])
+    colour = StringField('Colour', validators=[InputRequired()])
+    transmission = SelectField('Transmission', validators=[InputRequired()],
+                               choices=[('Auto', 'Auto'), ('Manual', 'Manual')])
+    weight = IntegerField('Weight', validators=[InputRequired(), valid_weight])
+    length = FloatField('Length', validators=[InputRequired(), valid_length])
+    load_index = IntegerField('Load index', validators=[InputRequired(), valid_load_index])
+    engine_capacity = FloatField('Engine capacity', validators=[InputRequired(), valid_engine_capacity])
+    ground_clearance = IntegerField('Ground clearance', validators=[InputRequired(), valid_ground_clearance])
+
+
+class UpdateCarModelForm(CarModelForm):
+    model_id = HiddenField('model_id')
 
 
 @site.route("/", methods=['POST', 'GET'])
@@ -308,19 +376,20 @@ def render_edit_car():
             return redirect(url_for("site.search_cars"))
         else:
             form.car_id.errors.append(result.text)
-            return render_template("employee/update_car.html", form=form, models=models)
+            return render_template("employee/update_car.html", form=form, models=models, method="Update")
     if 'user' in session and session['user']['type'] == 'ADMIN':
         car_id = request.args.get("car_id")
         if car_id is not None:
             result = requests.get("{}{}".format(URL, "/car"), params={"car_id": car_id})
-            car = result.json()
-            form = UpdateCarForm(models=models, model_id=car['model_id'])
-            form.existing_car_id.data = car['car_id']
-            form.car_id.data = car['car_id']
-            form.cph.data = car['cph']
-            form.lat.data = car['lat']
-            form.lng.data = car['lng']
-            form.name.data = car['name']
+            if result.status_code == 200:
+                car = result.json()
+                form = UpdateCarForm(models=models, model_id=car['model_id'])
+                form.existing_car_id.data = car['car_id']
+                form.car_id.data = car['car_id']
+                form.cph.data = car['cph']
+                form.lat.data = car['lat']
+                form.lng.data = car['lng']
+                form.name.data = car['name']
         return render_template("employee/update_car.html", form=form, models=models, method="Update")
     return redirect(url_for('site.home'))
 
@@ -597,12 +666,15 @@ def render_edit_user():
         user_id = request.args.get("user_id")
         if user_id is not None:
             result = requests.get("{}{}".format(URL, "/user"), params={"user_id": user_id})
-            user = result.json()
-            form.existing_username.data = user['username']
-            form.username.data = user['username']
-            form.email.data = user['email']
-            form.first_name.data = user['f_name']
-            form.last_name.data = user['l_name']
+            if result.status_code == 200:
+                user = result.json()
+                form.existing_username.data = user['username']
+                form.username.data = user['username']
+                form.email.data = user['email']
+                form.first_name.data = user['f_name']
+                form.last_name.data = user['l_name']
+            else:
+                user = None
         else:
             user = None
         print(user)
@@ -770,15 +842,18 @@ def render_edit_employee():
         employee_id = request.args.get("employee_id")
         if employee_id is not None:
             result = requests.get("{}{}".format(URL, "/employee"), params={"employee_id": employee_id})
-            employee = result.json()
-            form = UpdateEmployeeForm(type=employee['type'])
-            form.existing_username.data = employee['username']
-            form.username.data = employee['username']
-            form.email.data = employee['email']
-            form.first_name.data = employee['f_name']
-            form.last_name.data = employee['l_name']
-            if employee['mac_address'] is not None:
-                form.mac_address.data = employee['mac_address']
+            if result.status_code == 200:
+                employee = result.json()
+                form = UpdateEmployeeForm(type=employee['type'])
+                form.existing_username.data = employee['username']
+                form.username.data = employee['username']
+                form.email.data = employee['email']
+                form.first_name.data = employee['f_name']
+                form.last_name.data = employee['l_name']
+                if employee['mac_address'] is not None:
+                    form.mac_address.data = employee['mac_address']
+            else:
+                employee = None
         else:
             employee = None
         print(employee)
@@ -1001,6 +1076,145 @@ def engineer_dashboard():
         )
         return render_template("employee/engineer.html", user=session['user'], reports=data, map=car_map)
     return redirect(url_for("site.home"))
+
+
+@site.route("/view_models", methods=['GET'])
+def view_models():
+    """Render the vehicle model page - Admin can browse update and create new vehicle models
+
+    Returns:
+        renders models.html with a list of models retrieved from the cloud database
+    """
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        result = requests.get("{}{}".format(URL, "/car_models"))
+        if result.status_code == 200:
+            try:
+                models = result.json()
+            except JSONDecodeError as je:
+                models = None
+        else:
+            models = None
+        messages = session.pop('messages') if 'messages' in session else None
+        return render_template("employee/models.html", models=models, messages=messages)
+    return redirect(url_for("site.home"))
+
+
+@site.route("/create_model", methods=['GET', 'POST'])
+def render_create_model():
+    """Renders the create vehicle model form - Admin may create a new vehicle model. Upon validation, it submits the
+    data to the database :class:`api`
+
+    Returns:
+        renders update_model.html form for Admin to create new vehicle
+    """
+    form = CarModelForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        model = {
+            'make': form.make.data,
+            'model': form.model.data,
+            'year': form.year.data,
+            'capacity': form.capacity.data,
+            'colour': form.colour.data,
+            'transmission': form.transmission.data,
+            'weight': form.weight.data,
+            'length': form.length.data,
+            'load_index': form.load_index.data,
+            'engine_capacity': form.engine_capacity.data,
+            'ground_clearance': form.ground_clearance.data
+        }
+        print(model)
+        result = requests.post("{}{}".format(URL, "/car_model"), json=json.dumps(model))
+        print(result.text)
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Car model successfully created",
+                    "data": "{} {} {}".format(form.year.data, form.make.data, form.model.data)
+                }
+            )]
+        else:
+            session['messages'] = [(
+                "warning",
+                {
+                    "message": "Car model unable to be created",
+                    "data": "{} {} {}".format(form.year.data, form.make.data, form.model.data),
+                    "error": result.text
+                }
+            )]
+        return redirect(url_for("site.view_models"))
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        return render_template("employee/update_model.html", form=form, method="Create")
+    return redirect(url_for('site.home'))
+
+
+@site.route("/edit_model", methods=['GET', 'POST'])
+def edit_model():
+    """Renders page for editing a vehicle model - Admin can update any model attributes
+
+    Args:
+        model_id: id of model to update
+
+    Returns:
+        renders update_model.html with model attributes set to existing values
+    """
+    form = UpdateCarModelForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        model = {
+            'model_id': form.model_id.data,
+            'make': form.make.data,
+            'model': form.model.data,
+            'year': form.year.data,
+            'capacity': form.capacity.data,
+            'colour': form.colour.data,
+            'transmission': form.transmission.data,
+            'weight': form.weight.data,
+            'length': form.length.data,
+            'load_index': form.load_index.data,
+            'engine_capacity': form.engine_capacity.data,
+            'ground_clearance': form.ground_clearance.data
+        }
+        print(model)
+        result = requests.put("{}{}".format(URL, "/car_model"), json=json.dumps(model))
+        print(result.text)
+        if result.status_code == 200:
+            session['messages'] = [(
+                "success",
+                {
+                    "message": "Car model successfully updated",
+                    "data": "{} {} {}".format(form.year.data, form.make.data, form.model.data)
+                }
+            )]
+        else:
+            session['messages'] = [(
+                "warning",
+                {
+                    "message": "Car model unable to be updated",
+                    "data": "{} {} {}".format(form.year.data, form.make.data, form.model.data),
+                    "error": result.text
+                }
+            )]
+        return redirect(url_for("site.view_models"))
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        model_id = request.args.get("model_id")
+        if model_id is not None:
+            result = requests.get("{}{}".format(URL, "/car_model"), params={"model_id": model_id})
+            if result.status_code == 200:
+                model = result.json()
+                form = UpdateCarModelForm(transmission=model['transmission'])
+                form.model_id.data = model['model_id']
+                form.model.data = model['model']
+                form.make.data = model['make']
+                form.year.data = model['year']
+                form.colour.data = model['colour']
+                form.capacity.data = model['capacity']
+                form.weight.data = model['weight']
+                form.length.data = model['length']
+                form.load_index.data = model['load_index']
+                form.engine_capacity.data = model['engine_capacity']
+                form.ground_clearance.data = model['ground_clearance']
+        return render_template("employee/update_model.html", form=form, method="Update")
+    return redirect(url_for('site.home'))
 
 
 @site.route("/logout")

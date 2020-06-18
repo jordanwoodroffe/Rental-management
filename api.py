@@ -342,7 +342,6 @@ def employee_authentication():
 @api.route("/employee", methods=['PUT'])
 def update_employee():
     """Endpoint to update an existing employee details
-    TODO: add mac_address to endpoint & update form (only if engineer?)
 
     Args:
         data: json data containing employee fields to be updated
@@ -384,6 +383,14 @@ def update_employee():
 
 @api.route("/employee", methods=['DELETE'])
 def remove_employee():
+    """Endpoint to remove an employee from the database
+
+    Args:
+        employee_id: id of employee to remove
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, or 404 if employee_id is invalid,or 400 if missing request parameter
+    """
     employee_id = request.args.get('employee_id')
     if employee_id is not None:
         employee = Employee.query.get(employee_id)
@@ -398,11 +405,11 @@ def remove_employee():
 @api.route("/reports", methods=['GET'])
 def get_reports():
     """Endpoint to retrieve multiple reports, optionally based on assignment to an engineer, or for a vehicle
-    TODO: fix resolved - able to specify for each if return all or only completed
 
     Args:
         car_id: rego of car reports to return
         engineer_id: username of employee assigned to a repair/report
+        resolved: value filtering if a repair has been completed value (0 = false, 1 = true)
 
     Returns:
         :class:`flask.Response`: 200 if successful, along with report data as a json object
@@ -412,18 +419,26 @@ def get_reports():
     engineer_id = request.args.get("engineer_id")
     if resolved is not None:
         try:
-            res_val = int(resolved)
+            res_val = int(resolved)  # if set, enable filtering by resolved value (0 is not complete, 1 is completed)
             if res_val not in (1, 0):
                 raise ValueError
-            reports = CarReport.query.filter_by(resolved=res_val)
         except ValueError as ve:
             return Response("Incorrect resolved param value (must be 1 or 0)", status=400)
-    elif engineer_id is not None:  # return reports assigned to an engineer
-        reports = CarReport.query.join(Employee).filter(Employee.username == engineer_id)
+    if engineer_id is not None:  # return reports assigned to an engineer
+        if resolved:
+            reports = CarReport.query.filter_by(resolved=resolved).join(Employee).filter(Employee.username == engineer_id)
+        else:
+            reports = CarReport.query.join(Employee).filter(Employee.username == engineer_id)
     elif car_id is not None:  # return all uncompleted reports for a vehicle
-        reports = CarReport.query.filter_by(resolved=0).join(Car).filter(Car.car_id == car_id)
+        if resolved:
+            reports = CarReport.query.filter_by(resolved=resolved).join(Car).filter(Car.car_id == car_id)
+        else:
+            reports = CarReport.query.join(Car).filter(Car.car_id == car_id)
     else:  # return all reports
-        reports = CarReport.query.all()
+        if resolved:
+            reports = CarReport.query.filter_by(resolved=resolved)
+        else:
+            reports = CarReport.query.all()
     data = json.loads(ReportSchema(many=True).dumps(reports))
     for report in data:
         report['report_date'] = report['report_date'].replace("T", " ")
@@ -481,6 +496,14 @@ def create_report():
 
 @api.route("/report", methods=['DELETE'])
 def remove_report():
+    """Endpoint to remove a report
+
+    Args:
+        report_id: id of report to remove
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 404 if report_id invalid, or 400 if missing request parameter
+    """
     report_id = request.args.get('report_id')
     if report_id is not None:
         report = CarReport.query.get(report_id)
@@ -526,6 +549,15 @@ def update_report():
 
 @api.route("/report_notification", methods=['PUT'])
 def update_report_notification():
+    """Updates a repair reports notification status
+
+    Args:
+        report_id: id of report to update
+        notification: value to update (0 or 1)
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 404 if report was not found, 400 if request parameters were missing
+    """
     notification = request.args.get("notification")
     report_id = request.args.get("report_id")
     if None not in (report_id, notification):
@@ -625,7 +657,7 @@ def user_authentication():
 
     Returns:
         :class:`flask.Response`: 200 if successful, along with user data as a json object, 400 if email/password
-        parameter missing, 404 if password or email were invalid
+        parameter missing, 404 if password or user_id were invalid
     """
     user_id = request.args.get('user_id')
     password = request.args.get('password')
@@ -653,6 +685,14 @@ def user_authentication():
 
 @api.route("/user", methods=['DELETE'])
 def remove_user():
+    """Endpoint to remove a user from the database
+
+    Args:
+        user_id: id of user to remove
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 400 if missing request params, or 404 if user id invalid
+    """
     user_id = request.args.get('user_id')
     if user_id is not None:
         user = User.query.get(user_id)
@@ -674,7 +714,7 @@ def update_user():
 
     Returns:
         :class:`flask.Response`: 200 if successful, along with user data as json object, 400 if invalid encoding, or if
-        missing parameters, 404 if user id/email invalid (not registered)
+        missing parameters, 404 if user idv invalid
     """
     if request.args.get("update"):
         try:
@@ -756,6 +796,15 @@ def get_car():
 
 @api.route("/car", methods=['POST'])
 def create_car():
+    """Endpoint to create a new vehicle
+
+    Args:
+        car_data: JSON data representing the new vehicle
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 400 if request parameters are missing or unable to decode json,
+        404 if car_id was invalid (already exists)
+    """
     car_data = request.get_json()
     try:
         if car_data is None:  # Check if user_data is provided or not
@@ -817,6 +866,16 @@ def update_car():
 
 @api.route("/engineer/unlock_car", methods=['PUT'])
 def engineer_unlock():
+    """Endpoint for an Engineer to unlock a vehicle (during maintenance)
+
+    Args:
+        car_id: id of car to update
+        engineer_id: id of engineer who is repairing the vehicle
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, or 400 if missing parameters, or 404 if report_id or engineer_id are
+        invalid (engineer_id can be invalid if an employee does not exist or if they are not an engineer)
+    """
     car_id = request.args.get('car_id')
     engineer_id = request.args.get('engineer_id')
     if None not in (car_id, engineer_id):
@@ -933,6 +992,14 @@ def update_location(car_id):
 
 @api.route("/car", methods=['DELETE'])
 def remove_car():
+    """Endpoint to remove a car from the database
+
+    Args:
+        car_id: id of car to remove
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 400 if missing request parameters, 404 if car_id is invalid
+    """
     car_id = request.args.get('car_id')
     if car_id is not None:
         car = Car.query.get(car_id)
@@ -969,8 +1036,117 @@ def get_valid_cars(start, end):
 
 @api.route("/car_models", methods=['GET'])
 def get_car_models():
+    """Returns all car model from the database
+
+    Returns:
+        :class:`flask.Response`: 200 along with car models as JSON data
+    """
     car_models = CarModel.query.all()
     return Response(CarModelSchema(many=True).dumps(car_models), status=200)
+
+
+@api.route("/car_model", methods=['GET'])
+def get_car_model():
+    """Returns a Car Model from the database
+
+    Args:
+        model_id: id of model to fetch
+
+    Returns:
+        :class:`flask.Response`: 200 along with car model as JSON data, or 404 if model_id is invalid, or 400 if missing
+        request parameter
+    """
+    model_id = request.args.get('model_id')
+    if model_id is not None:
+        model = CarModel.query.get(model_id)
+        if model is not None:
+            return Response(CarModelSchema().dumps(model), status=200, mimetype="application/json")
+        return Response("Car model invalid: not found in database", status=404)
+    return Response("Missing request parameter", status=400)
+
+
+@api.route("/car_model", methods=['PUT'])
+def update_car_model():
+    """Endpoint to update an existing Vehicle model
+
+    Args:
+        car_data: JSON data representing the new vehicle
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, 404 if invalid model_id, or 400 if missing request parameter or
+        invalid JSON
+    """
+    model_data = request.get_json()
+    try:
+        if model_data is None:  # Check if data is provided or not
+            return Response("Missing json post data", status=400)
+        else:
+            data = json.loads(model_data)
+            model = CarModel.query.get(data['model_id'])
+            if model is not None and update_model(model, data, create=False):
+                return Response(status=200)
+            else:
+                return Response("Invalid model_id: does not exist", status=404)
+    except JSONDecodeError as de:
+        return Response("Unable to decode model object", status=400)
+    except ValueError as ve:
+        return Response("Unable to access value", status=400)
+
+
+@api.route("/car_model", methods=['POST'])
+def create_car_model():
+    """Endpoint to create a new Vehicle model
+
+    Args:
+        car_data: JSON data representing the new vehicle
+
+    Returns:
+        :class:`flask.Response`: 200 if successful, or 400 if missing request parameter or invalid JSON
+    """
+    model_data = request.get_json()
+    try:
+        if model_data is None:  # Check if data is provided or not
+            return Response("Missing json post data", status=400)
+        else:
+            data = json.loads(model_data)
+            if update_model(CarModel(), data, create=True):
+                return Response(status=200)
+            return Response("error in accessing json data", status=400)
+    except JSONDecodeError as de:
+        return Response("Unable to decode model object", status=400)
+
+
+def update_model(model: CarModel, data: [], create: bool) -> bool:
+    """Helper method to update/add fields to a CarModel item
+
+    Args:
+        model: CarModel object, row to be updated
+        data: list of data to add to model
+        create: boolean indicating if update or create function
+
+    Returns:
+        bool value indicating success/error
+    """
+    try:
+        model.make = data['make']
+        model.model = data['model']
+        model.year = data['year']
+        model.capacity = data['capacity']
+        model.colour = data['colour']
+        model.transmission = data['transmission']
+        model.weight = data['weight']
+        model.length = data['length']
+        model.load_index = data['load_index']
+        model.engine_capacity = data['engine_capacity']
+        model.ground_clearance = data['ground_clearance']
+        if create:
+            db.session.add(model)  # Add model to database
+        db.session.commit()
+        return True
+    except JSONDecodeError:
+        return False
+    except ValueError:
+        return False
 
 
 @api.route("/bookings", methods=['GET'])
@@ -1168,7 +1344,6 @@ def update_eventId():
 @api.route("/populate", methods=['GET'])
 def populate():
     """populates database with dummy data using csv files (see test_data directory).
-    populates users if none found in database, and populates cars/models if models are not found in database
 
     Returns:
         json object noting if a table was populated (boolean value)

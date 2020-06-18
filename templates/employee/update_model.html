@@ -1,0 +1,124 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="jumbotron">
+        <h1 class="display-4">{{method}} Vehicle Model</h1>
+        <p class="lead">{{method}} details by completing the form below.</p>
+        <hr class="my-4">
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <form class="form-signin" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.make)}}
+            <small id="makeHelpBlock" class="form-text text-muted">
+              {% for error in form.make.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.model)}}
+            <small id="modelHelpBlock" class="form-text text-muted">
+              {% for error in form.model.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-4">
+            {{ wtf.form_field(form.colour)}}
+            <small id="colourHelpBlock" class="form-text text-muted">
+              {% for error in form.colour.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            {{ wtf.form_field(form.year)}}
+            <small id="yearHelpBlock" class="form-text text-muted">
+              {% for error in form.year.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+              {{ wtf.form_field(form.capacity)}}
+            <small id="capacityHelpBlock" class="form-text text-muted">
+              {% for error in form.capacity.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+              {{ wtf.form_field(form.weight)}}
+            <small id="weightHelpBlock" class="form-text text-muted">
+              {% for error in form.weight.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+              {{ wtf.form_field(form.length)}}
+            <small id="lengthHelpBlock" class="form-text text-muted">
+              {% for error in form.length.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            {{ wtf.form_field(form.load_index)}}
+            <small id="load_indexHelpBlock" class="form-text text-muted">
+              {% for error in form.load_index.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+              {{ wtf.form_field(form.engine_capacity)}}
+            <small id="engine_capacityHelpBlock" class="form-text text-muted">
+              {% for error in form.engine_capacity.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+              {{ wtf.form_field(form.ground_clearance)}}
+            <small id="ground_clearanceHelpBlock" class="form-text text-muted">
+              {% for error in form.ground_clearance.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+              {{ wtf.form_field(form.transmission)}}
+            <small id="transmissionHelpBlock" class="form-text text-muted">
+              {% for error in form.transmission.errors %}
+              {{error}}<br/>
+              {% endfor %}
+            </small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <button type="submit" class="btn btn-primary">{{method}}</button>
+            <a class="btn btn-secondary text-light" href="/view_models">Cancel</a>
+          </div>
+          <div class="col-md-4"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
