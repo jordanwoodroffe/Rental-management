@@ -90,7 +90,7 @@ class Car(db.Model):
     model = db.relationship("CarModel")
     name = db.Column('name', VARCHAR(45), nullable=False)
     cph = db.Column('cph', Float())
-    locked = db.Column('available', TINYINT(1), nullable=False)
+    locked = db.Column('locked', TINYINT(1), nullable=False)
     lng = db.Column('lng', Float())
     lat = db.Column('lat', Float())
 

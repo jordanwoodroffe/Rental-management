@@ -27,6 +27,9 @@ app.config["GOOGLEMAPS_KEY"] = GOOGLE_MAPS_KEY
 app.permanent_session_lifetime = timedelta(hours=5)
 app.register_blueprint(api)
 app.register_blueprint(site)
+Bootstrap(app)
+db.init_app(app)
+GoogleMaps(app)
 
 
 @app.errorhandler(404)
@@ -47,12 +50,8 @@ def internal(error):
     return render_template("500.html"), 500
 
 
-Bootstrap(app)
-db.init_app(app)
-GoogleMaps(app)
-
 if __name__ == '__main__':
     """Run the flask application"""
-    # db.drop_all(app=app)
+    # db.drop_all(app=app)  # optional: uncomment to drop all data from tables
     db.create_all(app=app)
     app.run(debug=True, host="0.0.0.0")

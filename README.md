@@ -41,14 +41,14 @@ populate the database with data if empty:
 ```/populate``` endpoint provides auto-load function for sample data [```test_data/*.csv```](https://github.com/jordanwoodroffe/IOTA2/test_data)
 
 
-## How to use: Assignment 3
-employee_app
+## How to use: Employee App (Assignment 3)
+directory: employee_app
 - the employee master pi web app is accessible only by employees. Engineers may login to view repair requests and locations, Managers may log in to view an analytics dashbaord, and 
 Admin staff may log in to view/manage/update users employees and cars, and to file repair requests for vehicles.
 - the employee agent pi app is used by engineers to login to vehicles and perform repairs. it includes object recognition to retrieve an employees details via a QR code, along with automatic bluetooth recognition for convenient vehicle unlocking.
 
-## How to use: Assignment 2
-customer_app
+## How to use: Customer App (Assignment 2)
+directory: customer_app
 - the customer master pi web app is used to register, and once logged in a user can book vehicles, cancel bookings, search cars, view locations, and register for facial unlock of vehicles
 - the customer agent console app is used to authenticate users, where they can login with credentials or by face, and then unlock or return a vehicle
 
@@ -62,11 +62,29 @@ customer_app
 pip install -r requirements.txt
 ```
 
-## Group members
+## Assignment 3 Contributions
+#### Group Members
 - [Đào Việt Quang](https://github.com/DanDanDao)
 - [Donald U'Ren](https://github.com/donald-uren)
 - [Jordy Woodroffe](https://github.com/jordanwoodroffe)
 - [Kev Mason](https://github.com/Evzy)
+
+#### Part A: Employee Web Application/Database API - 50%
+- Đào Việt Quang, Donald U'Ren
+
+#### Part B: AP Bluetooth & Voice Recognition - 25%
+- Jordy Woodroffe
+
+#### Part C: Object Recognition - 10%
+- Evan Mason
+
+#### Part D: Unit Tests - 10%
+- Unit testing for Part A: Đào Việt Quang, Donald U'Ren
+
+- Unit testing for Part B: Jordy Woodroffe
+
+- Unit testing for Part C: Evan Mason
+
 
 ## Reference
 - [Flask documentation](https://flask.palletsprojects.com/en/1.1.x/)
