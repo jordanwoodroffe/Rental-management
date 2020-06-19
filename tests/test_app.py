@@ -15,6 +15,7 @@ class TestApp(unittest.TestCase):
         )
         self.assertEquals(result.status_code, 404)
 
+    @responses.activate
     def test_403(self):
         """Testing page forbidden- user is redirected here if they navigate to a page that they are not allowed to access"""
         responses.add(responses.GET, "{}{}".format(URL, "/forbidden"),
@@ -25,6 +26,7 @@ class TestApp(unittest.TestCase):
         )
         self.assertEquals(result.status_code, 403)
 
+    @responses.activate
     def test_500(self):
         """Testing server error - occurs when internal server error occurs"""
         responses.add(responses.GET, "{}{}".format(URL, "/server_error"),
