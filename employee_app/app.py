@@ -3,6 +3,16 @@ MP Flask Employee Web App
 
 Creates Flask app and registers database :class:`api` and :class:`employee_app.website` endpoints.
 
+Ensure that .env file is correct in order to run program:
+
+* DB_NAME: name of google cloud database
+* DB_USER: user/root user for google cloud database
+* DB_PASS: password for google cloud database
+* DB_IP: IP address of database (SQL Instance > Overview > Public IP Address)
+* PORT_NUMBER: port to connect to
+* USER_PW: convenience/testing value for default user/employee password
+* PUSH_BULLET_TOKEN: Access token for pushbullet account, required for notifications
+* GOOGLE_MAPS_KEY: Google Maps Javascript API key
 """
 from environs import Env
 from flask import Flask, render_template

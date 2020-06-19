@@ -1,12 +1,14 @@
 """
 Database Utilities & Database API
 
-Creates tables and establishes relationships in Google Cloud SQL Database
-Provides endpoints for accessing, inserting, and updating data from Google Cloud SQL Database
+Creates tables and establishes relationships in Google Cloud SQL Database, and provides endpoints for accessing,
+inserting, and updating data from Google Cloud SQL Database
 
-Instructions (Google MySQL Documentation): https://cloud.google.com/sql/docs/mysql/connect-external-app
+`Link How to set up Google Cloud SQL instance <https://cloud.google.com/sql/docs/mysql/quickstart>`_
 
-Short instructions:
+`Link Google Cloud proxy instructions <https://cloud.google.com/sql/docs/mysql/connect-external-app>`_
+
+Short proxy instructions:
 
 - Enable Cloud SQL Admin API for the project.
 - Create a new Google Cloud SQL Instance, then create a database.
@@ -178,24 +180,27 @@ class Encoding(db.Model):
 
 
 class UserSchema(ma.Schema):
-    """Schema to expose User record information"""
+    """Schema to expose :class:`api.User` record information"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = User
         fields = ("username", "email", "f_name", "l_name", "face_id", "register_date")
 
 
 class EmployeeSchema(ma.Schema):
-    """Schema to expose Employee record information"""
+    """Schema to expose :class:`api.Employee` record information"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = Employee
         fields = ("username", "email", "f_name", "l_name", "type", "mac_address")
 
 
 class CarModelSchema(ma.Schema):
-    """Schema to expose CarModel record information"""
+    """Schema to expose :class:`api.CarModel` record information"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = CarModel
         fields = ("model_id", "make", "model", "year", "capacity", "colour", "transmission", "weight", "length",
@@ -203,8 +208,9 @@ class CarModelSchema(ma.Schema):
 
 
 class CarSchema(ma.Schema):
-    """Schema to expose Car record information, including nested/foreign key records"""
+    """Schema to expose :class:`api.Car` record information, including nested/foreign key records"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = Car
         fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
@@ -213,19 +219,22 @@ class CarSchema(ma.Schema):
 
 
 class BookingSchema(ma.Schema):
-    """Schema to expose Booking record information, including nested/foreign key records"""
+    """Schema to expose :class:`api.Booking` record information, including nested/foreign key records"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = Booking
-        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id", "booking_date")
+        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car",
+                  "start", "end", "completed", "event_id", "booking_date")
 
     user = fields.Nested(UserSchema)
     car = fields.Nested(CarSchema)
 
 
 class ReportSchema(ma.Schema):
-    """Schema to expose CarReport table, including nested/foreign key records"""
+    """Schema to expose :class:`api.CarReport` table, including nested/foreign key records"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = CarReport
         fields = ("report_id", "car_id", "car", "engineer_id", "engineer", "details", "report_date", "complete_date",
@@ -235,6 +244,7 @@ class ReportSchema(ma.Schema):
     engineer = fields.Nested(EmployeeSchema)
 
 
+# noinspection PyMissingOrEmptyDocstring
 def create_app():
     app = Flask(__name__)
     db.init_app(app)
@@ -270,8 +280,8 @@ def get_employee():
         employee_id: username of employee to return
 
     Returns:
-        :class:`flask.Response`: 200 if successful, along with user data as a json object, 404 if user was not found,
-        400 if request parameters were missing
+        :class:`flask.Response`: 200 if successful, along with employee data as a json object, 404 if user was not
+        found, or 400 if request parameters were missing
     """
     employee_id = request.args.get("employee_id")
     if employee_id is not None:
@@ -392,7 +402,7 @@ def update_employee():
         try:
             data = json.loads(request.get_json())
             employee = Employee.query.get(data["existing_username"])
-            if employee is not None: # check if existing employee_id is valid (exists)
+            if employee is not None:  # check if existing employee_id is valid (exists)
                 if update_employee_attributes(employee, data, create=False):
                     return Response(
                         UserSchema().dumps(Employee.query.get(data["username"])),
@@ -447,11 +457,12 @@ def get_reports():
             res_val = int(resolved)  # if set, enable filtering by resolved value (0 is not complete, 1 is completed)
             if res_val not in (1, 0):
                 raise ValueError
-        except ValueError as ve:
+        except ValueError:
             return Response("Incorrect resolved param value (must be 1 or 0)", status=400)
     if engineer_id is not None:  # return reports assigned to an engineer
         if resolved:
-            reports = CarReport.query.filter_by(resolved=resolved).join(Employee).filter(Employee.username == engineer_id)
+            reports = CarReport.query.filter_by(resolved=resolved).join(
+                Employee).filter(Employee.username == engineer_id)
         else:
             reports = CarReport.query.join(Employee).filter(Employee.username == engineer_id)
     elif car_id is not None:  # return all uncompleted reports for a vehicle
@@ -1389,6 +1400,7 @@ def update_eventId():
     return response
 
 
+# noinspection DuplicatedCode
 @api.route("/populate", methods=['GET'])
 def populate():
     """populates database with dummy data using csv files (see test_data directory).
