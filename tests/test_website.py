@@ -19,6 +19,7 @@ URL = "{}:{}".format(IP, PORT)
 class TestFormValidation(unittest.TestCase):
 
     def test_lat(self):
+        """Testing Latitude value -90 to +90"""
         field = FloatField()
         field.data = 100
         self.assertRaises(ValidationError, valid_lat, None, field)
@@ -26,6 +27,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_lat, None, field)
 
     def test_lng(self):
+        """Testing longitude value -180 to +180"""
         field = FloatField()
         field.data = 200
         self.assertRaises(ValidationError, valid_lng, None, field)
@@ -33,6 +35,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_lng, None, field)
 
     def test_cph(self):
+        """Testing a car cph: above 0 and less than 100"""
         field = FloatField()
         field.data = -10
         self.assertRaises(ValidationError, valid_cph, None, field)
@@ -40,11 +43,13 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_cph, None, field)
 
     def test_rego(self):
+        """Testing car rego: 6 chars and alphanumeric"""
         field = StringField()
         field.data = "%$123as"
         self.assertRaises(ValidationError, valid_rego, None, field)
 
     def test_mac_address(self):
+        """Testing mac address: alphanumeric with separaators and 12 chars"""
         field = StringField()
         field.data = "1234"
         self.assertRaises(ValidationError, valid_mac_address, None, field)
@@ -56,6 +61,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_mac_address, None, field)
 
     def test_year(self):
+        """Testing year value between 1900 and 2999"""
         field = IntegerField()
         field.data = 1800
         self.assertRaises(ValidationError, valid_year, None, field)
@@ -65,6 +71,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_year, None, field)
 
     def test_capacity(self):
+        """Testing capacity value between 2 and 6"""
         field = IntegerField()
         field.data = 1
         self.assertRaises(ValidationError, valid_capacity, None, field)
@@ -74,6 +81,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_capacity, None, field)
 
     def test_weight(self):
+        """Testing weight input between 950 and 2300"""
         field = FloatField()
         field.data = 900
         self.assertRaises(ValidationError, valid_weight, None, field)
@@ -83,6 +91,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_weight, None, field)
 
     def test_length(self):
+        """Testing length value between 3 and 5m"""
         field = FloatField()
         field.data = 2
         self.assertRaises(ValidationError, valid_length, None, field)
@@ -92,6 +101,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_length, None, field)
 
     def test_load(self):
+        """Testing load value between 75 and 100"""
         field = IntegerField()
         field.data = 70
         self.assertRaises(ValidationError, valid_load_index, None, field)
@@ -101,6 +111,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_load_index, None, field)
 
     def test_engine(self):
+        """Testing engine value between 1 and 4"""
         field = FloatField()
         field.data = 0
         self.assertRaises(ValidationError, valid_engine_capacity, None, field)
