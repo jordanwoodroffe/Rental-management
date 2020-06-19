@@ -110,6 +110,7 @@ class TestFormValidation(unittest.TestCase):
         self.assertRaises(ValidationError, valid_engine_capacity, None, field)
 
     def test_clearance(self):
+        """Testing clearance value - between 100 and 250 """
         field = FloatField()
         field.data = 90
         self.assertRaises(ValidationError, valid_ground_clearance, None, field)
@@ -134,6 +135,7 @@ class TestWebsite(unittest.TestCase):
         app.app_context().push()
 
     def test_home(self):
+        """testing home page of website"""
         response = requests.get(
             "{}{}".format(URL, "")
         )
@@ -142,6 +144,7 @@ class TestWebsite(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_main(self):
+        """Testing main - that employee is redirected and that authentication works"""
         with app.test_client() as c:
             with c.session_transaction() as sess:
                 sess['user'] = {

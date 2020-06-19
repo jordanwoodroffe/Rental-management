@@ -12,8 +12,8 @@ Welcome to Car Share Application's documentation!
 
    a3-about
    a3-part-a
-   a3-part-b
-   a3-part-c
+   client
+   server
    a3-part-d
 
 Indices and tables
