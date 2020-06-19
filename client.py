@@ -40,7 +40,6 @@ Either way the car will lock on exit.
 """
 def bluelogin():
     print("Scanning...")
-    return False
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
     resultEmployees = requests.get("{}{}".format(URL, "/employees")) 
     employ = resultEmployees.json() 
