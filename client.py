@@ -10,7 +10,7 @@ import cv2
 serverAddressPort   = ("localhost", 20001)
 bufferSize          = 1024
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-URL = "http://193.116.105.6:1000/" 
+URL = "http://193.116.105.6:1000" 
 
 car_id = "VSB296"
 

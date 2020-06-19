@@ -8,7 +8,7 @@ app = Flask(__name__)
 localIP     = "localhost"
 localPort   = 20001
 bufferSize  = 1024
-URL = "http://193.116.105.6:1000/" 
+URL = "http://193.116.105.6:1000" 
 
 #Initalize server
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
