@@ -260,7 +260,7 @@ def search_cars():
                 reports_data = reports.json()
                 append_reports(car_data, reports_data)
                 print(car_data)
-            except JSONDecodeError as je:
+            except JSONDecodeError:
                 attributes = None
                 car_data = None
             else:
@@ -436,7 +436,7 @@ def view_reports():
         if result.status_code == 200:
             try:
                 reports = result.json()
-            except JSONDecodeError as je:
+            except JSONDecodeError:
                 reports = None
         else:
             reports = None
@@ -526,7 +526,7 @@ def report_car():
 
 
 @site.route("/alert_report", methods=['GET'])
-def alert_report(param_report_id = None):
+def alert_report(param_report_id=None):
     """Sends a Pushbullet notification alert upon a repair being raised. This can be actioned by an Admin user creating
     a new report, or by an Admin user approving/raising a User generated report.
     :func:`employee_app.website.send_repair_notification` carries out the pushbullet functionality
@@ -576,14 +576,14 @@ def send_repair_notification(data: [], report_id):
     message = "Car: {} - {} {} {}\nReported at: {}\nDetails: {}".format(
         data['car']['car_id'], data['car']['model']['make'], data['car']['model']['model'],
         data['car']['model']['year'], data['report_date'].replace("T", " "), data['details']
-    )
+    )  # message body - contains description of vehicle and repair required
     data_send = {
         "type": "link",
         "title": "New {} priority repair".format(data['priority']),
         "body": message,
         "url": "https://www.google.com/maps/search/?api=1&query={},{}".format(
             data['car']['lat'], data['car']['lng'])
-    }
+    }  # message to send - includes title with repair priority, and a link to a google map marking the location
     resp = requests.post(
         'https://api.pushbullet.com/v2/pushes',
         data=json.dumps(data_send),
@@ -593,7 +593,7 @@ def send_repair_notification(data: [], report_id):
         }
     )
     result = resp.status_code == 200
-    if result:
+    if result:  # append success notification to session
         session['messages'] = [(
             "success",
             {
@@ -603,7 +603,7 @@ def send_repair_notification(data: [], report_id):
             }
         )]
         requests.put("{}{}".format(URL, "/report_notification"), params={"notification": 1, "report_id": report_id})
-    else:
+    else:  # append error notification to session
         session['messages'] = [(
             "warning",
             {
@@ -616,10 +616,12 @@ def send_repair_notification(data: [], report_id):
 
 
 def cancel_repair_notification(data: []):
-    """Attmpets to send a cancellation notification for a repair (if dismissed by an Admin user)
+    """Attempts to send a cancellation notification for a repair (if dismissed by an Admin user). There is no return or
+    response handling as this is additional/extra functionality, and amending or deleting actual records occurs
+    elsewhere (i.e. this is an optional step in the remove_repair flow)
 
     Args:
-        data:
+        data: data to be sent (repair/car info)
 
     Returns:
         None
@@ -627,7 +629,7 @@ def cancel_repair_notification(data: []):
     message = "Car: {} - {} {} {}\nDetails: {}".format(
         data['car']['car_id'], data['car']['model']['make'], data['car']['model']['model'],
         data['car']['model']['year'], data['details']
-    )
+    )  # message body contains car information and repair details
     data_send = {
         "type": "note",
         "title": "CANCELLED REPAIR",
@@ -640,7 +642,7 @@ def cancel_repair_notification(data: []):
             'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
             'Content-Type': 'application/json'
         }
-    )
+    )  # send cancellation message
 
 
 @site.route("/view_users")
@@ -656,7 +658,7 @@ def view_users():
         if result.status_code == 200:
             try:
                 users = result.json()
-            except JSONDecodeError as je:
+            except JSONDecodeError:  # unable to get user details (none in database)
                 users = None
         else:
             users = None
@@ -684,14 +686,14 @@ def render_edit_user():
             'l_name': form.last_name.data,
             'f_name': form.first_name.data,
             'password': form.password.data,
-        }
+        }  # get new input values
         result = requests.put(
             "{}{}".format(URL, "/user"),
             json=json.dumps(user),
             params={"update": True}
         )
         print(result)
-        if result.status_code == 200:
+        if result.status_code == 200:  # add success message to session (display alert)
             session['messages'] = [(
                 "success",
                 {
@@ -699,7 +701,7 @@ def render_edit_user():
                     "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
                 }
             )]
-        else:
+        else:  # add error message to session (display alert)
             session['messages'] = [(
                 "warning",
                 {
@@ -713,7 +715,7 @@ def render_edit_user():
         user_id = request.args.get("user_id")
         if user_id is not None:
             result = requests.get("{}{}".format(URL, "/user"), params={"user_id": user_id})
-            if result.status_code == 200:
+            if result.status_code == 200:  # append existing values to the form
                 user = result.json()
                 form.existing_username.data = user['username']
                 form.username.data = user['username']
@@ -746,7 +748,7 @@ def create_user():
             'l_name': form.last_name.data,
             'f_name': form.first_name.data,
             'password': form.password.data
-        }
+        }  # get input values
         result = requests.post(
             "{}{}".format(URL, "/user"),
             json=json.dumps(user),
@@ -795,7 +797,7 @@ def remove_user():
                 "{}{}".format(URL, "/user"),
                 params={"user_id": user_id}
             )
-            if result.status_code == 200:
+            if result.status_code == 200:  # add success message to session (display alert)
                 session['messages'] = [(
                     "success",
                     {
@@ -813,7 +815,7 @@ def remove_user():
                 "data": "@{}".format(user_id),
                 "error": err
             }
-        )]
+        )]  # add error message to session (display alert)
         return redirect(url_for("site.view_users"))
     return redirect(url_for('site.home'))
 
@@ -831,7 +833,7 @@ def render_view_employees():
         if result.status_code == 200:
             try:
                 employees = result.json()
-            except JSONDecodeError as je:
+            except JSONDecodeError:  # no employees found in database (displays corresponding message in template)
                 employees = None
         else:
             employees = None
@@ -861,13 +863,13 @@ def render_edit_employee():
             'password': form.password.data,
             'type': form.type.data,
             'mac_address': form.mac_address.data
-        }
+        }  # retrieve updated details from form
         result = requests.put(
             "{}{}".format(URL, "/employee"),
             json=json.dumps(employee),
             params={"update": True}
         )
-        if result.status_code == 200:
+        if result.status_code == 200:  # add success message to session (display alert)
             session['messages'] = [(
                 "success",
                 {
@@ -875,7 +877,7 @@ def render_edit_employee():
                     "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
                 }
             )]
-        else:
+        else:  # add error message to session (display alert)
             session['messages'] = [(
                 "success",
                 {
@@ -889,7 +891,7 @@ def render_edit_employee():
         employee_id = request.args.get("employee_id")
         if employee_id is not None:
             result = requests.get("{}{}".format(URL, "/employee"), params={"employee_id": employee_id})
-            if result.status_code == 200:
+            if result.status_code == 200:  # append existing details to form
                 employee = result.json()
                 form = UpdateEmployeeForm(type=employee['type'])
                 form.existing_username.data = employee['username']
@@ -926,13 +928,13 @@ def create_employee():
             'password': form.password.data,
             'type': form.type.data,
             'mac_address': form.mac_address.data
-        }
+        }  # retrieve employee details from form
         result = requests.post(
             "{}{}".format(URL, "/employee"),
             json=json.dumps(employee),
             params={"update": True}
         )
-        if result.status_code == 200:
+        if result.status_code == 200:  # add success message to session (display alert)
             session['messages'] = [(
                 "success",
                 {
@@ -940,7 +942,7 @@ def create_employee():
                     "data": "{} {} (@{})".format(form.first_name.data, form.last_name.data, form.username.data)
                 }
             )]
-        else:
+        else:  # add error message to session (display alert)
             session['messages'] = [(
                 "warning",
                 {
@@ -968,14 +970,14 @@ def remove_employee():
     if 'user' in session and session['user']['type'] == 'ADMIN':
         employee_id = request.args.get('employee_id')
         err = "Missing employee_id parameter"
-        if employee_id == session['user']['username']:
+        if employee_id == session['user']['username']:  # an Admin user cannot delete themselves
             err = "{} is unable to delete themselves".format(session['user']['username'])
         elif employee_id is not None:
             result = requests.delete(
                 "{}{}".format(URL, "/employee"),
                 params={"employee_id": employee_id}
             )
-            if result.status_code == 200:
+            if result.status_code == 200:  # add success message to session (display alert)
                 session['messages'] = [(
                     "success",
                     {
@@ -993,7 +995,7 @@ def remove_employee():
                 "data": "@{}".format(employee_id),
                 "error": err
             }
-        )]
+        )]  # add error message to session (display alert)
         return redirect(url_for("site.render_view_employees"))
     return redirect(url_for('site.home'))
 
@@ -1017,7 +1019,7 @@ def manager_dashboard():
         result = requests.get("{}{}".format(URL, "/bookings"))
         try:
             bookings_data = result.json()
-        except JSONDecodeError as je:
+        except JSONDecodeError:
             bookings_data = None
         if bookings_data is not None:
             month_revenue = [0 for i in range(today.day)]
@@ -1046,7 +1048,7 @@ def manager_dashboard():
         result = requests.get("{}{}".format(URL, "/users"))
         try:
             users_data = result.json()
-        except JSONDecodeError as je:
+        except JSONDecodeError:
             users_data = None
         if users_data is not None:
             for user in users_data:
@@ -1085,29 +1087,33 @@ def engineer_dashboard():
         renders engineer.html with current repairs (as a list and map), and the engineer's details
     """
     if 'user' in session and session['user']['type'] == 'ENGINEER':
-        result = requests.get("{}{}".format(URL, "/reports"), params={"resolved": 0})
+        result = requests.get("{}{}".format(URL, "/reports"), params={"resolved": 0})  # get all unresolved reports
         if result.status_code == 200:
             try:
                 data = result.json()
                 markers = []
-                for i in range(len(data)):
+                link = "https://www.google.com/maps/search/?api=1&query="
+                for i in range(len(data)):  # create a marker (map pin with pop-up details) for each report
                     item = data[i]
+                    lat = item['car']['lat']
+                    lng = item['car']['lng']
                     badge_class = "badge-info" if item['priority'] == 'LOW' else \
                         "badge-warning text-light" if item['priority'] == 'MEDIUM' else 'badge-danger'
                     badge = "<p><span style='position:absolute; top: 16px; right: 20px;' class='status-value badge \
                         {}'>{}</span></p>".format(badge_class, item["priority"])
+                    map_link = "<br><a href='{}{},{}'><i>directions</i></a>".format(link, lat, lng)
+                    details = "<h5>{}:</h5><p>{} {} {}<br><small class='text-muted'>Details: {}{}</small></p>{}".format(
+                        item['car_id'], item['car']['model']['year'], item['car']['model']['make'],
+                        item['car']['model']['model'], item['details'], map_link, badge,
+                    )
                     markers.append(
                         {
-                            "infobox": "<h5>{}:</h5><p>{} {} {}<br>"
-                                       "<small class='text-muted'>Details: {}</small></p>{}".format(
-                                item['car_id'], item['car']['model']['year'], item['car']['model']['make'],
-                                item['car']['model']['model'], item['details'], badge
-                            ),
+                            "infobox": details,
                             "lat": item['car']['lat'],
                             "lng": item['car']['lng']
                         }
                     )
-            except JSONDecodeError as je:
+            except JSONDecodeError:  # no reports found in database
                 markers = []
                 data = None
         else:
@@ -1120,7 +1126,7 @@ def engineer_dashboard():
             zoom=9,
             style="height:600px;width:100%;margin:0;padding:0;",
             markers=markers
-        )
+        )  # create google map, with reports as markers
         return render_template("employee/engineer.html", user=session['user'], reports=data, map=car_map)
     return redirect(url_for("site.home"))
 
@@ -1133,14 +1139,15 @@ def view_models():
         renders models.html with a list of models retrieved from the cloud database
     """
     if 'user' in session and session['user']['type'] == 'ADMIN':
-        result = requests.get("{}{}".format(URL, "/car_models"))
+        result = requests.get("{}{}".format(URL, "/car_models"))  # get all car_models from database
         if result.status_code == 200:
             try:
                 models = result.json()
-            except JSONDecodeError as je:
+            except JSONDecodeError:  # no models found in the database
                 models = None
         else:
             models = None
+        # display messages (success/error on update or create)
         messages = session.pop('messages') if 'messages' in session else None
         return render_template("employee/models.html", models=models, messages=messages)
     return redirect(url_for("site.home"))
@@ -1168,11 +1175,9 @@ def render_create_model():
             'load_index': form.load_index.data,
             'engine_capacity': form.engine_capacity.data,
             'ground_clearance': form.ground_clearance.data
-        }
-        print(model)
+        }  # retrieve model data from form
         result = requests.post("{}{}".format(URL, "/car_model"), json=json.dumps(model))
-        print(result.text)
-        if result.status_code == 200:
+        if result.status_code == 200:  # add success message to session (display alert)
             session['messages'] = [(
                 "success",
                 {
@@ -1180,7 +1185,7 @@ def render_create_model():
                     "data": "{} {} {}".format(form.year.data, form.make.data, form.model.data)
                 }
             )]
-        else:
+        else:  # add error message to session (display alert)
             session['messages'] = [(
                 "warning",
                 {
@@ -1220,11 +1225,9 @@ def edit_model():
             'load_index': form.load_index.data,
             'engine_capacity': form.engine_capacity.data,
             'ground_clearance': form.ground_clearance.data
-        }
-        print(model)
+        }  # retrieve updated data from form
         result = requests.put("{}{}".format(URL, "/car_model"), json=json.dumps(model))
-        print(result.text)
-        if result.status_code == 200:
+        if result.status_code == 200:  # add success message to session (display alert)
             session['messages'] = [(
                 "success",
                 {
@@ -1232,7 +1235,7 @@ def edit_model():
                     "data": "{} {} {}".format(form.year.data, form.make.data, form.model.data)
                 }
             )]
-        else:
+        else:  # add error message to session (display alert)
             session['messages'] = [(
                 "warning",
                 {
@@ -1246,7 +1249,7 @@ def edit_model():
         model_id = request.args.get("model_id")
         if model_id is not None:
             result = requests.get("{}{}".format(URL, "/car_model"), params={"model_id": model_id})
-            if result.status_code == 200:
+            if result.status_code == 200:  # append existing data to form
                 model = result.json()
                 form = UpdateCarModelForm(transmission=model['transmission'])
                 form.model_id.data = model['model_id']
