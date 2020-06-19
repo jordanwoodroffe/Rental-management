@@ -1400,6 +1400,7 @@ def update_eventId():
     return response
 
 
+# noinspection DuplicatedCode
 @api.route("/populate", methods=['GET'])
 def populate():
     """populates database with dummy data using csv files (see test_data directory).
