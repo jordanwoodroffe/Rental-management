@@ -1,4 +1,4 @@
-Employee Web-Application
+MP Web-Application
 ************************
 
 Flask Application

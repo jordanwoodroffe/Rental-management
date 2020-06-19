@@ -2,7 +2,8 @@
 MP Employee Web App
 
 website.py renders html templates and handles page endpoints.
-Also handles input validation for login, register, booking, and cancel, along with processing forms.
+It handles login functionality and input validation, redirecting each type of employee to the correct website. Data
+is retrieved from
 """
 from customer_app.website import LoginForm, make_attributes, valid_name, valid_username, valid_password, \
     RegistrationForm, CreateReportForm
@@ -26,7 +27,7 @@ URL = "http://127.0.0.1:5000"
 env = Env()
 env.read_env()
 
-PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")
+PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")  # Pushbullet Access Token: required in order to send a notification
 
 
 def valid_lat(form, field: Field):
@@ -111,7 +112,7 @@ def valid_ground_clearance(form, field: Field):
 
 
 class UpdateUserForm(RegistrationForm):
-    """UpdateUserForm form to update user details"""
+    """UpdateUserForm form to update user details - inherits attributes from :class:`RegistrationForm`"""
     existing_username = HiddenField("Existing Username")
 
 
@@ -151,7 +152,8 @@ class UpdateCarForm(CreateCarForm):
 
 
 class CarModelForm(FlaskForm):
-    """Form for"""
+    """Form for creating a new vehicle model (car_model) - a car_model instance is a foreign key attribute of car,
+    listing mechanical/technical details (make, model, transmission etc)"""
     make = StringField('Make', validators=[InputRequired(), valid_make_model])
     model = StringField('Model', validators=[InputRequired(), valid_make_model])
     year = IntegerField('Year', validators=[InputRequired(), valid_year])
@@ -167,6 +169,7 @@ class CarModelForm(FlaskForm):
 
 
 class UpdateCarModelForm(CarModelForm):
+    """Form for updating a vehicle, inherits attributes from :class:`CarModelForm` appending the existing model_id"""
     model_id = HiddenField('model_id')
 
 
@@ -285,59 +288,6 @@ def append_reports(car_data, reports_data):
             if report['car']['car_id'] == car['car_id']:
                 car['repairs'] = True
                 break
-
-
-@site.route("/report_car", methods=['GET', 'POST'])
-def report_car():
-    """Report a car: renders a form for an admin to create a repair request
-
-    Args:
-        car_id: id of selected car (repair request is for this vehicle)
-
-    Returns:
-        renders report_car.html with car id/rego preset
-    """
-    form = CreateReportForm()
-    choices = ['High', 'Medium', 'Low']
-    if request.method == 'POST' and form.validate_on_submit():
-        report = {
-            'car_id': form.car_id.data,
-            'details': form.details.data,
-            'priority': form.priority.data,
-            'report_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        result = requests.post("{}{}".format(URL, "/report"), json=json.dumps(report))
-        if result.status_code == 200:
-            report = result.json()
-            session['messages'] = [(
-                "success",
-                {
-                    "message": "Report successfully created",
-                    "data": "Registration number: {}".format(form.car_id.data)
-                }
-            )]
-            print(report)
-            message = "Car Rego: " + report['car']['car_id'] + "\nPriority: " + report['priority'] + "\nReport date: " + \
-                      report['report_date'] + "\nDetails: " + report['details']
-            data_send = {"type": "note", "title": "New report requested", "body": message}
-
-            resp = requests.post('https://api.pushbullet.com/v2/pushes', data=json.dumps(data_send),
-                                 headers={'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
-                                          'Content-Type': 'application/json'})
-            requests.put(
-                "{}{}".format(URL, "/report_notification"),
-                params={"report_id": report['report_id'], "notification": 1}
-            )
-            return redirect(url_for("site.search_cars"))
-        else:
-            form.car_id.errors.append(result.text)
-            return render_template("employee/report_car.html", form=form, choices=choices)
-    if 'user' in session and session['user']['type'] == 'ADMIN':
-        car_id = request.args.get("car_id")
-        if car_id is not None:
-            form.car_id.data = car_id
-        return render_template("employee/report_car.html", form=form, choices=choices)
-    return redirect(url_for('site.home'))
 
 
 @site.route("/edit_car", methods=['GET', 'POST'])
@@ -497,7 +447,7 @@ def view_reports():
 
 @site.route("/remove_report", methods=['GET'])
 def remove_report():
-    """Allows an Admin user to dismiss a report
+    """Allows an Admin user to dismiss a report - upon successful deletion sends notification to engineers
 
     Returns:
         corresponding success/error message after calling :class:`api` endpoint
@@ -510,11 +460,13 @@ def remove_report():
                 params={"report_id": report_id}
             )
             if result.status_code == 200:
+                data = result.json()
+                cancel_repair_notification(data)  # send cancellation notifation to engineers
                 session['messages'] = [(
                     "success",
                     {
-                        "message": "Car report successfully removed",
-                        "data": ""
+                        "message": "Report for {} successfully removed".format(data['car']['car_id']),
+                        "data": "\"{}\"".format(data['details'])
                     }
                 )]
             else:
@@ -530,12 +482,57 @@ def remove_report():
     return redirect(url_for('site.home'))
 
 
-@site.route("/alert_report", methods=['GET'])
-def alert_report():
-    """Sends a Pushbullet notification alert upon a repair being raised. This can be actioned by an Admin user creating
-    a new report, or by an Admin user approving/raising a User generated report.
+@site.route("/report_car", methods=['GET', 'POST'])
+def report_car():
+    """Report a car: renders a form for an admin to create a repair request, and upon successful validation submits
+    report data to the database via :class:`api`, finally attempts to alert engineers via
+    :func:`employee_app.website.send_repair_notification`
 
     Args:
+        car_id: id of selected car (repair request is for this vehicle)
+
+    Returns:
+        renders report_car.html with car id/rego preset
+    """
+    form = CreateReportForm()
+    choices = ['High', 'Medium', 'Low']
+    if request.method == 'POST' and form.validate_on_submit():
+        report = {
+            'car_id': form.car_id.data,
+            'details': form.details.data,
+            'priority': form.priority.data,
+            'report_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        result = requests.post("{}{}".format(URL, "/report"), json=json.dumps(report))
+        if result.status_code == 200:
+            data = result.json()
+            send_repair_notification(data, data['report_id'])
+        else:
+            session['messages'] = [(
+                "danger",
+                {
+                    "message": "Unable to create report",
+                    "data": "Error occurred while attempting to create report",
+                    "error": result.text
+                }
+            )]
+        return redirect(url_for('site.view_reports'))
+    if 'user' in session and session['user']['type'] == 'ADMIN':
+        car_id = request.args.get("car_id")
+        if car_id is not None:
+            form.car_id.data = car_id
+        return render_template("employee/report_car.html", form=form, choices=choices)
+    return redirect(url_for('site.home'))
+
+
+@site.route("/alert_report", methods=['GET'])
+def alert_report(param_report_id = None):
+    """Sends a Pushbullet notification alert upon a repair being raised. This can be actioned by an Admin user creating
+    a new report, or by an Admin user approving/raising a User generated report.
+    :func:`employee_app.website.send_repair_notification` carries out the pushbullet functionality
+
+    Args:
+        param_report_id: optional parameter when calling functionality by method
         report_id: id of report to notify
 
     Returns:
@@ -543,6 +540,8 @@ def alert_report():
     """
     if 'user' in session and session['user']['type'] == 'ADMIN':
         report_id = request.args.get('report_id')
+        if report_id is None:
+            report_id = param_report_id
         if report_id is not None:
             result = requests.get(
                 "{}{}".format(URL, "/report"),
@@ -550,51 +549,98 @@ def alert_report():
             )
             if result.status_code == 200:
                 data = result.json()
-                message = "Car: {} - {} {} {}\nDetails: {}\nReport date: {}".format(
-                    data['car']['car_id'], data['car']['model']['make'], data['car']['model']['model'],
-                    data['car']['model']['year'], data['details'], data['report_date'].replace("T", " ")
-                )
-                data_send = {
-                    "type": "note",
-                    "title": "New {} priority repair".format(data['priority']),
-                    "body": message
-                }
-                resp = requests.post('https://api.pushbullet.com/v2/pushes', data=json.dumps(data_send),
-                                     headers={'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
-                                              'Content-Type': 'application/json'})
-                if resp.status_code != 200:
-                    session['warning'] = [(
-                        "success",
-                        {
-                            "message": "Report created",
-                            "data": "no notification sent"
-                        }
-                    )]
-                else:
-                    session['messages'] = [(
-                        "success",
-                        {
-                            "message": "Report created",
-                            "data": "notification sent"
-                        }
-                    )]
-                    print('complete sending')
-                    requests.put(
-                        "{}{}".format(URL, "/report_notification"),
-                        params={"report_id": report_id, "notification": 1}
-                    )
+                send_repair_notification(data, report_id)
             else:
                 session['messages'] = [(
-                    "warning",
+                    "danger",
                     {
-                        "message": "Car report unable to be removed",
-                        "data": "",
+                        "message": "Unable to retrieve report",
+                        "data": "Error occurred while attempting to retrieve report",
                         "error": result.text
                     }
                 )]
-
         return redirect(url_for('site.view_reports'))
     return redirect(url_for('site.home'))
+
+
+def send_repair_notification(data: [], report_id):
+    """Helper function to send Pushbullet notification: used when Admin creates or raises a repair request
+
+    Args:
+        report_id: id of report being notified
+        data: json data of car repair being raised
+
+    Returns:
+        boolean value indicating if report was sent succesfully
+    """
+    message = "Car: {} - {} {} {}\nReported at: {}\nDetails: {}".format(
+        data['car']['car_id'], data['car']['model']['make'], data['car']['model']['model'],
+        data['car']['model']['year'], data['report_date'].replace("T", " "), data['details']
+    )
+    data_send = {
+        "type": "link",
+        "title": "New {} priority repair".format(data['priority']),
+        "body": message,
+        "url": "https://www.google.com/maps/search/?api=1&query={},{}".format(
+            data['car']['lat'], data['car']['lng'])
+    }
+    resp = requests.post(
+        'https://api.pushbullet.com/v2/pushes',
+        data=json.dumps(data_send),
+        headers={
+            'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
+            'Content-Type': 'application/json'
+        }
+    )
+    result = resp.status_code == 200
+    if result:
+        session['messages'] = [(
+            "success",
+            {
+                "message": "Report created and raised for {}".format(data['car']['car_id']),
+                "data": "New report created: \"{}\"".format(data['details']),
+                "error": "Notification sent to engineers"
+            }
+        )]
+        requests.put("{}{}".format(URL, "/report_notification"), params={"notification": 1, "report_id": report_id})
+    else:
+        session['messages'] = [(
+            "warning",
+            {
+                "message": "Report created for {}".format(data['car']['car_id']),
+                "data": "New report created {}".format(data['details']),
+                "error": "Unable to send notification"
+            }
+        )]
+    return result
+
+
+def cancel_repair_notification(data: []):
+    """Attmpets to send a cancellation notification for a repair (if dismissed by an Admin user)
+
+    Args:
+        data:
+
+    Returns:
+        None
+    """
+    message = "Car: {} - {} {} {}\nDetails: {}".format(
+        data['car']['car_id'], data['car']['model']['make'], data['car']['model']['model'],
+        data['car']['model']['year'], data['details']
+    )
+    data_send = {
+        "type": "note",
+        "title": "CANCELLED REPAIR",
+        "body": message
+    }
+    requests.post(
+        'https://api.pushbullet.com/v2/pushes',
+        data=json.dumps(data_send),
+        headers={
+            'Authorization': 'Bearer ' + PUSH_BULLET_TOKEN,
+            'Content-Type': 'application/json'
+        }
+    )
 
 
 @site.route("/view_users")

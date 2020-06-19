@@ -513,9 +513,10 @@ def remove_report():
     if report_id is not None:
         report = CarReport.query.get(report_id)
         if report is not None:  # check if report_id is valid (report exists)
+            data = ReportSchema().dumps(report)
             db.session.delete(report)
             db.session.commit()
-            return Response(status=200)
+            return Response(data, status=200, mimetype="application/json")
         return Response("Invalid report_id: not found in database", status=404)
     return Response("Missing request parameter", status=400)
 
