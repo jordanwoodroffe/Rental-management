@@ -3,7 +3,9 @@ MP Employee Web App
 
 website.py renders html templates and handles page endpoints.
 It handles login functionality and input validation, redirecting each type of employee to the correct website. Data
-is retrieved from
+is retrieved from.
+
+Enables pushbullet/notification functionality: ensure that PUSH_BULLET_TOKEN is set and valid in .env file
 """
 from customer_app.website import LoginForm, make_attributes, valid_name, RegistrationForm, CreateReportForm
 import json
@@ -32,22 +34,34 @@ GOOGLE_MAPS_KEY = env("GOOGLE_MAPS_KEY")
 # noinspection PyUnusedLocal
 def valid_lat(form, field: Field):
     """form validation method for a cars lat value (in range -90 and +90)"""
-    if float(field.data) < -90 or float(field.data) > 90:
-        raise ValidationError("Latitude value must be between -90 and +90")
+    try:
+        val = float(field.data)
+        if val < -90 or val > 90:
+            raise ValidationError("Latitude value must be between -90 and +90")
+    except TypeError:
+        raise ValidationError("Year must be within 1900-2999")
 
 
 # noinspection PyUnusedLocal
 def valid_lng(form, field: Field):
     """form validation method for a cars lng value (in range -180 and +180)"""
-    if float(field.data) < -180 or float(field.data) > 180:
-        raise ValidationError("Longitude value must be between -180 and +180")
+    try:
+        val = float(field.data)
+        if val < -180 or val > 180:
+            raise ValidationError("Longitude value must be between -180 and +180")
+    except TypeError:
+        raise ValidationError("Year must be within 1900-2999")
 
 
 # noinspection PyUnusedLocal
 def valid_cph(form, field: Field):
-    """form validation method for verifying a cars cph value (is > 0)"""
-    if float(field.data) <= 0:
-        raise ValidationError("Cph value must be > 0")
+    """form validation method for verifying a cars cph value is between 1 and 500"""
+    try:
+        val = float(field.data)
+        if not (10 <= val <= 100):
+            raise ValidationError("Cph value must be > 0")
+    except TypeError:
+        raise ValidationError("Year must be within 1900-2999")
 
 
 # noinspection PyUnusedLocal
@@ -77,49 +91,77 @@ def valid_make_model(form, field: Field):
 # noinspection PyUnusedLocal
 def valid_year(form, field: Field):
     """form validation method for car model year attribute: 1900 or 2000's only"""
-    if not (1900 <= int(field.data) <= 2999):
+    try:
+        val = int(field.data)
+        if not (1900 <= val <= 2999):
+            raise ValidationError("Year must be within 1900-2999")
+    except TypeError:
         raise ValidationError("Year must be within 1900-2999")
 
 
 # noinspection PyUnusedLocal
 def valid_capacity(form, field: Field):
     """form validation method for car model capacity: must be between 2 and 6"""
-    if not (2 <= int(field.data) <= 6):
-        raise ValidationError("Capcity must be between 2 and 6")
+    try:
+        val = int(field.data)
+        if not (2 <= val <= 6):
+            raise ValidationError("Capcity must be between 2 and 6")
+    except TypeError:
+        raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
 # noinspection PyUnusedLocal
 def valid_weight(form, field: Field):
     """form validation method for car model weight: must be between 950 and 2300kg"""
-    if not (950 <= int(field.data) <= 2300):
-        raise ValidationError("Weight must be between 950 and 2300 kg")
+    try:
+        val = int(field.data)
+        if not (950 <= val <= 2300):
+            raise ValidationError("Weight must be between 950 and 2300 kg")
+    except TypeError:
+        raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
 # noinspection PyUnusedLocal
 def valid_length(form, field: Field):
     """form validation method for car model length: must be between 3 and 5 metres"""
-    if not (3 <= int(field.data) <= 5):
-        raise ValidationError("Length must be between 3 and 5 metres")
+    try:
+        val = int(field.data)
+        if not (3 <= val <= 5):
+            raise ValidationError("Length must be between 3 and 5 metres")
+    except TypeError:
+        raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
 # noinspection PyUnusedLocal
 def valid_load_index(form, field: Field):
     """form validation method for car model load index: must be between 75 and 100"""
-    if not (75 <= int(field.data) <= 100):
-        raise ValidationError("Load index must be between 75 and 100")
+    try:
+        val = int(field.data)
+        if not (75 <= val <= 100):
+            raise ValidationError("Load index must be between 75 and 100")
+    except TypeError:
+        raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
 # noinspection PyUnusedLocal
 def valid_engine_capacity(form, field: Field):
     """form validation method for car model engine capacity: must be between 1 and 4 litres"""
-    if not (1 <= int(field.data) <= 4):
-        raise ValidationError("Engine capacity must be between 1 and 4 litres")
+    try:
+        val = int(field.data)
+        if not (1 <= val <= 4):
+            raise ValidationError("Engine capacity must be between 1 and 4 litres")
+    except TypeError:
+        raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
 # noinspection PyUnusedLocal
 def valid_ground_clearance(form, field: Field):
     """form validation method for car model ground clearance: must be between 100 and 250mm"""
-    if not (100 <= int(field.data) <= 250):
+    try:
+        val = int(field.data)
+        if not (100 <= val <= 250):
+            raise ValidationError("Ground clearance must be between 100 and 250mm")
+    except TypeError:
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 

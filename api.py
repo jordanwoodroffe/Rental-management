@@ -1,12 +1,14 @@
 """
 Database Utilities & Database API
 
-Creates tables and establishes relationships in Google Cloud SQL Database
-Provides endpoints for accessing, inserting, and updating data from Google Cloud SQL Database
+Creates tables and establishes relationships in Google Cloud SQL Database, and provides endpoints for accessing,
+inserting, and updating data from Google Cloud SQL Database
 
-Instructions (Google MySQL Documentation): https://cloud.google.com/sql/docs/mysql/connect-external-app
+`Link How to set up Google Cloud SQL instance <https://cloud.google.com/sql/docs/mysql/quickstart>`_
 
-Short instructions:
+`Link Google Cloud proxy instructions <https://cloud.google.com/sql/docs/mysql/connect-external-app>`_
+
+Short proxy instructions:
 
 - Enable Cloud SQL Admin API for the project.
 - Create a new Google Cloud SQL Instance, then create a database.
@@ -178,7 +180,7 @@ class Encoding(db.Model):
 
 
 class UserSchema(ma.Schema):
-    """Schema to expose User record information"""
+    """Schema to expose :class:`api.User` record information"""
 
     # noinspection PyMissingOrEmptyDocstring
     class Meta:
@@ -187,7 +189,7 @@ class UserSchema(ma.Schema):
 
 
 class EmployeeSchema(ma.Schema):
-    """Schema to expose Employee record information"""
+    """Schema to expose :class:`api.Employee` record information"""
 
     # noinspection PyMissingOrEmptyDocstring
     class Meta:
@@ -196,7 +198,7 @@ class EmployeeSchema(ma.Schema):
 
 
 class CarModelSchema(ma.Schema):
-    """Schema to expose CarModel record information"""
+    """Schema to expose :class:`api.CarModel` record information"""
 
     # noinspection PyMissingOrEmptyDocstring
     class Meta:
@@ -206,7 +208,7 @@ class CarModelSchema(ma.Schema):
 
 
 class CarSchema(ma.Schema):
-    """Schema to expose Car record information, including nested/foreign key records"""
+    """Schema to expose :class:`api.Car` record information, including nested/foreign key records"""
 
     # noinspection PyMissingOrEmptyDocstring
     class Meta:
@@ -217,7 +219,7 @@ class CarSchema(ma.Schema):
 
 
 class BookingSchema(ma.Schema):
-    """Schema to expose Booking record information, including nested/foreign key records"""
+    """Schema to expose :class:`api.Booking` record information, including nested/foreign key records"""
 
     # noinspection PyMissingOrEmptyDocstring
     class Meta:
@@ -230,7 +232,7 @@ class BookingSchema(ma.Schema):
 
 
 class ReportSchema(ma.Schema):
-    """Schema to expose CarReport table, including nested/foreign key records"""
+    """Schema to expose :class:`api.CarReport` table, including nested/foreign key records"""
 
     # noinspection PyMissingOrEmptyDocstring
     class Meta:
@@ -278,8 +280,8 @@ def get_employee():
         employee_id: username of employee to return
 
     Returns:
-        :class:`flask.Response`: 200 if successful, along with user data as a json object, 404 if user was not found,
-        400 if request parameters were missing
+        :class:`flask.Response`: 200 if successful, along with employee data as a json object, 404 if user was not
+        found, or 400 if request parameters were missing
     """
     employee_id = request.args.get("employee_id")
     if employee_id is not None:

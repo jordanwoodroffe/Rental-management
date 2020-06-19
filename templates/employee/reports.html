@@ -76,7 +76,6 @@
               <p class="card-text font-italic">"{{report.details}}"</p>
               <p class="card-text">Requested on {{report.report_date}}</p>
               {% if report.resolved == 1 %}
-              <p class="card-text">Completed on {{report.complete_date}}</p>
               <hr>
               <h5 class="card-title employee">Engineer -
                 <span class="fName">{{report.engineer.f_name}}</span> <span class="lName">{{report.engineer.l_name}}</span>
@@ -85,6 +84,7 @@
                 @<span class="username">{{report.engineer.username}}</span>
                 / <span class="email">{{report.engineer.email}}</span>
               </p>
+              <p class="card-text">Completed on {{report.complete_date}}</p>
               {% endif %}
               {% if (report.notified == 0) %}
               <a class="btn btn-primary mr-1" href="/alert_report?report_id={{report.report_id}}">Raise repair request</a>
