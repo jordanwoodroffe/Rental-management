@@ -7,6 +7,7 @@ from wtforms import StringField, FloatField, IntegerField
 from wtforms.validators import ValidationError
 from employee_app.website import valid_lat, valid_lng, valid_cph, valid_rego, valid_mac_address, valid_year, \
     valid_capacity, valid_weight, valid_length, valid_load_index, valid_engine_capacity, valid_ground_clearance
+from api import create_app
 from employee_app.website import site
 from employee_app.app import app
 
