@@ -1,5 +1,5 @@
 import unittest
-import server
+import employee_app.server as server
 
 class TestServer(unittest.TestCase):
 

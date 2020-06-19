@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-import client
+import employee_app.client as client
 
 class TestClient(unittest.TestCase):
 
