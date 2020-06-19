@@ -14,8 +14,6 @@ Private repo for Assignment 2 & 3 - Car Share Application
 10. [Trello and Github Usage](#trello-and-github-usage)
 
 
-
-
 ## About the project
 This is an university project attempting to develop a Internet of Things application for a cer booking service. The development team have 4 members, the project lasts 8 weeks in totals.
 
@@ -149,6 +147,9 @@ pip install -r requirements.txt
 - [Google Calendar API Python Quickstart](https://developers.google.com/calendar/quickstart/python)
 
 ## Trello and Github Usage
+
+[Assignment 3 Trello Board](https://trello.com/b/vUtlSkvC/iot-a3)
+
 ![Example commit history](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/commits.png)
 
 ![Example branches](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/branches.png)
