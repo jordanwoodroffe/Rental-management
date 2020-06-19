@@ -10,12 +10,13 @@ import cv2
 serverAddressPort   = ("localhost", 20001)
 bufferSize          = 1024
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-URL = "http://127.0.0.1:5000" 
+URL = "http://193.116.105.6:1000/" 
 
 car_id = "VSB296"
 
 def scan():
     print("Scanning...")
+    found_device = False
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
     print("Found %d devices" % len(nearby_devices))
 
@@ -24,9 +25,12 @@ def scan():
         add = addr
         print (devName)
         print (add)
+        found_device = True
+    return found_device
 
 def bluelogin():
     print("Scanning...")
+    return False
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
     resultEmployees = requests.get("{}{}".format(URL, "/employees")) 
     employ = resultEmployees.json() 
@@ -85,6 +89,7 @@ def bluelogin():
     return False
 
 def qrlogin():
+    
     image = cv2.imread("jwoodroffe.png")
     mask = cv2.inRange(image,(0,0,0),(200,200,200))
     thresholded = cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
@@ -101,7 +106,7 @@ def qrlogin():
                 if success.status_code == 200:
                     print("logged in")
                     if success.json()['type'] == "ENGINEER":
-                        print("User is an engineer")
+                        print(username + " is an verified engineer")
                         unlock_str = "_unloCar" + car_id + "_user_" + username
                         carRequestBytes = str.encode(unlock_str)
                         UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
@@ -130,13 +135,14 @@ def qrlogin():
                                         resultPutReport = requests.put("{}{}".format(URL, "/report"),params={"report_id": choice, "engineer_id": username, "complete_date":dt})
                                         if (resultPutReport.status_code == 200):
                                             print ("car report updated")
+                                            return True
                                         else:
                                             print ("car report failed to update")    
                                     else: 
                                         print ("no reports found car locked")
                                 else:
                                     print ("failed to fetch reports car locked")
-                                return True
+                                return False
 
                             elif (choice == "n"):
                                 #Lock car
@@ -154,6 +160,7 @@ def qrlogin():
                 print("QR Code doesn't have data")
         else:
             print("Data is not a QR code")
+    return False
 
 def interface():
     if (bluelogin() != True):
