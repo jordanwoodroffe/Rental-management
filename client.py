@@ -27,7 +27,6 @@ def scan():
 
 def bluelogin():
     print("Scanning...")
-    return False
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
     resultEmployees = requests.get("{}{}".format(URL, "/employees")) 
     employ = resultEmployees.json() 
@@ -75,7 +74,6 @@ def bluelogin():
                         else:
                             print ("failed to fetch reports car locked")
                         return True
-
                     elif (choice == "n"):
                         #Lock car
                         lock_str = "_lockedCar" + car_id + "_user_" + eng_id
