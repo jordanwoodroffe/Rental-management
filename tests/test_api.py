@@ -259,7 +259,7 @@ class TestApi(unittest.TestCase):
             "{}{}".format(URL, "report"),
             params={"report_id": "-1"}
         )
-        self.assertEqual(result404.status_code, 404)
+        self.assertEqual(result404.status_code, 400)
 
     def test_update_report_notification(self):
         """testing update notification of report"""
