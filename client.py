@@ -14,6 +14,9 @@ URL = "http://193.116.105.6:1000/"
 
 car_id = "VSB296"
 
+""" Scan for nearby devices
+:return (bool) true if devices are found false if none 
+"""
 def scan():
     print("Scanning...")
     found_device = False
@@ -28,6 +31,13 @@ def scan():
         found_device = True
     return found_device
 
+""" Bluetooth login
+:return (bool) true if bluetooth devices scan finds a device
+that is of an engineer and logs them in and successfully performs the task.
+It will ask the engineer what
+they want to do, they can chose to repair a problem with the car if they please.
+Either way the car will lock on exit.
+"""
 def bluelogin():
     print("Scanning...")
     return False
@@ -87,6 +97,13 @@ def bluelogin():
                     else:
                         print ("invalid choice")
     return False
+
+""" QR Code login
+:return (bool) true if QR code is an engineers,logs them in 
+and successfully performs the task. It will ask the engineer what they want 
+to do, they can chose to repair a problem with the car if they please.
+Either way the car will lock on exit.
+"""
 
 def qrlogin():
     
@@ -161,6 +178,11 @@ def qrlogin():
         else:
             print("Data is not a QR code")
     return False
+
+""" Interface for engineer
+:return (none) Checks for an engineers bluetooth device to see if they are there.
+Displays the menu for the engineer if they cannot log in via bluetooth automatically
+"""
 
 def interface():
     if (bluelogin() != True):

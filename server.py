@@ -18,7 +18,11 @@ global address
 message = None
 address = None
 print("UDP server up and listening")
-    
+
+""" Incoming Datagram reciever
+The monitors the messages recieved and performs the server options according to
+the message. It will decode them and run the method related to the message.
+"""
 #Incoming datagrams
 def incomingFeed():    
  
@@ -41,6 +45,11 @@ def incomingFeed():
             if ("_lockedCar" in clientMsg):
                 lockCar(clientMsg)
                 break
+
+""" unlocks car
+:return (bool) returns true if the car was successfully unlocked using the 
+parameters given to it via the client application.
+"""
 
 #Sets cars locked status to unlocked
 def unlockCar(input):
@@ -71,6 +80,11 @@ def unlockCar(input):
         return False
     return
 
+""" locks car
+:return (bool) returns true if the car was successfully locked using the 
+parameters given to it via the client application.
+"""
+
 #Sets cars locked status to locked
 def lockCar(input):
     global message
@@ -91,11 +105,15 @@ def lockCar(input):
     else:
         msgFromServer       = "unsuccessful"
         bytesToSend         = str.encode(msgFromServer)
-            if address is not None: ## Allows us to unittest, this will be set usually.
-        UDPServerSocket.sendto(bytesToSend, address)
+        if address is not None: ## Allows us to unittest, this will be set usually.
+            UDPServerSocket.sendto(bytesToSend, address)
         return False
     return
 
+""" main method
+runs the incomingFeed loop method when the server.py file is ran
+so the server can recieve messages.
+"""
 
 def main():
     incomingFeed()
