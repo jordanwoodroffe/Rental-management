@@ -68,7 +68,7 @@
               <h5 class="card-title">Report details</h5>
               {% set status = {0: "Requested", 1: "Resolved"}[ report.resolved]|default("Requested") -%}
               {% set raised = {0: "false", 1: "true"}[ report.notified]|default("false") -%}
-              <p class="raised-value">{{raised}}</p>
+              <p style="display: none;" class="raised-value">{{raised}}</p>
               {% set badge_class = {0: "badge-dark", 1: "badge-light"}[ report.resolved]|default("badge-info") -%}
               {% set priority_badge_class = {'LOW': "badge-info", 'MEDIUM': "badge-warning text-light", 'HIGH': "badge-danger"}[ report.priority]|default("badge-info") -%}
               <p>Priority <span class="priority-value badge {{priority_badge_class}}">{{report.priority}}</span></p>

@@ -28,7 +28,7 @@ env = Env()
 env.read_env()
 
 PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")  # Pushbullet Access Token: required in order to send a notification
-
+GOOGLE_MAPS_KEY = env("GOOGLE_MAPS_KEY")
 
 def valid_lat(form, field: Field):
     """form validation method for a cars lat value (in range -90 and +90)"""
@@ -1091,43 +1091,11 @@ def engineer_dashboard():
         if result.status_code == 200:
             try:
                 data = result.json()
-                markers = []
-                link = "https://www.google.com/maps/search/?api=1&query="
-                for i in range(len(data)):  # create a marker (map pin with pop-up details) for each report
-                    item = data[i]
-                    lat = item['car']['lat']
-                    lng = item['car']['lng']
-                    badge_class = "badge-info" if item['priority'] == 'LOW' else \
-                        "badge-warning text-light" if item['priority'] == 'MEDIUM' else 'badge-danger'
-                    badge = "<p><span style='position:absolute; top: 16px; right: 20px;' class='status-value badge \
-                        {}'>{}</span></p>".format(badge_class, item["priority"])
-                    map_link = "<br><a href='{}{},{}'><i>directions</i></a>".format(link, lat, lng)
-                    details = "<h5>{}:</h5><p>{} {} {}<br><small class='text-muted'>Details: {}{}</small></p>{}".format(
-                        item['car_id'], item['car']['model']['year'], item['car']['model']['make'],
-                        item['car']['model']['model'], item['details'], map_link, badge,
-                    )
-                    markers.append(
-                        {
-                            "infobox": details,
-                            "lat": item['car']['lat'],
-                            "lng": item['car']['lng']
-                        }
-                    )
             except JSONDecodeError:  # no reports found in database
-                markers = []
                 data = None
         else:
-            markers = []
             data = None
-        car_map = Map(
-            identifier="view-side",
-            lat=-37.781255,
-            lng=145.135217,
-            zoom=9,
-            style="height:600px;width:100%;margin:0;padding:0;",
-            markers=markers
-        )  # create google map, with reports as markers
-        return render_template("employee/engineer.html", user=session['user'], reports=data, map=car_map)
+        return render_template("employee/engineer.html", user=session['user'], reports=data, maps_key=GOOGLE_MAPS_KEY)
     return redirect(url_for("site.home"))
 
 

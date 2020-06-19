@@ -449,6 +449,11 @@ def get_reports():
         report['report_date'] = report['report_date'].replace("T", " ")
         if report['complete_date'] is not None:
             report['complete_date'] = report['complete_date'].replace("T", " ")
+        else:
+            report['complete_date'] = 0
+        if report['engineer_id'] is None:
+            report['engineer_id'] = 0
+            report['engineer'] = 0
     return Response(json.dumps(data), status=200, mimetype="application/json")
 
 

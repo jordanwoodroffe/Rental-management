@@ -2,11 +2,71 @@
 
 {% block head %}
 {{ super() }}
-{{map.js}}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
 {% endblock %}}
 
 {% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% block javascript %}
+<script>
+  var map;
+  function initMap() {
+    map = new google.maps.Map(
+      document.getElementById('map'),
+      {
+        zoom:8,
+        center:{lat:-38,lng:145}
+      }
+    );
+    let repairs = {{ reports|safe }}
+    console.log(repairs)
+    let infoWindow = new google.maps.InfoWindow();
+    let link = "https://www.google.com/maps/search/?api=1&query=";
+    for (let i = 0; i < repairs.length; i++) {
+      let repair = repairs[i];
+      let lat = repair.car.lat;
+      let lng = repair.car.lng;
+      let badge_class
+      if (repair.priority === 'LOW') {
+        badge_class = "badge-info";
+      } else if(repair.priority === 'MEDIUM') {
+        badge_class = "badge-warning text-light";
+      } else{
+        badge_class = "badge-danger";
+      }
 
+      let content = `
+      <h5 class="card-title">${repair.car_id}</h5>
+      <p>${repair.car.model.year} ${repair.car.model.make} ${repair.car.model.model}<br>
+      <small class="text-muted">
+      Details: ${repair.details}
+      <br>
+        <a href="${link}${lat},${lng}" target="_blank"><i>directions</i></a>
+      </small>
+      </p>
+      <p><span style='position:absolute; top: 16px; right: 20px;' class='status-value badge ${badge_class}'>${repair.priority}</span></p>
+      `;
+
+      let marker = new google.maps.Marker(
+        {
+          position: new google.maps.LatLng(lat, lng),
+          map: map
+        }
+      );
+
+      google.maps.event.addListener(marker, 'mouseover', (function(marker, i) {
+        return function() {
+          infoWindow.setContent(content);
+          infoWindow.open(map, marker)
+        }
+      })(marker, i));
+    }
+  }
+</script>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{maps_key}}&callback=initMap">
+</script>
+{% endblock %}
 {% with page="main", type="ENGINEER"%}
 {% include "employee/nav.html" %}
 {% endwith %}
@@ -66,9 +126,7 @@
           <div class="card-header">
             Map
           </div>
-          <div id="map" class="card-body" style="padding:0;">
-            {{map.html}}
-          </div>
+          <div id="map" class="card-body" style="padding:0;"></div>
         </div>
       </div>
     </div>
