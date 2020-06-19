@@ -7,7 +7,6 @@ Creates Flask app and registers database :class:`api` and :class:`employee_app.w
 from environs import Env
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
-from flask_googlemaps import GoogleMaps
 from api import api, db, DB_URI
 from employee_app.website import site
 from datetime import timedelta
@@ -29,7 +28,6 @@ app.register_blueprint(api)
 app.register_blueprint(site)
 Bootstrap(app)
 db.init_app(app)
-GoogleMaps(app)
 
 
 @app.errorhandler(404)

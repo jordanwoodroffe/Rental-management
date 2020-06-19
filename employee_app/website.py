@@ -11,7 +11,6 @@ import json
 from json.decoder import JSONDecodeError
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
-from flask_googlemaps import Map
 import re
 import requests
 from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField, IntegerField, Field
@@ -29,6 +28,7 @@ env.read_env()
 
 PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")  # Pushbullet Access Token: required in order to send a notification
 GOOGLE_MAPS_KEY = env("GOOGLE_MAPS_KEY")
+
 
 def valid_lat(form, field: Field):
     """form validation method for a cars lat value (in range -90 and +90)"""

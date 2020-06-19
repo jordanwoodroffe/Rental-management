@@ -86,7 +86,7 @@ class Car(db.Model):
     """Car Table - contains basic car information"""
     __tablename__ = "car"
     car_id = db.Column('car_id', VARCHAR(6), primary_key=True, nullable=False)
-    model_id = db.Column('model_id', Integer(), ForeignKey('car_model.model_id'), nullable=False)
+    model_id = db.Column('model_id', Integer(), ForeignKey('car_model.model_id', onupdate="CASCADE"), nullable=False)
     model = db.relationship("CarModel")
     name = db.Column('name', VARCHAR(45), nullable=False)
     cph = db.Column('cph', Float())
@@ -116,9 +116,17 @@ class Booking(db.Model):
     """Booking Table - contains booking information"""
     __tablename__ = "booking"
     booking_id = db.Column('booking_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
-    user_id = db.Column('user_id', VARCHAR(45), ForeignKey('user.username'), nullable=False)
+    user_id = db.Column(
+        'user_id', VARCHAR(45),
+        ForeignKey('user.username', ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False
+    )
     user = db.relationship('User')
-    car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
+    car_id = db.Column(
+        'car_id', VARCHAR(6),
+        ForeignKey('car.car_id', ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False
+    )
     car = db.relationship('Car')
     start = db.Column('start', DateTime(), nullable=False)
     end = db.Column('end', DateTime(), nullable=False)
@@ -132,9 +140,17 @@ class CarReport(db.Model):
     """CarReport table: used to track repairs on vehicles"""
     __tablename__ = "car_report"
     report_id = db.Column('report_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
-    car_id = db.Column('car_id', VARCHAR(6), ForeignKey('car.car_id'), nullable=False)
+    car_id = db.Column(
+        'car_id', VARCHAR(6),
+        ForeignKey('car.car_id', ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False
+    )
     car = db.relationship('Car')
-    engineer_id = db.Column('engineer_id', VARCHAR(12), ForeignKey('employee.username'), nullable=True)
+    engineer_id = db.Column(
+        'engineer_id', VARCHAR(12),
+        ForeignKey('employee.username', ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True
+    )
     engineer = db.relationship('Employee')
     details = db.Column('details', VARCHAR(280), nullable=True)
     report_date = db.Column('report_date', DateTime(), nullable=False)
@@ -148,7 +164,11 @@ class Encoding(db.Model):
     """Encoding Table: contains image encoding information (NOTE: not used currently, as per discussion forum advice)"""
     __tablename__ = "encoding"
     enc_id = db.Column('image_id', Integer(), primary_key=True, nullable=False, autoincrement=True)
-    user_id = db.Column('user_id', VARCHAR(45), ForeignKey('user.username'), nullable=False)
+    user_id = db.Column(
+        'user_id', VARCHAR(45),
+        ForeignKey('user.username', ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False
+    )
     user = db.relationship('User')
     data = db.Column('data', LargeBinary(length=(2 ** 32) - 1), nullable=False)
     name = db.Column('name', VARCHAR(45))
