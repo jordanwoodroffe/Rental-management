@@ -15,6 +15,8 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind((localIP, localPort))
 global message
 global address
+message = None
+address = None
 print("UDP server up and listening")
     
 #Incoming datagrams
@@ -57,13 +59,15 @@ def unlockCar(input):
     if result.status_code == 200:
         msgFromServer       = "successful"
         bytesToSend         = str.encode(msgFromServer)
-        UDPServerSocket.sendto(bytesToSend, address)
+        if address is not None: ## Allows us to unittest, this will be set usually.
+            UDPServerSocket.sendto(bytesToSend, address)
         return True
         
     else:
         msgFromServer       = "unsuccessful"
         bytesToSend         = str.encode(msgFromServer)
-        UDPServerSocket.sendto(bytesToSend, address)
+        if address is not None: ## Allows us to unittest, this will be set usually.
+            UDPServerSocket.sendto(bytesToSend, address)
         return False
     return
 
@@ -80,12 +84,14 @@ def lockCar(input):
     if result.status_code == 200:
         msgFromServer       = "successful"
         bytesToSend         = str.encode(msgFromServer)
-        UDPServerSocket.sendto(bytesToSend, address)
+        if address is not None: ## Allows us to unittest, this will be set usually.
+            UDPServerSocket.sendto(bytesToSend, address)
         return True
         
     else:
         msgFromServer       = "unsuccessful"
         bytesToSend         = str.encode(msgFromServer)
+            if address is not None: ## Allows us to unittest, this will be set usually.
         UDPServerSocket.sendto(bytesToSend, address)
         return False
     return

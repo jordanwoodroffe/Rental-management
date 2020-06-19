@@ -9,6 +9,5 @@ class TestServer(unittest.TestCase):
     def test_lockCar(self):
         self.assertTrue(server.unlockCar("_unloCar" + "VSB296" + "_user_" + "jwoodroffe"))
 
-
 if __name__ == '__main__':
     unittest.main()
