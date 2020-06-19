@@ -1,6 +1,21 @@
 # Programming Internet of Things
 Private repo for Assignment 2 & 3 - Car Share Application
 
+## Table of contents
+1. [About](#about-the-project)
+2. [Build](#built-with)
+3. [Setup](#setup)
+4. [How to start](#how-to-start)
+5. [How to use: Employee](#how-to-use-employee-app-assignment-3)
+6. [How to use: Customer](#how-to-use-customer-app-assignment-2)
+7. [Requirements](#requirements)
+8. [Contributions](#assignment-3-contributions)
+9. [Reference](#reference)
+10. [Trello and Github Usage](#trello-and-github-usage)
+
+
+
+
 ## About the project
 This is an university project attempting to develop a Internet of Things application for a cer booking service. The development team have 4 members, the project lasts 8 weeks in totals.
 
@@ -133,7 +148,7 @@ pip install -r requirements.txt
 - [Connect to Google CLoud SQL from external application](https://cloud.google.com/sql/docs/mysql/connect-external-app)
 - [Google Calendar API Python Quickstart](https://developers.google.com/calendar/quickstart/python)
 
-##Trello and Github Usage
+## Trello and Github Usage
 ![Example commit history](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/commits.png)
 
 ![Example branches](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/branches.png)
