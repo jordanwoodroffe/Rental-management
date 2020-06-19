@@ -38,7 +38,7 @@ def valid_lat(form, field: Field):
         val = float(field.data)
         if val < -90 or val > 90:
             raise ValidationError("Latitude value must be between -90 and +90")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Year must be within 1900-2999")
 
 
@@ -49,7 +49,7 @@ def valid_lng(form, field: Field):
         val = float(field.data)
         if val < -180 or val > 180:
             raise ValidationError("Longitude value must be between -180 and +180")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Year must be within 1900-2999")
 
 
@@ -60,7 +60,7 @@ def valid_cph(form, field: Field):
         val = float(field.data)
         if not (10 <= val <= 100):
             raise ValidationError("Cph value must be > 0")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Year must be within 1900-2999")
 
 
@@ -95,7 +95,7 @@ def valid_year(form, field: Field):
         val = int(field.data)
         if not (1900 <= val <= 2999):
             raise ValidationError("Year must be within 1900-2999")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Year must be within 1900-2999")
 
 
@@ -106,7 +106,7 @@ def valid_capacity(form, field: Field):
         val = int(field.data)
         if not (2 <= val <= 6):
             raise ValidationError("Capcity must be between 2 and 6")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
@@ -117,7 +117,7 @@ def valid_weight(form, field: Field):
         val = int(field.data)
         if not (950 <= val <= 2300):
             raise ValidationError("Weight must be between 950 and 2300 kg")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
@@ -128,7 +128,7 @@ def valid_length(form, field: Field):
         val = int(field.data)
         if not (3 <= val <= 5):
             raise ValidationError("Length must be between 3 and 5 metres")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
@@ -139,7 +139,7 @@ def valid_load_index(form, field: Field):
         val = int(field.data)
         if not (75 <= val <= 100):
             raise ValidationError("Load index must be between 75 and 100")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
@@ -150,7 +150,7 @@ def valid_engine_capacity(form, field: Field):
         val = int(field.data)
         if not (1 <= val <= 4):
             raise ValidationError("Engine capacity must be between 1 and 4 litres")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
@@ -161,7 +161,7 @@ def valid_ground_clearance(form, field: Field):
         val = int(field.data)
         if not (100 <= val <= 250):
             raise ValidationError("Ground clearance must be between 100 and 250mm")
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValidationError("Ground clearance must be between 100 and 250mm")
 
 
