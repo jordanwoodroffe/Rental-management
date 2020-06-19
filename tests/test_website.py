@@ -1,12 +1,13 @@
 import unittest
 import requests
-import logging
 import api
 from datetime import timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from api import create_app
 from employee_app.website import site
 from employee_app.app import app
+from unittest import mock
+
 
 IP = "http://127.0.0.1"
 PORT = "5000/"
