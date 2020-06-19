@@ -179,7 +179,7 @@ def qrlogin():
     return False
 
 """ Interface for engineer
-:return (none) Checks for an engineers bluetooth device to see if they are there.
+Checks for an engineers bluetooth device to see if they are there.
 Displays the menu for the engineer if they cannot log in via bluetooth automatically
 """
 
