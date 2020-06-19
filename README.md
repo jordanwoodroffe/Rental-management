@@ -64,6 +64,14 @@ Company managers can log in to a web application in order to view business metri
 
 - setup google cloud proxy for development environment
 
+## Testing
+- Some of the unit tests
+
+<img src="https://github.com/jordanwoodroffe/IOTA2/blob/master/wiki/test_website.png" width="300"><img src="https://github.com/jordanwoodroffe/IOTA2/blob/master/wiki/test_app.png" width="300"><img src="https://github.com/jordanwoodroffe/IOTA2/blob/master/wiki/test_api.png" width="300">
+
+
+
+
 ## How to start
 - To start the server, run:
 
