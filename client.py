@@ -4,8 +4,8 @@ import sys
 import bluetooth
 from flask import Flask, render_template, request, redirect, Response
 from datetime import datetime
-#from pyzbar import pyzbar
-#import cv2
+from pyzbar import pyzbar
+import cv2
 
 serverAddressPort   = ("localhost", 20001)
 bufferSize          = 1024
@@ -27,6 +27,7 @@ def scan():
 
 def bluelogin():
     print("Scanning...")
+    return False
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
     resultEmployees = requests.get("{}{}".format(URL, "/employees")) 
     employ = resultEmployees.json() 
@@ -84,7 +85,7 @@ def bluelogin():
                     else:
                         print ("invalid choice")
     return False
-"""
+
 def qrlogin():
     image = cv2.imread("jwoodroffe.png")
     mask = cv2.inRange(image,(0,0,0),(200,200,200))
@@ -98,18 +99,64 @@ def qrlogin():
         if barcodeType == "QRCODE":
             if barcodeData is not foundData:
                 username = barcodeData
-                #if username exists in db login
-                #print ("Login successful car locked")
-                #unlock car
-                #print ("Finished maintainenance?")
-                #print ("y/n")
-                #lock car
-                #update maintenance table
+                success = requests.get("{}{}".format(URL, "/employee"), params={"employee_id": username})
+                if success.status_code == 200:
+                    print("logged in")
+                    if success.json()['type'] == "ENGINEER":
+                        print("User is an engineer")
+                        unlock_str = "_unloCar" + car_id + "_user_" + username
+                        carRequestBytes = str.encode(unlock_str)
+                        UDPClientSocket.sendto(carRequestBytes, serverAddressPort)
+                        print ("Finished maintainenance?")
+                        print ("y/n")
+                        while (True):
+                            choice = input()
+                            if (choice == "y"):
+                                
+                                #Lock car
+                                lock_str = "_lockedCar" + car_id + "_user_" + username
+                                lockCarRequestBytes = str.encode(lock_str)
+                                UDPClientSocket.sendto(lockCarRequestBytes, serverAddressPort)
+                            
+                                #Fetch reports
+                                reportResult = requests.get("{}{}".format(URL, "/reports"),params={"car_id": car_id})
+                                reports = reportResult.json()
+                                if (reportResult.status_code == 200):
+                                    if reports is not None:
+                                        print (reports)
+                                        print ("please select report to complete")     
+                                        choice = input()
+                                        #Update report
+                                        now = datetime.now()
+                                        dt = now.strftime("%Y-%m-%d %H:%M:%S")
+                                        resultPutReport = requests.put("{}{}".format(URL, "/report"),params={"report_id": choice, "engineer_id": username, "complete_date":dt})
+                                        if (resultPutReport.status_code == 200):
+                                            print ("car report updated")
+                                        else:
+                                            print ("car report failed to update")    
+                                    else: 
+                                        print ("no reports found car locked")
+                                else:
+                                    print ("failed to fetch reports car locked")
+                                return True
+
+                            elif (choice == "n"):
+                                #Lock car
+                                lock_str = "_lockedCar" + car_id + "_user_" + username
+                                lockCarRequestBytes = str.encode(lock_str)
+                                UDPClientSocket.sendto(lockCarRequestBytes, serverAddressPort)
+                                return True
+                            else:
+                                print ("invalid choice")
+                    else:
+                        print("User is not an engineer")
+                else:
+                    print("User not found")
             else:
                 print("QR Code doesn't have data")
         else:
             print("Data is not a QR code")
-"""
+
 def interface():
     if (bluelogin() != True):
         while (True):   
@@ -122,9 +169,9 @@ def interface():
                 print (x)
             print ("Select an option...")
             selectedOption = input()
-            #if (selectedOption == "1"):
-                #qrlogin()          
-            if (selectedOption == "2"):
+            if (selectedOption == "1"):
+                qrlogin()          
+            elif (selectedOption == "2"):
                 bluelogin()
             elif (selectedOption == "3"):
                 scan()
