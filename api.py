@@ -1273,7 +1273,7 @@ def add_booking():
         booking.car_id = data['car_id']
         booking.completed = 0
         booking.cost = calc_cost(float(data['cph']), booking.start, booking.end)
-        booking.booking_date = datetime.datetime.now()
+        booking.booking_date = datetime.now()
         if data['event_id'] is not None:  # If event_id is provided, add event_id to booking
             booking.event_id = data['event_id']
         if valid_booking(booking):  # Check if booking is valid
