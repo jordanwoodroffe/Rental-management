@@ -180,6 +180,7 @@ class Encoding(db.Model):
 class UserSchema(ma.Schema):
     """Schema to expose User record information"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = User
         fields = ("username", "email", "f_name", "l_name", "face_id", "register_date")
@@ -188,6 +189,7 @@ class UserSchema(ma.Schema):
 class EmployeeSchema(ma.Schema):
     """Schema to expose Employee record information"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = Employee
         fields = ("username", "email", "f_name", "l_name", "type", "mac_address")
@@ -196,6 +198,7 @@ class EmployeeSchema(ma.Schema):
 class CarModelSchema(ma.Schema):
     """Schema to expose CarModel record information"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = CarModel
         fields = ("model_id", "make", "model", "year", "capacity", "colour", "transmission", "weight", "length",
@@ -205,6 +208,7 @@ class CarModelSchema(ma.Schema):
 class CarSchema(ma.Schema):
     """Schema to expose Car record information, including nested/foreign key records"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = Car
         fields = ("car_id", "name", "model_id", "model", "locked", "cph", "lat", "lng")
@@ -215,9 +219,11 @@ class CarSchema(ma.Schema):
 class BookingSchema(ma.Schema):
     """Schema to expose Booking record information, including nested/foreign key records"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = Booking
-        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car", "start", "end", "completed", "event_id", "booking_date")
+        fields = ("booking_id", "user_id", "cost", "user", "car_id", "car",
+                  "start", "end", "completed", "event_id", "booking_date")
 
     user = fields.Nested(UserSchema)
     car = fields.Nested(CarSchema)
@@ -226,6 +232,7 @@ class BookingSchema(ma.Schema):
 class ReportSchema(ma.Schema):
     """Schema to expose CarReport table, including nested/foreign key records"""
 
+    # noinspection PyMissingOrEmptyDocstring
     class Meta:
         model = CarReport
         fields = ("report_id", "car_id", "car", "engineer_id", "engineer", "details", "report_date", "complete_date",
@@ -235,6 +242,7 @@ class ReportSchema(ma.Schema):
     engineer = fields.Nested(EmployeeSchema)
 
 
+# noinspection PyMissingOrEmptyDocstring
 def create_app():
     app = Flask(__name__)
     db.init_app(app)
@@ -392,7 +400,7 @@ def update_employee():
         try:
             data = json.loads(request.get_json())
             employee = Employee.query.get(data["existing_username"])
-            if employee is not None: # check if existing employee_id is valid (exists)
+            if employee is not None:  # check if existing employee_id is valid (exists)
                 if update_employee_attributes(employee, data, create=False):
                     return Response(
                         UserSchema().dumps(Employee.query.get(data["username"])),
@@ -447,11 +455,12 @@ def get_reports():
             res_val = int(resolved)  # if set, enable filtering by resolved value (0 is not complete, 1 is completed)
             if res_val not in (1, 0):
                 raise ValueError
-        except ValueError as ve:
+        except ValueError:
             return Response("Incorrect resolved param value (must be 1 or 0)", status=400)
     if engineer_id is not None:  # return reports assigned to an engineer
         if resolved:
-            reports = CarReport.query.filter_by(resolved=resolved).join(Employee).filter(Employee.username == engineer_id)
+            reports = CarReport.query.filter_by(resolved=resolved).join(
+                Employee).filter(Employee.username == engineer_id)
         else:
             reports = CarReport.query.join(Employee).filter(Employee.username == engineer_id)
     elif car_id is not None:  # return all uncompleted reports for a vehicle
@@ -1273,7 +1282,7 @@ def add_booking():
         booking.car_id = data['car_id']
         booking.completed = 0
         booking.cost = calc_cost(float(data['cph']), booking.start, booking.end)
-        booking.booking_date = datetime.datetime.now()
+        booking.booking_date = datetime.now()
         if data['event_id'] is not None:  # If event_id is provided, add event_id to booking
             booking.event_id = data['event_id']
         if valid_booking(booking):  # Check if booking is valid

@@ -5,16 +5,15 @@ website.py renders html templates and handles page endpoints.
 It handles login functionality and input validation, redirecting each type of employee to the correct website. Data
 is retrieved from
 """
-from customer_app.website import LoginForm, make_attributes, valid_name, valid_username, valid_password, \
-    RegistrationForm, CreateReportForm
+from customer_app.website import LoginForm, make_attributes, valid_name, RegistrationForm, CreateReportForm
 import json
 from json.decoder import JSONDecodeError
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
 import re
 import requests
-from wtforms import StringField, PasswordField, SelectField, HiddenField, FloatField, IntegerField, Field
-from wtforms.validators import InputRequired, Email, Length, ValidationError
+from wtforms import StringField, SelectField, HiddenField, FloatField, IntegerField, Field
+from wtforms.validators import InputRequired, Length, ValidationError
 import datetime
 from dateutil.relativedelta import *
 from environs import Env
@@ -30,30 +29,35 @@ PUSH_BULLET_TOKEN = env("PUSH_BULLET_TOKEN")  # Pushbullet Access Token: require
 GOOGLE_MAPS_KEY = env("GOOGLE_MAPS_KEY")
 
 
+# noinspection PyUnusedLocal
 def valid_lat(form, field: Field):
     """form validation method for a cars lat value (in range -90 and +90)"""
     if float(field.data) < -90 or float(field.data) > 90:
         raise ValidationError("Latitude value must be between -90 and +90")
 
 
+# noinspection PyUnusedLocal
 def valid_lng(form, field: Field):
     """form validation method for a cars lng value (in range -180 and +180)"""
     if float(field.data) < -180 or float(field.data) > 180:
         raise ValidationError("Longitude value must be between -180 and +180")
 
 
+# noinspection PyUnusedLocal
 def valid_cph(form, field: Field):
     """form validation method for verifying a cars cph value (is > 0)"""
     if float(field.data) <= 0:
         raise ValidationError("Cph value must be > 0")
 
 
+# noinspection PyUnusedLocal
 def valid_rego(form, field: Field):
     """form validation method for verifying a car_id/rego against a regex pattern (alphanumeric)"""
     if not re.match("[A-Za-z0-9]", field.data):
         raise ValidationError("Rego value must be alphanumeric")
 
 
+# noinspection PyUnusedLocal
 def valid_mac_address(form, field: Field):
     """form validation method for verifying a mac address against a regex pattern
     (12 hexadecimal chars separated by : or -)
@@ -63,48 +67,56 @@ def valid_mac_address(form, field: Field):
                               "<br>for example 98:9E:63:37:A9:8F or 98-9E-63-37-A9-8F")
 
 
+# noinspection PyUnusedLocal
 def valid_make_model(form, field: Field):
     """form validation method for car model make/model attributes: alphanumeric and some special chars"""
-    if not re.match("[0-9A-Za-z\-]", field.data):
+    if not re.match("^[0-9A-Za-z ]+-?[0-9A-Za-z ]+$", field.data):
         raise ValidationError("Invalid value - must contain alphanumeric characters")
 
 
+# noinspection PyUnusedLocal
 def valid_year(form, field: Field):
     """form validation method for car model year attribute: 1900 or 2000's only"""
     if not (1900 <= int(field.data) <= 2999):
         raise ValidationError("Year must be within 1900-2999")
 
 
+# noinspection PyUnusedLocal
 def valid_capacity(form, field: Field):
     """form validation method for car model capacity: must be between 2 and 6"""
     if not (2 <= int(field.data) <= 6):
         raise ValidationError("Capcity must be between 2 and 6")
 
 
+# noinspection PyUnusedLocal
 def valid_weight(form, field: Field):
     """form validation method for car model weight: must be between 950 and 2300kg"""
     if not (950 <= int(field.data) <= 2300):
         raise ValidationError("Weight must be between 950 and 2300 kg")
 
 
+# noinspection PyUnusedLocal
 def valid_length(form, field: Field):
     """form validation method for car model length: must be between 3 and 5 metres"""
     if not (3 <= int(field.data) <= 5):
         raise ValidationError("Length must be between 3 and 5 metres")
 
 
+# noinspection PyUnusedLocal
 def valid_load_index(form, field: Field):
     """form validation method for car model load index: must be between 75 and 100"""
     if not (75 <= int(field.data) <= 100):
         raise ValidationError("Load index must be between 75 and 100")
 
 
+# noinspection PyUnusedLocal
 def valid_engine_capacity(form, field: Field):
     """form validation method for car model engine capacity: must be between 1 and 4 litres"""
     if not (1 <= int(field.data) <= 4):
         raise ValidationError("Engine capacity must be between 1 and 4 litres")
 
 
+# noinspection PyUnusedLocal
 def valid_ground_clearance(form, field: Field):
     """form validation method for car model ground clearance: must be between 100 and 250mm"""
     if not (100 <= int(field.data) <= 250):
@@ -173,6 +185,7 @@ class UpdateCarModelForm(CarModelForm):
     model_id = HiddenField('model_id')
 
 
+# noinspection DuplicatedCode
 @site.route("/", methods=['POST', 'GET'])
 def home():
     """Authenticates a user when they log in to the MP employee web app
@@ -252,14 +265,13 @@ def search_cars():
             params={"car_reports": True}
         )  # Retrieve all cars in car table
         reports = requests.get(
-            "{}{}".format(URL, "/reports")
+            "{}{}".format(URL, "/reports", params={"resolved": 0})
         )
         if cars.status_code == 200:
             try:
                 car_data = cars.json()
                 reports_data = reports.json()
                 append_reports(car_data, reports_data)
-                print(car_data)
             except JSONDecodeError:
                 attributes = None
                 car_data = None
@@ -285,7 +297,7 @@ def append_reports(car_data, reports_data):
     """
     for car in car_data:
         for report in reports_data:
-            if report['car']['car_id'] == car['car_id']:
+            if report['car']['car_id'] == car['car_id'] and int(report['resolved']) == 0:
                 car['repairs'] = True
                 break
 
@@ -314,7 +326,6 @@ def render_edit_car():
             'name': form.name.data
         }
         result = requests.put("{}{}".format(URL, "/update_car"), json=json.dumps(car))
-        print(result)
         if result.status_code == 200:
             session['messages'] = [(
                 "success",
@@ -323,7 +334,6 @@ def render_edit_car():
                     "data": "Registration number: {}".format(form.car_id.data)
                 }
             )]
-            print("Updated car")
             return redirect(url_for("site.search_cars"))
         else:
             form.car_id.errors.append(result.text)
@@ -369,7 +379,6 @@ def render_create_vehicle():
             "{}{}".format(URL, "/car"),
             json=json.dumps(car),
         )
-        print("create response" + str(result))
         if result.status_code == 200:
             session['messages'] = [(
                 "success",
@@ -388,7 +397,8 @@ def render_create_vehicle():
 
 @site.route("/remove_car", methods=['POST'])
 def remove_car():
-    """Removes a car from the database: Admin can select 'remove' for any vehicle, and remove from database via :class:`api`
+    """Removes a car from the database: Admin can select 'remove' for any vehicle, and remove from database via
+    :class:`api`
 
     Returns:
         presents alert message for corresponding success/error
@@ -692,7 +702,6 @@ def render_edit_user():
             json=json.dumps(user),
             params={"update": True}
         )
-        print(result)
         if result.status_code == 200:  # add success message to session (display alert)
             session['messages'] = [(
                 "success",
@@ -722,11 +731,6 @@ def render_edit_user():
                 form.email.data = user['email']
                 form.first_name.data = user['f_name']
                 form.last_name.data = user['l_name']
-            else:
-                user = None
-        else:
-            user = None
-        print(user)
         return render_template("employee/update_user.html", form=form, method="Update")
     return redirect(url_for('site.home'))
 
@@ -901,11 +905,6 @@ def render_edit_employee():
                 form.last_name.data = employee['l_name']
                 if employee['mac_address'] is not None:
                     form.mac_address.data = employee['mac_address']
-            else:
-                employee = None
-        else:
-            employee = None
-        print(employee)
         return render_template("employee/update_employee.html", form=form, method="Update")
     return redirect(url_for('site.home'))
 
@@ -1022,7 +1021,7 @@ def manager_dashboard():
         except JSONDecodeError:
             bookings_data = None
         if bookings_data is not None:
-            month_revenue = [0 for i in range(today.day)]
+            month_revenue = [0 for _ in range(today.day)]
             for booking in bookings_data:
                 date = datetime.datetime.strptime(booking["booking_date"], "%Y-%m-%dT%H:%M:%S")
                 if date.year == today.year and date.month == today.month:
