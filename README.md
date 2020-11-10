@@ -6,9 +6,8 @@
 5. [How to use: Employee](#how-to-use-employee-app-assignment-3)
 6. [How to use: Customer](#how-to-use-customer-app-assignment-2)
 7. [Requirements](#requirements)
-8. [Contributions](#assignment-3-contributions)
-9. [Reference](#reference)
-10. [Trello and Github Usage](#trello-and-github-usage)
+8. [Reference](#reference)
+9. [Trello and Github Usage](#trello-and-github-usage)
 
 
 ## About the project
@@ -122,30 +121,6 @@ Customer Details:
 pip install -r requirements.txt
 ```
 
-## Assignment 3 Contributions
-#### Group Members
-- [Đào Việt Quang](https://github.com/DanDanDao)
-- [Donald U'Ren](https://github.com/donald-uren)
-- [Jordy Woodroffe](https://github.com/jordanwoodroffe)
-- [Kev Mason](https://github.com/Evzy)
-
-#### Part A: Employee Web Application/Database API - 55%
-- Đào Việt Quang, Donald U'Ren
-
-#### Part B: AP Bluetooth & Voice Recognition - 25%
-- Jordy Woodroffe
-
-#### Part C: Object Recognition - 10%
-- Evan Mason
-
-#### Part D: Unit Tests - 10%
-- Unit testing for Part A: Đào Việt Quang, Donald U'Ren
-
-- Unit testing for Part B: Jordy Woodroffe
-
-- Unit testing for Part C: Evan Mason
-
-
 ## Reference
 - [Flask documentation](https://flask.palletsprojects.com/en/1.1.x/)
 - [Connect to Google CLoud SQL from external application](https://cloud.google.com/sql/docs/mysql/connect-external-app)
@@ -154,8 +129,6 @@ pip install -r requirements.txt
 ## Trello and Github Usage
 
 [Assignment 3 Trello Board](https://trello.com/b/vUtlSkvC/iot-a3)
-
-![Example commit history](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/commits.png)
 
 ![Example branches](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/branches.png)
 
