@@ -1,6 +1,3 @@
-# Programming Internet of Things
-Private repo for Assignment 2 & 3 - Car Share Application
-
 ## Table of contents
 1. [About](#about-the-project)
 2. [Build](#built-with)
@@ -15,7 +12,7 @@ Private repo for Assignment 2 & 3 - Car Share Application
 
 
 ## About the project
-This is an university project attempting to develop a Internet of Things application for a car booking service. The development team have 4 members, the project lasts 8 weeks in totals.
+This is a project attempting to develop a Internet of Things application for a car booking service.
 
 ![Customer App screenshot](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/customer.png)
 
