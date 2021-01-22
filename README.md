@@ -84,7 +84,7 @@ populate the database with data if empty:
 ```/populate``` endpoint provides auto-load function for sample data [```test_data/*.csv```](https://github.com/jordanwoodroffe/IOTA2/test_data)
 
 
-## How to use: Employee App (Assignment 3)
+## How to use: Employee App
 directory: [```employee_app```](https://github.com/jordanwoodroffe/IOTA2/employee_app)
 - the employee master pi web app is accessible only by employees. Engineers may login to view repair requests and locations, Managers may log in to view an analytics dashbaord, and 
 Admin staff may log in to view/manage/update users employees and cars, and to file repair requests for vehicles.
@@ -102,7 +102,7 @@ Manager Details:
 - username: johnsmith 
 - password: 123Qwe!
 
-## How to use: Customer App (Assignment 2)
+## How to use: Customer App 
 directory: [```customer_app```](https://github.com/jordanwoodroffe/IOTA2/customer_app)
 - the customer master pi web app is used to register, and once logged in a user can book vehicles, cancel bookings, search cars, view locations, and register for facial unlock of vehicles
 - the customer agent console app is used to authenticate users, where they can login with credentials or by face, and then unlock or return a vehicle
@@ -128,13 +128,7 @@ pip install -r requirements.txt
 
 ## Trello and Github Usage
 
-[Assignment 3 Trello Board](https://trello.com/b/vUtlSkvC/iot-a3)
-
 ![Example branches](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/branches.png)
-
-![Trello board](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/trello1.png)
-
-![Example Trello card](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/trello2.png)
 
 ![Database design](https://github.com/jordanwoodroffe/IOTA2/blob/a3-mp-app/wiki/database.png)
 
